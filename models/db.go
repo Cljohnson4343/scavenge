@@ -13,10 +13,11 @@ var db *sql.DB
 func InitDB(dataSourceName string) {
 	db, err := sql.Open("postgres", dataSourceName)
 	if err != nil {
-		log.Panic(err)
+		log.Panicf("Error connecting to postgresql db: %s\n", err.Error())
 	}
+	defer db.Close()
 
 	if err = db.Ping(); err != nil {
-		log.Panic(err)
+		log.Panicf("Error pinging postresql db: %s\n", err.Error())
 	}
 }
