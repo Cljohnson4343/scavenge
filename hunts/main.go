@@ -4,48 +4,13 @@ import (
 	"net/http"
 	"os"
 	"strconv"
-	"time"
 
+	"github.com/cljohnson4343/scavenge/models"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 )
 
-type Coord struct {
-	Latitude  float32 `json:"latitude"`
-	Longitude float32 `json:"longitude"`
-}
-
-type Location struct {
-	Name   string `json:"name"`
-	Coords Coord  `json:"coords"`
-}
-
-type User struct {
-	First string `json:"first"`
-	Last  string `json:"last"`
-}
-type Team struct {
-	Name string `json:"name"`
-}
-
-type Item struct {
-	Name   string `json:"name"`
-	Points uint   `json:"points"`
-	IsDone bool   `json:"is_done"`
-}
-
-type Hunt struct {
-	Title    string    `json:"title"`
-	MaxTeams int       `json:"max_teams"`
-	ID       int       `json:"id"`
-	Start    time.Time `json:"start"`
-	End      time.Time `json:"end"`
-	Teams    []Team    `json:"teams"`
-	Items    []Item    `json:"items"`
-	Location Location  `json:"location"`
-}
-
-var hunts []Hunt
+var hunts []models.Hunt
 
 // Routes returns a router that serves the hunts routes
 func Routes() *chi.Mux {
