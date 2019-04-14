@@ -1,0 +1,271 @@
+{
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "schemes": [
+    "http",
+    "https"
+  ],
+  "swagger": "2.0",
+  "info": {
+    "description": "This package provides all endpoints used to access/manipulate Hunts",
+    "title": "Scavenge API",
+    "termsOfService": "there are no TOS at this moment, use at your own risk we take no responsibility",
+    "contact": {
+      "name": "Chris Johnson",
+      "email": "cljohnson4343@gmail.com"
+    },
+    "version": "0.0.1"
+  },
+  "host": "localhost",
+  "basePath": "/api/v0",
+  "paths": {
+    "/hunts": {
+      "get": {
+        "description": "This will show all hunts by default.",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "hunts"
+        ],
+        "summary": "Lists hunts.",
+        "operationId": "getHunts",
+        "responses": {
+          "200": {},
+          "500": {}
+        }
+      },
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "hunts"
+        ],
+        "summary": "Creates the given hunt.",
+        "operationId": "createHunt",
+        "responses": {
+          "200": {},
+          "500": {}
+        }
+      }
+    },
+    "/hunts/{id}": {
+      "get": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "hunt"
+        ],
+        "summary": "Gets the hunt with given id.",
+        "operationId": "getHunt",
+        "responses": {
+          "200": {},
+          "444": {},
+          "500": {}
+        }
+      },
+      "delete": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "hunt"
+        ],
+        "summary": "Deletes the given hunt.",
+        "operationId": "deleteHunt",
+        "responses": {
+          "200": {},
+          "400": {}
+        }
+      }
+    }
+  },
+  "definitions": {
+    "Coord": {
+      "description": "A Coord is the representation of gps coordinates",
+      "type": "object",
+      "required": [
+        "latitude",
+        "longitude"
+      ],
+      "properties": {
+        "latitude": {
+          "description": "the latitude of the coordinates",
+          "type": "number",
+          "format": "float",
+          "x-go-name": "Latitude"
+        },
+        "longitude": {
+          "description": "the longitude of the coordinates",
+          "type": "number",
+          "format": "float",
+          "x-go-name": "Longitude"
+        }
+      },
+      "x-go-package": "github.com/cljohnson4343/scavenge/hunts/models"
+    },
+    "Hunt": {
+      "type": "object",
+      "title": "A Hunt is the representation of a scavenger hunt.",
+      "required": [
+        "title",
+        "max_teams",
+        "id",
+        "start",
+        "end"
+      ],
+      "properties": {
+        "end": {
+          "description": "The end time for the Hunt",
+          "type": "string",
+          "format": "date",
+          "x-go-name": "End"
+        },
+        "id": {
+          "description": "The id of the Hunt",
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "ID"
+        },
+        "items": {
+          "description": "the items for this hunt",
+          "type": "array",
+          "minLength": 1,
+          "items": {
+            "$ref": "#/definitions/item"
+          },
+          "x-go-name": "Items"
+        },
+        "location": {
+          "$ref": "#/definitions/Location"
+        },
+        "max_teams": {
+          "description": "The maximum number of teams that can participate in the Hunt.",
+          "type": "integer",
+          "format": "int64",
+          "minimum": 1,
+          "x-go-name": "MaxTeams"
+        },
+        "start": {
+          "description": "The start time for the Hunt",
+          "type": "string",
+          "format": "date",
+          "x-go-name": "Start"
+        },
+        "teams": {
+          "description": "the teams for this hunt",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Team"
+          },
+          "x-go-name": "Teams"
+        },
+        "title": {
+          "description": "The name of the Hunt",
+          "type": "string",
+          "maxLength": 255,
+          "x-go-name": "Title"
+        }
+      },
+      "x-go-package": "github.com/cljohnson4343/scavenge/hunts/models"
+    },
+    "Location": {
+      "description": "A Location is a representation of a Location",
+      "type": "object",
+      "required": [
+        "coords"
+      ],
+      "properties": {
+        "coords": {
+          "$ref": "#/definitions/Coord"
+        },
+        "name": {
+          "description": "the name of the location",
+          "type": "string",
+          "maxLength": 80,
+          "x-go-name": "Name"
+        }
+      },
+      "x-go-package": "github.com/cljohnson4343/scavenge/hunts/models"
+    },
+    "Team": {
+      "description": "A Team is a representation of a Team",
+      "type": "object",
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "description": "the name of the team",
+          "type": "string",
+          "maxLength": 255,
+          "x-go-name": "Name"
+        }
+      },
+      "x-go-package": "github.com/cljohnson4343/scavenge/hunts/models"
+    },
+    "item": {
+      "description": "Item is the data representation of a scavenger hunt item",
+      "type": "object",
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "is_done": {
+          "description": "whether or not this item has been found\n\nrequired true",
+          "type": "boolean",
+          "x-go-name": "IsDone"
+        },
+        "name": {
+          "description": "the name of the item",
+          "type": "string",
+          "maxLength": 255,
+          "x-go-name": "Name"
+        },
+        "points": {
+          "description": "the amount of points this item is worth",
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 1,
+          "x-go-name": "Points"
+        }
+      },
+      "x-go-name": "Item",
+      "x-go-package": "github.com/cljohnson4343/scavenge/hunts/models"
+    }
+  }
+}

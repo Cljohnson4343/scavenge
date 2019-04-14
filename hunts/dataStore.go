@@ -1,73 +1,33 @@
 package hunts
 
 import (
-	"time"
+	"github.com/cljohnson4343/scavenge/hunts/models"
 )
 
-// Coord is a representation of a Coord
-type Coord struct {
-	Latitude  float32 `json:"latitude"`
-	Longitude float32 `json:"longitude"`
-}
-
-// Location is a representation of a Location
-type Location struct {
-	Name   string `json:"name"`
-	Coords Coord  `json:"coords"`
-}
-
-// User is a representation of a User
-type User struct {
-	First string `json:"first"`
-	Last  string `json:"last"`
-}
-
-// Team is a representation of a Team
-type Team struct {
-	Name string `json:"name"`
-}
-
-// Item is a representation of a Item
-type Item struct {
-	Name   string `json:"name"`
-	Points uint   `json:"points"`
-	IsDone bool   `json:"is_done"`
-}
-
-// Hunt is a representation of a Hunt
-type Hunt struct {
-	Title    string    `json:"title"`
-	MaxTeams int       `json:"max_teams"`
-	ID       int       `json:"id"`
-	Start    time.Time `json:"start"`
-	End      time.Time `json:"end"`
-	Teams    []Team    `json:"teams"`
-	Items    []Item    `json:"items"`
-	Location Location  `json:"location"`
-}
-
+// HuntDataStore is an interface that comprised of all access methods
+// that pkg hunts needs to communicate with the database
 type HuntDataStore interface {
-	AllHunts() ([]*Hunt, error)
-	GetHunt(hunt *Hunt, huntID int) error
-	GetItems(items *[]Item, huntID int) error
-	GetTeams(teams *[]Team, huntID int) error
-	InsertHunt(hunt *Hunt) (int, error)
-	InsertTeam(team *Team, huntID int) (int, error)
-	InsertItem(item *Item, huntID int) (int, error)
+	AllHunts() ([]*models.Hunt, error)
+	GetHunt(hunt *models.Hunt, huntID int) error
+	GetItems(items *[]models.Item, huntID int) error
+	GetTeams(teams *[]models.Team, huntID int) error
+	InsertHunt(hunt *models.Hunt) (int, error)
+	InsertTeam(team *models.Team, huntID int) (int, error)
+	InsertItem(item *models.Item, huntID int) (int, error)
 	DeleteHunt(huntID int) error
 }
 
 // AllHunts returns all Hunts from the database
-func (env *Env) AllHunts() ([]*Hunt, error) {
+func (env *Env) AllHunts() ([]*models.Hunt, error) {
 	rows, err := env.db.Query("SELECT * FROM hunts;")
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	hunts := make([]*Hunt, 0)
+	hunts := make([]*models.Hunt, 0)
 	for rows.Next() {
-		hunt := new(Hunt)
+		hunt := new(models.Hunt)
 		err = rows.Scan(&hunt.ID, &hunt.Title, &hunt.MaxTeams, &hunt.Start,
 			&hunt.End, &hunt.Location.Coords.Latitude,
 			&hunt.Location.Coords.Longitude, &hunt.Location.Name)
@@ -94,7 +54,7 @@ func (env *Env) AllHunts() ([]*Hunt, error) {
 }
 
 // GetHunt returns a pointer to the hunt with the given ID.
-func (env *Env) GetHunt(hunt *Hunt, huntID int) error {
+func (env *Env) GetHunt(hunt *models.Hunt, huntID int) error {
 	sqlStatement := `
 		SELECT title, max_teams, start_time, end_time, latitude, longitude, location_name FROM hunts
 		WHERE hunts.id = $1;`
@@ -118,7 +78,7 @@ func (env *Env) GetHunt(hunt *Hunt, huntID int) error {
 }
 
 // GetItems populates the items slice with all the items for the given hunt
-func (env *Env) GetItems(items *[]Item, huntID int) error {
+func (env *Env) GetItems(items *[]models.Item, huntID int) error {
 	sqlStatement := `
 		SELECT name, points FROM items WHERE items.hunt_id = $1;`
 
@@ -128,7 +88,7 @@ func (env *Env) GetItems(items *[]Item, huntID int) error {
 	}
 	defer rows.Close()
 
-	item := Item{}
+	item := models.Item{}
 	for rows.Next() {
 		err = rows.Scan(&item.Name, &item.Points)
 		if err != nil {
@@ -142,7 +102,7 @@ func (env *Env) GetItems(items *[]Item, huntID int) error {
 }
 
 // GetTeams populates the teams slice with all the teams for the given hunt
-func (env *Env) GetTeams(teams *[]Team, huntID int) error {
+func (env *Env) GetTeams(teams *[]models.Team, huntID int) error {
 	sqlStatement := `
 		SELECT name FROM teams WHERE teams.hunt_id = $1;`
 
@@ -152,7 +112,7 @@ func (env *Env) GetTeams(teams *[]Team, huntID int) error {
 	}
 	defer rows.Close()
 
-	team := Team{}
+	team := models.Team{}
 	for rows.Next() {
 		err = rows.Scan(&team.Name)
 		if err != nil {
@@ -166,7 +126,7 @@ func (env *Env) GetTeams(teams *[]Team, huntID int) error {
 }
 
 // InsertHunt inserts the given hunt into the database and returns the id of the inserted hunt
-func (env *Env) InsertHunt(hunt *Hunt) (int, error) {
+func (env *Env) InsertHunt(hunt *models.Hunt) (int, error) {
 	sqlStatement := `
 		INSERT INTO hunts(title, max_teams, start_time, end_time, location_name, latitude, longitude)
 		VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -199,7 +159,7 @@ func (env *Env) InsertHunt(hunt *Hunt) (int, error) {
 }
 
 // InsertTeam inserts a Team into the db
-func (env *Env) InsertTeam(team *Team, huntID int) (int, error) {
+func (env *Env) InsertTeam(team *models.Team, huntID int) (int, error) {
 	sqlStatement := `
 		INSERT INTO teams(hunt_id, name)
 		VALUES ($1, $2)
@@ -212,7 +172,7 @@ func (env *Env) InsertTeam(team *Team, huntID int) (int, error) {
 }
 
 // InsertItem inserts an Item into the db
-func (env *Env) InsertItem(item *Item, huntID int) (int, error) {
+func (env *Env) InsertItem(item *models.Item, huntID int) (int, error) {
 	sqlStatement := `
 		INSERT INTO items(hunt_id, name, points)
 		VALUES ($1, $2, $3)

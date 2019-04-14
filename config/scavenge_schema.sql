@@ -1,12 +1,12 @@
 CREATE TABLE hunts (
     id              serial,
-    title           varchar(255),
-    max_teams       smallint CONSTRAINT positive_num_teams CHECK (max_teams > 0),
-    start_time      timestamp,
+    title           varchar(255) NOT NULL,
+    max_teams       smallint  NOT NULL CONSTRAINT positive_num_teams CHECK (max_teams > 0),
+    start_time      timestamp NOT NULL,
     /* @TODO see about constraining end_time to be after start_time */
-    end_time        timestamp,
-    latitude        real,
-    longitude       real,
+    end_time        timestamp NOT NULL,
+    latitude        real NOT NULL,
+    longitude       real NOT NULL,
     location_name   varchar(80),
     PRIMARY KEY(id)
 );
@@ -30,7 +30,7 @@ CREATE TABLE items (
     id              serial,
     hunt_id         int NOT NULL,
     name            varchar(255) NOT NULL,
-    points          smallint NOT NULL CHECK (points > 0),
+    points          smallint CHECK (points > 0),
     PRIMARY KEY(id),
     FOREIGN KEY (hunt_id) REFERENCES hunts(id) ON DELETE CASCADE 
 );
