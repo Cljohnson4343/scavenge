@@ -64,12 +64,70 @@ func AllHunts() ([]*Hunt, error) {
 			return nil, err
 		}
 
+		err = GetTeams(&hunt.Teams, hunt.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		err = GetItems(&hunt.Items, hunt.ID)
+		if err != nil {
+			return nil, err
+		}
+
 		hunts = append(hunts, hunt)
 	}
 
 	err = rows.Err()
 
 	return hunts, err
+}
+
+// GetItems populates the items slice with all the items for the given hunt
+func GetItems(items *[]Item, huntID int) error {
+	sqlStatement := `
+		SELECT name, points FROM items WHERE items.hunt_id = $1;`
+
+	rows, err := db.Query(sqlStatement, huntID)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	item := Item{}
+	for rows.Next() {
+		err = rows.Scan(&item.Name, &item.Points)
+		if err != nil {
+			return err
+		}
+
+		*items = append(*items, item)
+	}
+
+	return nil
+}
+
+// GetTeams populates the teams slice with all the teams for the given hunt
+func GetTeams(teams *[]Team, huntID int) error {
+	sqlStatement := `
+		SELECT name FROM teams WHERE teams.hunt_id = $1;`
+
+	rows, err := db.Query(sqlStatement, huntID)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	team := Team{}
+	for rows.Next() {
+		err = rows.Scan(&team.Name)
+		if err != nil {
+			return err
+		}
+
+		*teams = append(*teams, team)
+	}
+
+	return nil
 }
 
 // InsertHunt inserts the given hunt into the database and returns the id of the inserted hunt
@@ -79,6 +137,7 @@ func InsertHunt(hunt *Hunt) (int, error) {
 		VALUES ($1, $2, $3, $4, $5, $6, $7)
 		RETURNING id AS hunt_id
 		`
+	// @TODO look into whether the row from queryrow needs to be closed
 	id := 0
 	err := db.QueryRow(sqlStatement, hunt.Title, hunt.MaxTeams, hunt.Start,
 		hunt.End, hunt.Location.Name, hunt.Location.Coords.Latitude,
