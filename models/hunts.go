@@ -79,19 +79,53 @@ func InsertHunt(hunt *Hunt) (int, error) {
 		VALUES ($1, $2, $3, $4, $5, $6, $7)
 		RETURNING id AS hunt_id
 		`
-	/*
-		`
-		insert_teams AS
-			INSERT INTO teams(hunt_id, name)
-			SELECT hunt_id, $7 FROM insert_hunt),
-		INSERT INTO items(hunt_id, name, points)
-		SELECT hunt_id, $8, $9 FROM insert_hunt;`
-	*/
-
 	id := 0
 	err := db.QueryRow(sqlStatement, hunt.Title, hunt.MaxTeams, hunt.Start,
 		hunt.End, hunt.Location.Name, hunt.Location.Coords.Latitude,
 		hunt.Location.Coords.Longitude).Scan(&id)
+	if err != nil {
+		return id, err
+	}
+
+	for _, v := range hunt.Teams {
+		_, err = InsertTeam(&v, id)
+		if err != nil {
+			return id, err
+		}
+	}
+
+	for _, v := range hunt.Items {
+		_, err = InsertItem(&v, id)
+		if err != nil {
+			return id, err
+		}
+	}
+
+	return id, err
+}
+
+// InsertTeam inserts a Team into the db
+func InsertTeam(team *Team, huntID int) (int, error) {
+	sqlStatement := `
+		INSERT INTO teams(hunt_id, name)
+		VALUES ($1, $2)
+		RETURNING id`
+
+	id := 0
+	err := db.QueryRow(sqlStatement, huntID, team.Name).Scan(&id)
+
+	return id, err
+}
+
+// InsertItem inserts an Item into the db
+func InsertItem(item *Item, huntID int) (int, error) {
+	sqlStatement := `
+		INSERT INTO items(hunt_id, name, points)
+		VALUES ($1, $2, $3)
+		RETURNING id`
+
+	id := 0
+	err := db.QueryRow(sqlStatement, huntID, item.Name, item.Points).Scan(&id)
 
 	return id, err
 }
