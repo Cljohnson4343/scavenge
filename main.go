@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -23,11 +24,11 @@ type DBConfig struct {
 }
 
 // Routes inits a router
-func Routes() *chi.Mux {
+func Routes(db *sql.DB) *chi.Mux {
 	router := chi.NewRouter()
 
 	router.Route("/api/v0", func(r chi.Router) {
-		r.Mount("/hunts", hunts.Routes())
+		r.Mount("/hunts", hunts.Routes(db))
 	})
 
 	return router
@@ -49,9 +50,12 @@ func main() {
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
 		dbConfig.Host, dbConfig.Port, dbConfig.User, dbConfig.Password, dbConfig.DBName)
 
-	models.InitDB(psqlInfo)
+	db, err := models.NewDB(psqlInfo)
+	if err != nil {
+		log.Panicf("Error initializing the db: %s\n", err.Error())
+	}
 
-	router := Routes()
+	router := Routes(db)
 
 	walkFunc := func(method string, route string, handler http.Handler, middlewares ...func(http.Handler) http.Handler) error {
 		log.Printf("%s %s\n", method, route) // walk and print out all routes
