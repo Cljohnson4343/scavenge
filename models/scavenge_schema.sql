@@ -1,12 +1,13 @@
 CREATE TABLE hunts (
-    id              serial NOT NULL,
-    title           varchar(255) NOT NULL,
-    max_teams       smallint NOT NULL CONSTRAINT positive_num_teams CHECK (max_teams > 0),
-    start_time      timestamp NOT NULL,
+    id              serial,
+    title           varchar(255),
+    max_teams       smallint CONSTRAINT positive_num_teams CHECK (max_teams > 0),
+    start_time      timestamp,
     /* @TODO see about constraining end_time to be after start_time */
-    end_time        timestamp NOT NULL ,
-    location        point NOT NULL,
-    location_name   varchar(80) NOT NULL,
+    end_time        timestamp,
+    latitude        real,
+    longitude       real,
+    location_name   varchar(80),
     PRIMARY KEY(id)
 );
 

@@ -1,16 +1,14 @@
 package hunts
 
 import (
+	"log"
 	"net/http"
 	"os"
-	"strconv"
 
 	"github.com/cljohnson4343/scavenge/models"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 )
-
-var hunts []models.Hunt
 
 // Routes returns a router that serves the hunts routes
 func Routes() *chi.Mux {
@@ -19,8 +17,6 @@ func Routes() *chi.Mux {
 		panic(err)
 	}
 	defer file.Close()
-
-	render.DecodeJSON(file, &hunts)
 
 	router := chi.NewRouter()
 
@@ -33,31 +29,50 @@ func Routes() *chi.Mux {
 }
 
 func getHunts(w http.ResponseWriter, r *http.Request) {
+	hunts, err := models.AllHunts()
+	if err != nil {
+		log.Printf("Failed to retrieve hunts: %s\n", err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
 	render.JSON(w, r, hunts)
 	return
 }
 
 func getHunt(w http.ResponseWriter, r *http.Request) {
-	huntID, err := strconv.Atoi(chi.URLParam(r, "huntID"))
+	/*
+		huntID, err := strconv.Atoi(chi.URLParam(r, "huntID"))
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		hunt, err := models.Hunt(huntID)
+		render.JSON(w, r, v)
+
+		w.WriteHeader(http.StatusNotFound)
+		w.Write([]byte("Oops! No such hunt."))
+		return
+	*/
+}
+
+func createHunt(w http.ResponseWriter, r *http.Request) {
+	hunt := new(models.Hunt)
+	err := render.DecodeJSON(r.Body, hunt)
 	if err != nil {
+		log.Printf("Unable to create hunt: %s\n", err.Error())
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	for _, v := range hunts {
-		if v.ID == huntID {
-			render.JSON(w, r, v)
-			return
-		}
+	_, err = models.InsertHunt(hunt)
+	if err != nil {
+		log.Printf("Unable to create hunt: %s\n", err.Error())
+		return
 	}
 
-	w.WriteHeader(http.StatusNotFound)
-	w.Write([]byte("Oops! No such hunt."))
 	return
-}
-
-func createHunt(w http.ResponseWriter, r *http.Request) {
-
 }
 
 func deleteHunt(w http.ResponseWriter, r *http.Request) {

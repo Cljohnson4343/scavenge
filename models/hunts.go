@@ -1,7 +1,6 @@
 package models
 
 import (
-	"log"
 	"time"
 )
 
@@ -49,26 +48,50 @@ type Hunt struct {
 
 // AllHunts returns all Hunts from the database
 func AllHunts() ([]*Hunt, error) {
-	rows, err := db.Query("")
+	rows, err := db.Query("SELECT * FROM hunts;")
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	cols, err := rows.Columns()
-	if err != nil {
-		return nil, err
+	hunts := make([]*Hunt, 0)
+	for rows.Next() {
+		hunt := new(Hunt)
+		err = rows.Scan(&hunt.ID, &hunt.Title, &hunt.MaxTeams, &hunt.Start,
+			&hunt.End, &hunt.Location.Coords.Latitude,
+			&hunt.Location.Coords.Longitude, &hunt.Location.Name)
+		if err != nil {
+			return nil, err
+		}
+
+		hunts = append(hunts, hunt)
 	}
 
-	log.Print(cols)
+	err = rows.Err()
 
-	hunts := make([]*Hunt, 0)
+	return hunts, err
+}
+
+// InsertHunt inserts the given hunt into the database and returns the id of the inserted hunt
+func InsertHunt(hunt *Hunt) (int, error) {
+	sqlStatement := `
+		INSERT INTO hunts(title, max_teams, start_time, end_time, location_name, latitude, longitude)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		RETURNING id AS hunt_id
+		`
 	/*
-		for rows.Next() {
-
-		}
+		`
+		insert_teams AS
+			INSERT INTO teams(hunt_id, name)
+			SELECT hunt_id, $7 FROM insert_hunt),
+		INSERT INTO items(hunt_id, name, points)
+		SELECT hunt_id, $8, $9 FROM insert_hunt;`
 	*/
 
-	return hunts, nil
+	id := 0
+	err := db.QueryRow(sqlStatement, hunt.Title, hunt.MaxTeams, hunt.Start,
+		hunt.End, hunt.Location.Name, hunt.Location.Coords.Latitude,
+		hunt.Location.Coords.Longitude).Scan(&id)
 
+	return id, err
 }
