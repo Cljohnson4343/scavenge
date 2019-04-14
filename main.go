@@ -8,20 +8,10 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/cljohnson4343/scavenge/models"
-
+	"github.com/cljohnson4343/scavenge/config"
 	"github.com/cljohnson4343/scavenge/hunts"
 	"github.com/go-chi/chi"
 )
-
-// DBConfig is a custom type to store info used to configure postgresql db
-type DBConfig struct {
-	Host     string `json:"host"`
-	Port     int    `json:"port"`
-	User     string `json:"user"`
-	Password string `json:"password"`
-	DBName   string `json:"dbname"`
-}
 
 // Routes inits a router
 func Routes(db *sql.DB) *chi.Mux {
@@ -35,13 +25,13 @@ func Routes(db *sql.DB) *chi.Mux {
 }
 
 func main() {
-	file, err := os.Open("./models/db_info.json")
+	file, err := os.Open("./config/db_info.json")
 	if err != nil {
 		log.Panicf("Error configuring db: %s\n", err.Error())
 	}
 	defer file.Close()
 
-	var dbConfig = new(DBConfig)
+	var dbConfig = new(config.DBConfig)
 	err = json.NewDecoder(file).Decode(&dbConfig)
 	if err != nil {
 		log.Panicf("Error decoding config file: %s\n", err.Error())
@@ -50,7 +40,7 @@ func main() {
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
 		dbConfig.Host, dbConfig.Port, dbConfig.User, dbConfig.Password, dbConfig.DBName)
 
-	db, err := models.NewDB(psqlInfo)
+	db, err := config.NewDB(psqlInfo)
 	if err != nil {
 		log.Panicf("Error initializing the db: %s\n", err.Error())
 	}
