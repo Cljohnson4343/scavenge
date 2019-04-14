@@ -79,5 +79,16 @@ func createHunt(w http.ResponseWriter, r *http.Request) {
 }
 
 func deleteHunt(w http.ResponseWriter, r *http.Request) {
+	huntID, err := strconv.Atoi(chi.URLParam(r, "huntID"))
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 
+	err = models.DeleteHunt(huntID)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+	}
+
+	return
 }

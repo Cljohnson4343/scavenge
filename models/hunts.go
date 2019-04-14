@@ -212,3 +212,13 @@ func InsertItem(item *Item, huntID int) (int, error) {
 
 	return id, err
 }
+
+// DeleteHunt deletes the hunt with the given ID. All associated data will also be deleted.
+func DeleteHunt(huntID int) error {
+	sqlStatement := `
+		DELETE FROM hunts
+		WHERE hunts.id = $1`
+
+	_, err := db.Exec(sqlStatement, huntID)
+	return err
+}
