@@ -82,6 +82,30 @@ func AllHunts() ([]*Hunt, error) {
 	return hunts, err
 }
 
+// GetHunt returns a pointer to the hunt with the given ID.
+func GetHunt(hunt *Hunt, huntID int) error {
+	sqlStatement := `
+		SELECT title, max_teams, start_time, end_time, latitude, longitude, location_name FROM hunts
+		WHERE hunts.id = $1;`
+
+	err := db.QueryRow(sqlStatement, huntID).Scan(&hunt.Title, &hunt.MaxTeams, &hunt.Start,
+		&hunt.End, &hunt.Location.Coords.Latitude, &hunt.Location.Coords.Longitude, &hunt.Location.Name)
+	if err != nil {
+		return err
+	}
+
+	// @TODO make sure getteams doesnt return an error if no teams are found. we need to still
+	// get items
+	err = GetTeams(&hunt.Teams, huntID)
+	if err != nil {
+		return err
+	}
+
+	err = GetItems(&hunt.Items, huntID)
+
+	return err
+}
+
 // GetItems populates the items slice with all the items for the given hunt
 func GetItems(items *[]Item, huntID int) error {
 	sqlStatement := `

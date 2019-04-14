@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 
 	"github.com/cljohnson4343/scavenge/models"
 	"github.com/go-chi/chi"
@@ -41,20 +42,22 @@ func getHunts(w http.ResponseWriter, r *http.Request) {
 }
 
 func getHunt(w http.ResponseWriter, r *http.Request) {
-	/*
-		huntID, err := strconv.Atoi(chi.URLParam(r, "huntID"))
-		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-
-		hunt, err := models.Hunt(huntID)
-		render.JSON(w, r, v)
-
-		w.WriteHeader(http.StatusNotFound)
-		w.Write([]byte("Oops! No such hunt."))
+	huntID, err := strconv.Atoi(chi.URLParam(r, "huntID"))
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
 		return
-	*/
+	}
+
+	hunt := new(models.Hunt)
+	err = models.GetHunt(hunt, huntID)
+	if err == nil {
+		render.JSON(w, r, hunt)
+		return
+	}
+
+	w.WriteHeader(http.StatusNotFound)
+	w.Write([]byte("Oops! No such hunt."))
+	return
 }
 
 func createHunt(w http.ResponseWriter, r *http.Request) {
