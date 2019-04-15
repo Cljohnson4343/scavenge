@@ -7,18 +7,18 @@ import (
 // HuntDataStore is an interface that comprised of all access methods
 // that pkg hunts needs to communicate with the database
 type HuntDataStore interface {
-	AllHunts() ([]*models.Hunt, error)
-	GetHunt(hunt *models.Hunt, huntID int) error
-	GetItems(items *[]models.Item, huntID int) error
-	GetTeams(teams *[]models.Team, huntID int) error
-	InsertHunt(hunt *models.Hunt) (int, error)
-	InsertTeam(team *models.Team, huntID int) (int, error)
-	InsertItem(item *models.Item, huntID int) (int, error)
-	DeleteHunt(huntID int) error
+	allHunts() ([]*models.Hunt, error)
+	getHunt(hunt *models.Hunt, huntID int) error
+	getItems(items *[]models.Item, huntID int) error
+	getTeams(teams *[]models.Team, huntID int) error
+	insertHunt(hunt *models.Hunt) (int, error)
+	insertTeam(team *models.Team, huntID int) (int, error)
+	insertItem(item *models.Item, huntID int) (int, error)
+	deleteHunt(huntID int) error
 }
 
 // AllHunts returns all Hunts from the database
-func (env *Env) AllHunts() ([]*models.Hunt, error) {
+func (env *Env) allHunts() ([]*models.Hunt, error) {
 	rows, err := env.db.Query("SELECT * FROM hunts;")
 	if err != nil {
 		return nil, err
@@ -35,12 +35,12 @@ func (env *Env) AllHunts() ([]*models.Hunt, error) {
 			return nil, err
 		}
 
-		err = env.GetTeams(&hunt.Teams, hunt.ID)
+		err = env.getTeams(&hunt.Teams, hunt.ID)
 		if err != nil {
 			return nil, err
 		}
 
-		err = env.GetItems(&hunt.Items, hunt.ID)
+		err = env.getItems(&hunt.Items, hunt.ID)
 		if err != nil {
 			return nil, err
 		}
@@ -53,8 +53,8 @@ func (env *Env) AllHunts() ([]*models.Hunt, error) {
 	return hunts, err
 }
 
-// GetHunt returns a pointer to the hunt with the given ID.
-func (env *Env) GetHunt(hunt *models.Hunt, huntID int) error {
+// getHunt returns a pointer to the hunt with the given ID.
+func (env *Env) getHunt(hunt *models.Hunt, huntID int) error {
 	sqlStatement := `
 		SELECT title, max_teams, start_time, end_time, latitude, longitude, location_name FROM hunts
 		WHERE hunts.id = $1;`
@@ -67,18 +67,18 @@ func (env *Env) GetHunt(hunt *models.Hunt, huntID int) error {
 
 	// @TODO make sure getteams doesnt return an error if no teams are found. we need to still
 	// get items
-	err = env.GetTeams(&hunt.Teams, huntID)
+	err = env.getTeams(&hunt.Teams, huntID)
 	if err != nil {
 		return err
 	}
 
-	err = env.GetItems(&hunt.Items, huntID)
+	err = env.getItems(&hunt.Items, huntID)
 
 	return err
 }
 
-// GetItems populates the items slice with all the items for the given hunt
-func (env *Env) GetItems(items *[]models.Item, huntID int) error {
+// getItems populates the items slice with all the items for the given hunt
+func (env *Env) getItems(items *[]models.Item, huntID int) error {
 	sqlStatement := `
 		SELECT name, points FROM items WHERE items.hunt_id = $1;`
 
@@ -101,8 +101,8 @@ func (env *Env) GetItems(items *[]models.Item, huntID int) error {
 	return nil
 }
 
-// GetTeams populates the teams slice with all the teams for the given hunt
-func (env *Env) GetTeams(teams *[]models.Team, huntID int) error {
+// getTeams populates the teams slice with all the teams for the given hunt
+func (env *Env) getTeams(teams *[]models.Team, huntID int) error {
 	sqlStatement := `
 		SELECT name FROM teams WHERE teams.hunt_id = $1;`
 
@@ -125,8 +125,8 @@ func (env *Env) GetTeams(teams *[]models.Team, huntID int) error {
 	return nil
 }
 
-// InsertHunt inserts the given hunt into the database and returns the id of the inserted hunt
-func (env *Env) InsertHunt(hunt *models.Hunt) (int, error) {
+// insertHunt inserts the given hunt into the database and returns the id of the inserted hunt
+func (env *Env) insertHunt(hunt *models.Hunt) (int, error) {
 	sqlStatement := `
 		INSERT INTO hunts(title, max_teams, start_time, end_time, location_name, latitude, longitude)
 		VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -142,14 +142,14 @@ func (env *Env) InsertHunt(hunt *models.Hunt) (int, error) {
 	}
 
 	for _, v := range hunt.Teams {
-		_, err = env.InsertTeam(&v, id)
+		_, err = env.insertTeam(&v, id)
 		if err != nil {
 			return id, err
 		}
 	}
 
 	for _, v := range hunt.Items {
-		_, err = env.InsertItem(&v, id)
+		_, err = env.insertItem(&v, id)
 		if err != nil {
 			return id, err
 		}
@@ -158,8 +158,8 @@ func (env *Env) InsertHunt(hunt *models.Hunt) (int, error) {
 	return id, err
 }
 
-// InsertTeam inserts a Team into the db
-func (env *Env) InsertTeam(team *models.Team, huntID int) (int, error) {
+// insertTeam inserts a Team into the db
+func (env *Env) insertTeam(team *models.Team, huntID int) (int, error) {
 	sqlStatement := `
 		INSERT INTO teams(hunt_id, name)
 		VALUES ($1, $2)
@@ -171,8 +171,8 @@ func (env *Env) InsertTeam(team *models.Team, huntID int) (int, error) {
 	return id, err
 }
 
-// InsertItem inserts an Item into the db
-func (env *Env) InsertItem(item *models.Item, huntID int) (int, error) {
+// insertItem inserts an Item into the db
+func (env *Env) insertItem(item *models.Item, huntID int) (int, error) {
 	sqlStatement := `
 		INSERT INTO items(hunt_id, name, points)
 		VALUES ($1, $2, $3)
@@ -184,8 +184,8 @@ func (env *Env) InsertItem(item *models.Item, huntID int) (int, error) {
 	return id, err
 }
 
-// DeleteHunt deletes the hunt with the given ID. All associated data will also be deleted.
-func (env *Env) DeleteHunt(huntID int) error {
+// deleteHunt deletes the hunt with the given ID. All associated data will also be deleted.
+func (env *Env) deleteHunt(huntID int) error {
 	sqlStatement := `
 		DELETE FROM hunts
 		WHERE hunts.id = $1`

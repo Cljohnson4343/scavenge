@@ -29,7 +29,7 @@ import (
 //  500:
 func getHunts(ds HuntDataStore) func(http.ResponseWriter, *http.Request) {
 	return (func(w http.ResponseWriter, r *http.Request) {
-		hunts, err := ds.AllHunts()
+		hunts, err := ds.allHunts()
 		if err != nil {
 			log.Printf("Failed to retrieve hunts: %s\n", err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
@@ -66,7 +66,7 @@ func getHunt(ds HuntDataStore) func(http.ResponseWriter, *http.Request) {
 		}
 
 		hunt := new(models.Hunt)
-		err = ds.GetHunt(hunt, huntID)
+		err = ds.getHunt(hunt, huntID)
 		if err == nil {
 			render.JSON(w, r, hunt)
 			return
@@ -103,7 +103,7 @@ func createHunt(ds HuntDataStore) func(http.ResponseWriter, *http.Request) {
 			return
 		}
 
-		_, err = ds.InsertHunt(hunt)
+		_, err = ds.insertHunt(hunt)
 		if err != nil {
 			log.Printf("Unable to create hunt: %s\n", err.Error())
 			return
@@ -136,7 +136,7 @@ func deleteHunt(ds HuntDataStore) func(http.ResponseWriter, *http.Request) {
 			return
 		}
 
-		err = ds.DeleteHunt(huntID)
+		err = ds.deleteHunt(huntID)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 		}

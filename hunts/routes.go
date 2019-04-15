@@ -26,7 +26,6 @@ package hunts
 
 import (
 	"database/sql"
-	"os"
 
 	"github.com/go-chi/chi"
 )
@@ -38,16 +37,12 @@ type Env struct {
 	db *sql.DB
 }
 
+func CreateEnv(db *sql.DB) *Env {
+	return &Env{db}
+}
+
 // Routes returns a router that serves the hunts routes
-func Routes(sqlDB *sql.DB) *chi.Mux {
-	file, err := os.Open("hunts/test_data.json")
-	if err != nil {
-		panic(err)
-	}
-	defer file.Close()
-
-	env := &Env{sqlDB}
-
+func Routes(env HuntDataStore) *chi.Mux {
 	router := chi.NewRouter()
 
 	router.Get("/", getHunts(env))

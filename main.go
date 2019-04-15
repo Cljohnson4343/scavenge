@@ -17,8 +17,9 @@ import (
 func Routes(db *sql.DB) *chi.Mux {
 	router := chi.NewRouter()
 
+	env := hunts.CreateEnv(db)
 	router.Route("/api/v0", func(r chi.Router) {
-		r.Mount("/hunts", hunts.Routes(db))
+		r.Mount("/hunts", hunts.Routes(env))
 	})
 
 	return router
