@@ -144,3 +144,51 @@ func deleteHunt(ds HuntDataStore) func(http.ResponseWriter, *http.Request) {
 		return
 	})
 }
+
+// swagger:route PATCH /hunts/{id} hunt patchHunt
+//
+// Partial update on the hunt with the given id.
+// The data that will be updated will be retrieved from
+// the request body. All valid keys from the request body
+// will update the corresponding hunt's value with that
+// key's value. To update the name of the hunt send
+// body: {"title": "New Hunt Name"}.
+//
+// Consumes:
+// 	- application/json
+//
+// Produces:
+//	- application/json
+//
+// Schemes: http, https
+//
+// Responses:
+// 	200:
+// 	400:
+func patchHunt(ds HuntDataStore) func(http.ResponseWriter, *http.Request) {
+	return (func(w http.ResponseWriter, r *http.Request) {
+		huntID, err := strconv.Atoi(chi.URLParam(r, "huntID"))
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		partialHunt := make(map[string]interface{})
+		err = render.DecodeJSON(r.Body, &partialHunt)
+		if err != nil {
+			log.Printf("Unable to patch hunt: %s\n", err.Error())
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		rowsAffected, err := ds.updateHunt(huntID, &partialHunt)
+		if err != nil {
+			log.Printf("Error patching hunt: %s\n", err.Error())
+			w.WriteHeader(http.StatusInternalServerError)
+		}
+		log.Printf("Updated %d rows", rowsAffected)
+
+		render.JSON(w, r, partialHunt)
+		return
+	})
+}

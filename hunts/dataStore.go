@@ -1,6 +1,12 @@
 package hunts
 
 import (
+	"errors"
+	"fmt"
+	"log"
+	"strings"
+	"time"
+
 	"github.com/cljohnson4343/scavenge/hunts/models"
 )
 
@@ -15,6 +21,7 @@ type HuntDataStore interface {
 	insertTeam(team *models.Team, huntID int) (int, error)
 	insertItem(item *models.Item, huntID int) (int, error)
 	deleteHunt(huntID int) error
+	updateHunt(huntID int, partialHunt *map[string]interface{}) (int, error)
 }
 
 // AllHunts returns all Hunts from the database
@@ -192,4 +199,121 @@ func (env *Env) deleteHunt(huntID int) error {
 
 	_, err := env.db.Exec(sqlStatement, huntID)
 	return err
+}
+
+type sqlHuntUpdater struct {
+	sqlStatement string
+	args         []interface{}
+}
+
+// updateHunt updates the hunt with the given ID using the fields that are not nil in the
+// partial hunt.
+func (env *Env) updateHunt(huntID int, partialHunt *map[string]interface{}) (int, error) {
+	sqlUpdater, err := getSQLHuntUpdater(huntID, partialHunt)
+	if err != nil {
+		log.Print(err.Error())
+	}
+
+	res, err := env.db.Exec(sqlUpdater.sqlStatement, sqlUpdater.args...)
+	if err != nil {
+		return 0, err
+	}
+
+	count, err := res.RowsAffected()
+	if err != nil {
+		return 0, err
+	}
+
+	return int(count), nil
+}
+
+func getSQLHuntUpdater(huntID int, partialHunt *map[string]interface{}) (*sqlHuntUpdater, error) {
+	var eb, sqlb strings.Builder
+
+	eb.WriteString("Error updating hunt: \n")
+	encounteredError := false
+
+	handleErr := func(errString string) {
+		encounteredError = true
+		eb.WriteString(errString)
+	}
+
+	update := new(sqlHuntUpdater)
+
+	sqlb.WriteString("\n\t\tUPDATE hunts\n\t\tSET")
+
+	inc := 1
+	for k, v := range *partialHunt {
+		switch k {
+		case "title":
+			newTitle, ok := v.(string)
+			if !ok {
+				handleErr(fmt.Sprintf("Expected title to be of type string but got %T\n", v))
+				break
+			}
+			sqlb.WriteString(fmt.Sprintf(" title=$%d,", inc))
+			inc++
+			update.args = append(update.args, newTitle)
+		case "max_teams":
+			newMax, ok := v.(float64)
+			if !ok {
+				handleErr(fmt.Sprintf("Expected max_teams to be of type float64 but got %T\n", v))
+				break
+			}
+			sqlb.WriteString(fmt.Sprintf(" max_teams=$%d,", inc))
+			inc++
+			update.args = append(update.args, int(newMax))
+
+		case "start":
+			newStart, ok := v.(string)
+			if !ok {
+				handleErr(fmt.Sprintf("Expected start to be of type string but got %T\n", v))
+				break
+
+			}
+
+			startTime, err := time.Parse(time.RFC3339, newStart)
+			if err != nil {
+				handleErr(fmt.Sprintf("%s\n", err.Error()))
+				break
+			}
+
+			sqlb.WriteString(fmt.Sprintf(" start_time=$%d,", inc))
+			inc++
+			update.args = append(update.args, startTime)
+
+		case "end":
+			newEnd, ok := v.(string)
+			if !ok {
+				handleErr(fmt.Sprintf("Expected end to be of type string but got %T\n", v))
+				break
+			}
+			endTime, err := time.Parse(time.RFC3339, newEnd)
+			if err != nil {
+				handleErr(fmt.Sprintf("%s\n", err.Error()))
+				break
+			}
+
+			sqlb.WriteString(fmt.Sprintf(" end_time=$%d,", inc))
+			inc++
+			update.args = append(update.args, endTime)
+
+		case "teams":
+		case "items":
+		case "location":
+		default:
+		}
+	}
+
+	l := sqlb.Len()
+	update.sqlStatement = fmt.Sprintf("%s\n\t\tWHERE id = $%d", sqlb.String()[0:l-1], inc)
+	update.args = append(update.args, huntID)
+	log.Printf(update.sqlStatement)
+	log.Print(update.args...)
+
+	if encounteredError {
+		return update, errors.New(eb.String())
+	} else {
+		return update, nil
+	}
 }
