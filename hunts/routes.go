@@ -37,6 +37,7 @@ type Env struct {
 	db *sql.DB
 }
 
+// CreateEnv instantiates a Env type
 func CreateEnv(db *sql.DB) *Env {
 	return &Env{db}
 }

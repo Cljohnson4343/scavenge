@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"log"
 	"strings"
 	"time"
 
@@ -22,7 +21,7 @@ type HuntDataStore interface {
 	insertTeam(team *models.Team, huntID int) (int, error)
 	insertItem(item *models.Item, huntID int) (int, error)
 	deleteHunt(huntID int) error
-	updateHunt(huntID int, partialHunt *map[string]interface{}) (int, error)
+	updateHunt(huntID int, partialHunt *map[string]interface{}) (bool, error)
 }
 
 // AllHunts returns all Hunts from the database
@@ -207,29 +206,34 @@ type sqlStatement struct {
 	args []interface{}
 }
 
+// Executioner is an interface that is needed for database/sql polymorphism
 type Executioner interface {
 	Exec(query string, args ...interface{}) (sql.Result, error)
 }
 
 // updateHunt updates the hunt with the given ID using the fields that are not nil in the
-// partial hunt.
-func (env *Env) updateHunt(huntID int, partialHunt *map[string]interface{}) (int, error) {
+// partial hunt. If the hunt was updated then true will be returned.
+func (env *Env) updateHunt(huntID int, partialHunt *map[string]interface{}) (bool, error) {
 	sqlStmnts, err := getSQLHuntUpdater(huntID, partialHunt)
 	if err != nil {
-		log.Print(err.Error())
+		return false, err
 	}
 
-	res, err := (*sqlStmnts)[0].exec(env.db)
+	tx, err := env.db.Begin()
 	if err != nil {
-		return 0, err
+		return false, err
 	}
 
-	count, err := res.RowsAffected()
-	if err != nil {
-		return 0, err
+	// attempt to execute all the statements in this transaction
+	for _, v := range *sqlStmnts {
+		_, err := v.exec(tx)
+		if err != nil {
+			tx.Rollback()
+			return false, err
+		}
 	}
 
-	return int(count), nil
+	return true, tx.Commit()
 }
 
 func (sqlStmnt *sqlStatement) exec(ex Executioner) (sql.Result, error) {
@@ -309,17 +313,37 @@ func getSQLHuntUpdater(huntID int, partialHunt *map[string]interface{}) (*[]*sql
 			sqlStmnts[0].args = append(sqlStmnts[0].args, endTime)
 
 		case "teams":
-			_, ok := v.([]interface{})
+			newTeams, ok := v.([]interface{})
 			if !ok {
 				handleErr(fmt.Sprintf("Expected teams to be of type []interface{} but got %T\n", v))
 				break
 			}
+
+			// @TODO think about how to handle the case where an error is thrown(should we try partial execution?)
+			newTeamsStmnt, err := getUpsertTeamsSQLStatement(huntID, newTeams)
+			if err != nil {
+				handleErr(fmt.Sprintf("%s\n", err.Error()))
+				break
+			}
+
+			sqlStmnts = append(sqlStmnts, newTeamsStmnt)
+
 		case "items":
-			_, ok := v.([]interface{})
+			newItems, ok := v.([]interface{})
 			if !ok {
 				handleErr(fmt.Sprintf("Expected items to be of type []interface{} but got %T\n", v))
 				break
 			}
+
+			// @TODO think about how to handle the case where an error is thrown(should we try partial execution?)
+			newItemsStmnt, err := getUpsertItemsSQLStatement(huntID, newItems)
+			if err != nil {
+				handleErr(fmt.Sprintf("%s\n", err.Error()))
+				break
+			}
+
+			sqlStmnts = append(sqlStmnts, newItemsStmnt)
+
 		case "location":
 			_, ok := v.(map[string]interface{})
 			if !ok {
@@ -336,7 +360,124 @@ func getSQLHuntUpdater(huntID int, partialHunt *map[string]interface{}) (*[]*sql
 
 	if encounteredError {
 		return &sqlStmnts, errors.New(eb.String())
-	} else {
-		return &sqlStmnts, nil
 	}
+
+	return &sqlStmnts, nil
+}
+
+func getUpsertTeamsSQLStatement(huntID int, newTeams []interface{}) (*sqlStatement, error) {
+	var eb, sqlValuesSB strings.Builder
+
+	eb.WriteString("Error updating teams: \n")
+	encounteredError := false
+
+	handleErr := func(errString string) {
+		encounteredError = true
+		eb.WriteString(errString)
+	}
+
+	sqlValuesSB.WriteString("(")
+	inc := 1
+
+	sqlStmnt := new(sqlStatement)
+
+	for _, value := range newTeams {
+		team, ok := value.(map[string]interface{})
+		if !ok {
+			handleErr(fmt.Sprintf("Expected newTeams to be type map[string]interface{} but got %T\n", value))
+			break
+		}
+
+		v, ok := team["name"]
+		if !ok {
+			handleErr("Expected a name value.\n")
+			break
+		}
+
+		name, ok := v.(string)
+		if !ok {
+			handleErr(fmt.Sprintf("Expected a name type of string but got %T\n", v))
+			break
+		}
+
+		// make sure all validation is done before writing to sqlValueSB and adding to sqlStmnt.args
+		sqlValuesSB.WriteString(fmt.Sprintf("$%d, $%d),(", inc, inc+1))
+		inc += 2
+		sqlStmnt.args = append(sqlStmnt.args, huntID, name)
+	}
+
+	valuesStr := (sqlValuesSB.String())[:sqlValuesSB.Len()-2]
+
+	sqlStmnt.sql = fmt.Sprintf("\n\tINSERT INTO teams(hunt_id, name)\n\tVALUES\n\t\t%s\n\tON CONFLICT ON CONSTRAINT teams_in_same_hunt_name\n\tDO\n\t\tUPDATE\n\t\tSET name = EXCLUDED.name;", valuesStr)
+
+	if encounteredError {
+		return sqlStmnt, errors.New(eb.String())
+	}
+
+	return sqlStmnt, nil
+}
+
+func getUpsertItemsSQLStatement(huntID int, newItems []interface{}) (*sqlStatement, error) {
+	var eb, sqlValuesSB strings.Builder
+
+	eb.WriteString("Error updating items: \n")
+	encounteredError := false
+
+	handleErr := func(errString string) {
+		encounteredError = true
+		eb.WriteString(errString)
+	}
+
+	sqlValuesSB.WriteString("(")
+	inc := 1
+
+	sqlStmnt := new(sqlStatement)
+
+	for _, value := range newItems {
+		item, ok := value.(map[string]interface{})
+		if !ok {
+			handleErr(fmt.Sprintf("Expected newItems to be type map[string]interface{} but got %T\n", value))
+			break
+		}
+
+		v, ok := item["name"]
+		if !ok {
+			handleErr("Expected a name value for items.\n")
+			break
+		}
+
+		name, ok := v.(string)
+		if !ok {
+			handleErr(fmt.Sprintf("Expected a name type of string but got %T\n", v))
+			break
+		}
+
+		ptsV, ok := item["points"]
+		if !ok {
+			handleErr(fmt.Sprintf("Expected a points value for item with name %s\n", name))
+			break
+		}
+
+		pts, ok := ptsV.(float64)
+		if !ok {
+			handleErr(fmt.Sprintf("Expected a points type of float64 but got %T for item with name %s\n", ptsV, name))
+			pts = 1
+		}
+
+		// make sure all validation is done before writing to sqlValueSB and adding to sqlStmnt.args
+		sqlValuesSB.WriteString(fmt.Sprintf("$%d, $%d, $%d),(", inc, inc+1, inc+2))
+		inc += 3
+		sqlStmnt.args = append(sqlStmnt.args, huntID, name, int(pts))
+	}
+
+	// drop the extra ',(' from value string
+	valuesStr := (sqlValuesSB.String())[:sqlValuesSB.Len()-2]
+
+	sqlStmnt.sql = fmt.Sprintf("\n\tINSERT INTO items(hunt_id, name, points)\n\tVALUES\n\t\t%s\n\tON CONFLICT ON CONSTRAINT items_in_same_hunt_name\n\tDO\n\t\tUPDATE\n\t\tSET name = EXCLUDED.name, points = EXCLUDED.points;", valuesStr)
+
+	if encounteredError {
+		return sqlStmnt, errors.New(eb.String())
+	}
+
+	return sqlStmnt, nil
 }
