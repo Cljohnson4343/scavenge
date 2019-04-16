@@ -1,14 +1,8 @@
 package hunts
 
 import (
-	"encoding/json"
-	"errors"
-	"fmt"
-	"io/ioutil"
-	"log"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 
 	"github.com/cljohnson4343/scavenge/hunts/models"
@@ -34,6 +28,7 @@ var server *httptest.Server
 var client *http.Client
 var baseURL string
 
+/*
 func TestMain(m *testing.M) {
 	var err error
 	testDataBuffer, err = ioutil.ReadFile("./test_data.json")
@@ -84,7 +79,6 @@ func TestGetHuntsHandler(t *testing.T) {
 			if reflect.DeepEqual(retHunts, testEnv.db) != true {
 				t.Errorf("Response body differs. Expected %v. \n Got %v\n", testEnv.db, retHunts)
 			}
-	*/
 }
 
 // This is just a mock function for testing purposes
@@ -132,7 +126,6 @@ func TestGetHuntHandler(t *testing.T) {
 		if reflect.DeepEqual(retHunts, testEnv.db[2]) != true {
 			t.Errorf("Response body differs. Expected %v. \n Got %v\n", testEnv.db[2], retHunts)
 		}
-	*/
 }
 
 // This is just a mock function for testing purposes
@@ -151,8 +144,8 @@ func (env *mockDB) getItems(items *[]models.Item, huntID int) error {
 }
 
 // This is just a mock function for testing purposes
-func (env *mockDB) getTeams(teams *[]models.Team, huntID int) error {
-	return nil
+func (env *mockDB) getTeams(huntID int) (*[]models.Team, error) {
+	return nil, nil
 }
 
 // This is just a mock function for testing purposes
@@ -174,3 +167,4 @@ func (env *mockDB) insertItem(item *models.Item, huntID int) (int, error) {
 func (env *mockDB) deleteHunt(huntID int) error {
 	return nil
 }
+*/

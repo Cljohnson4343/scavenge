@@ -198,3 +198,39 @@ func patchHunt(ds HuntDataStore) func(http.ResponseWriter, *http.Request) {
 		return
 	})
 }
+
+// swagger:route GET /hunts/{hunt_id}/teams teams getTeams
+//
+// Lists the teams for {hunt_id}.
+//
+// Consumes:
+// 	- application/json
+//
+// Produces:
+//	- application/json
+//
+// Schemes: http, https
+//
+// Responses:
+// 	200:
+// 	400:
+//  500:
+func getTeams(ds HuntDataStore) func(http.ResponseWriter, *http.Request) {
+	return (func(w http.ResponseWriter, r *http.Request) {
+		huntID, err := strconv.Atoi(chi.URLParam(r, "huntID"))
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		teams, err := ds.getTeams(huntID)
+		if err != nil {
+			log.Printf("Failed to retrieve teams for hunt %d: %s\n", huntID, err.Error())
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		render.JSON(w, r, teams)
+		return
+	})
+}
