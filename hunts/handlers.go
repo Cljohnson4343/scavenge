@@ -67,13 +67,14 @@ func getHunt(ds HuntDataStore) func(http.ResponseWriter, *http.Request) {
 
 		hunt := new(models.Hunt)
 		err = ds.getHunt(hunt, huntID)
-		if err == nil {
-			render.JSON(w, r, hunt)
+		if err != nil {
+			w.WriteHeader(http.StatusNotFound)
+			w.Write([]byte("Oops! No such hunt."))
 			return
 		}
 
-		w.WriteHeader(http.StatusNotFound)
-		w.Write([]byte("Oops! No such hunt."))
+		(*hunt).ID = huntID
+		render.JSON(w, r, hunt)
 		return
 	})
 }
