@@ -130,7 +130,7 @@ func (env *Env) deleteTeam(huntID, teamID int) error {
 	}
 
 	if numRows < 1 {
-		return fmt.Errorf("Hunt %d does not have a team %d.", huntID, teamID)
+		return fmt.Errorf("hunt %d does not have a team %d", huntID, teamID)
 	}
 
 	return nil
