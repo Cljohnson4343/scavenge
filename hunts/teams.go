@@ -112,3 +112,26 @@ func getUpsertTeamsSQLStatement(huntID int, newTeams []interface{}) (*sqlStateme
 
 	return sqlStmnt, nil
 }
+
+// deleteTeam deletes the team with the given teamID AND huntID
+func (env *Env) deleteTeam(huntID, teamID int) error {
+	sqlStatement := `
+		DELETE FROM teams
+		WHERE id = $1 AND hunt_id = $2;`
+
+	res, err := env.db.Exec(sqlStatement, teamID, huntID)
+	if err != nil {
+		return err
+	}
+
+	numRows, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if numRows < 1 {
+		return fmt.Errorf("Hunt %d does not have a team %d.", huntID, teamID)
+	}
+
+	return nil
+}

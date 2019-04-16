@@ -41,7 +41,7 @@ func getHunts(ds HuntDataStore) func(http.ResponseWriter, *http.Request) {
 	})
 }
 
-// swagger:route GET /hunts/{id} hunt getHunt
+// swagger:route GET /hunts/{huntID} hunt getHunt
 //
 // Gets the hunt with given id.
 //
@@ -114,7 +114,7 @@ func createHunt(ds HuntDataStore) func(http.ResponseWriter, *http.Request) {
 	})
 }
 
-// swagger:route DELETE /hunts/{id} hunt deleteHunt
+// swagger:route DELETE /hunts/{huntID} hunt delete deleteHunt
 //
 // Deletes the given hunt.
 //
@@ -146,7 +146,7 @@ func deleteHunt(ds HuntDataStore) func(http.ResponseWriter, *http.Request) {
 	})
 }
 
-// swagger:route PATCH /hunts/{id} hunt patchHunt
+// swagger:route PATCH /hunts/{huntID} hunt patchHunt
 //
 // Partial update on the hunt with the given id.
 // The data that will be updated will be retrieved from
@@ -201,9 +201,9 @@ func patchHunt(ds HuntDataStore) func(http.ResponseWriter, *http.Request) {
 	})
 }
 
-// swagger:route GET /hunts/{hunt_id}/teams teams getTeams
+// swagger:route GET /hunts/{huntID}/teams teams getTeams
 //
-// Lists the teams for {hunt_id}.
+// Lists the teams for {huntID}.
 //
 // Consumes:
 // 	- application/json
@@ -237,7 +237,7 @@ func getTeams(ds HuntDataStore) func(http.ResponseWriter, *http.Request) {
 	})
 }
 
-// swagger:route GET /hunts/{hunt_id}/teams/{id} team getTeam
+// swagger:route GET /hunts/{huntID}/teams/{teamID} team getTeam
 //
 // Gets the team with given id.
 //
@@ -276,6 +276,44 @@ func getTeam(ds HuntDataStore) func(http.ResponseWriter, *http.Request) {
 
 		(*team).ID = teamID
 		render.JSON(w, r, team)
+		return
+	})
+}
+
+// swagger:route DELETE /hunts/{huntID}/teams/{teamID} delete team deleteTeam
+//
+// Deletes the given team.
+//
+// Consumes:
+// 	- application/json
+//
+// Produces:
+//	- application/json
+//
+// Schemes: http, https
+//
+// Responses:
+// 	200:
+//  400:
+func deleteTeam(ds HuntDataStore) func(http.ResponseWriter, *http.Request) {
+	return (func(w http.ResponseWriter, r *http.Request) {
+		huntID, err := strconv.Atoi(chi.URLParam(r, "huntID"))
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		teamID, err := strconv.Atoi(chi.URLParam(r, "teamID"))
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		err = ds.deleteTeam(huntID, teamID)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+		}
+
 		return
 	})
 }
