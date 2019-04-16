@@ -46,14 +46,18 @@ func CreateEnv(db *sql.DB) *Env {
 func Routes(env HuntDataStore) *chi.Mux {
 	router := chi.NewRouter()
 
+	// /hunts routes
 	router.Get("/", getHunts(env))
 	router.Get("/{huntID}", getHunt(env))
 	router.Post("/", createHunt(env))
 	router.Delete("/{huntID}", deleteHunt(env))
 	router.Patch("/{huntID}", patchHunt(env))
+
+	// /hunts/{huntID}/teams routes
 	router.Get("/{huntID}/teams/", getTeams(env))
 	router.Get("/{huntID}/teams/{teamID}", getTeam(env))
 	router.Delete("/{huntID}/teams/{teamID}", deleteTeam(env))
+	router.Post("/{huntID}/teams/", createTeam(env))
 
 	return router
 }

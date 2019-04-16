@@ -19,7 +19,7 @@ DROP TABLE IF EXISTS teams CASCADE;
 CREATE TABLE teams (
     id              serial,
     hunt_id         int NOT NULL,
-    name            varchar(255) NOT NULL,
+    name            varchar(255) NOT NULL CHECK (length(name) > 0),
     CONSTRAINT teams_in_same_hunt_name UNIQUE(hunt_id, name),
     PRIMARY KEY(id),
     FOREIGN KEY (hunt_id) REFERENCES hunts(id) ON DELETE CASCADE

@@ -317,3 +317,49 @@ func deleteTeam(ds HuntDataStore) func(http.ResponseWriter, *http.Request) {
 		return
 	})
 }
+
+// swagger:route POST /hunts/{huntID}/teams team create createTeam
+//
+// Creates the given team for the given hunt.
+//
+// Consumes:
+// 	- application/json
+//
+// Produces:
+//	- application/json
+//
+// Schemes: http, https
+//
+// Responses:
+// 	200:
+//  400:
+//  500:
+func createTeam(ds HuntDataStore) func(http.ResponseWriter, *http.Request) {
+	return (func(w http.ResponseWriter, r *http.Request) {
+		huntID, err := strconv.Atoi(chi.URLParam(r, "huntID"))
+		if err != nil {
+			log.Printf("Error creating a team: %s\n", err.Error())
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		team := new(models.Team)
+		err = render.DecodeJSON(r.Body, team)
+		if err != nil {
+			log.Printf("Unable to create team: %s\n", err.Error())
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		teamID, err := ds.insertTeam(team, huntID)
+		if err != nil {
+			log.Printf("Error creating a team: %s\n", err.Error())
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		(*team).ID = teamID
+		render.JSON(w, r, team)
+		return
+	})
+}
