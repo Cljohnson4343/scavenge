@@ -187,6 +187,12 @@ func patchHunt(ds HuntDataStore) func(http.ResponseWriter, *http.Request) {
 			log.Printf("Error patching hunt: %s\n", err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
 		}
+
+		if rowsAffected < 1 {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+
 		log.Printf("Updated %d rows", rowsAffected)
 
 		render.JSON(w, r, partialHunt)
