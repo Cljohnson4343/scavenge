@@ -1,3 +1,4 @@
+DROP TABLE IF EXISTS hunts CASCADE;
 CREATE TABLE hunts (
     id              serial,
     title           varchar(255) NOT NULL,
@@ -14,10 +15,12 @@ CREATE TABLE hunts (
 /*
     one to many: Hunt has many teams
 */
+DROP TABLE IF EXISTS teams CASCADE;
 CREATE TABLE teams (
     id              serial,
     hunt_id         int NOT NULL,
     name            varchar(255) NOT NULL,
+    CONSTRAINT teams_in_same_hunt_name UNIQUE(hunt_id, name),
     PRIMARY KEY(id),
     FOREIGN KEY (hunt_id) REFERENCES hunts(id) ON DELETE CASCADE
 
@@ -26,11 +29,13 @@ CREATE TABLE teams (
 /*
     one to many: Hunt has many items
 */
+DROP TABLE IF EXISTS items CASCADE;
 CREATE TABLE items (
     id              serial,
     hunt_id         int NOT NULL,
     name            varchar(255) NOT NULL,
     points          smallint CHECK (points > 0),
+    CONSTRAINT items_in_same_hunt_name UNIQUE(hunt_id, name),
     PRIMARY KEY(id),
     FOREIGN KEY (hunt_id) REFERENCES hunts(id) ON DELETE CASCADE 
 );
