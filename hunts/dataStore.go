@@ -1,6 +1,7 @@
 package hunts
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
 	"log"
@@ -201,20 +202,24 @@ func (env *Env) deleteHunt(huntID int) error {
 	return err
 }
 
-type sqlHuntUpdater struct {
-	sqlStatement string
-	args         []interface{}
+type sqlStatement struct {
+	sql  string
+	args []interface{}
+}
+
+type Executioner interface {
+	Exec(query string, args ...interface{}) (sql.Result, error)
 }
 
 // updateHunt updates the hunt with the given ID using the fields that are not nil in the
 // partial hunt.
 func (env *Env) updateHunt(huntID int, partialHunt *map[string]interface{}) (int, error) {
-	sqlUpdater, err := getSQLHuntUpdater(huntID, partialHunt)
+	sqlStmnts, err := getSQLHuntUpdater(huntID, partialHunt)
 	if err != nil {
 		log.Print(err.Error())
 	}
 
-	res, err := env.db.Exec(sqlUpdater.sqlStatement, sqlUpdater.args...)
+	res, err := (*sqlStmnts)[0].exec(env.db)
 	if err != nil {
 		return 0, err
 	}
@@ -227,7 +232,11 @@ func (env *Env) updateHunt(huntID int, partialHunt *map[string]interface{}) (int
 	return int(count), nil
 }
 
-func getSQLHuntUpdater(huntID int, partialHunt *map[string]interface{}) (*sqlHuntUpdater, error) {
+func (sqlStmnt *sqlStatement) exec(ex Executioner) (sql.Result, error) {
+	return ex.Exec(sqlStmnt.sql, sqlStmnt.args...)
+}
+
+func getSQLHuntUpdater(huntID int, partialHunt *map[string]interface{}) (*[]*sqlStatement, error) {
 	var eb, sqlb strings.Builder
 
 	eb.WriteString("Error updating hunt: \n")
@@ -238,7 +247,8 @@ func getSQLHuntUpdater(huntID int, partialHunt *map[string]interface{}) (*sqlHun
 		eb.WriteString(errString)
 	}
 
-	update := new(sqlHuntUpdater)
+	sqlStmnts := make([]*sqlStatement, 0)
+	sqlStmnts = append(sqlStmnts, new(sqlStatement))
 
 	sqlb.WriteString("\n\t\tUPDATE hunts\n\t\tSET")
 
@@ -253,7 +263,7 @@ func getSQLHuntUpdater(huntID int, partialHunt *map[string]interface{}) (*sqlHun
 			}
 			sqlb.WriteString(fmt.Sprintf(" title=$%d,", inc))
 			inc++
-			update.args = append(update.args, newTitle)
+			sqlStmnts[0].args = append(sqlStmnts[0].args, newTitle)
 		case "max_teams":
 			newMax, ok := v.(float64)
 			if !ok {
@@ -262,7 +272,7 @@ func getSQLHuntUpdater(huntID int, partialHunt *map[string]interface{}) (*sqlHun
 			}
 			sqlb.WriteString(fmt.Sprintf(" max_teams=$%d,", inc))
 			inc++
-			update.args = append(update.args, int(newMax))
+			sqlStmnts[0].args = append(sqlStmnts[0].args, int(newMax))
 
 		case "start":
 			newStart, ok := v.(string)
@@ -280,7 +290,7 @@ func getSQLHuntUpdater(huntID int, partialHunt *map[string]interface{}) (*sqlHun
 
 			sqlb.WriteString(fmt.Sprintf(" start_time=$%d,", inc))
 			inc++
-			update.args = append(update.args, startTime)
+			sqlStmnts[0].args = append(sqlStmnts[0].args, startTime)
 
 		case "end":
 			newEnd, ok := v.(string)
@@ -296,24 +306,37 @@ func getSQLHuntUpdater(huntID int, partialHunt *map[string]interface{}) (*sqlHun
 
 			sqlb.WriteString(fmt.Sprintf(" end_time=$%d,", inc))
 			inc++
-			update.args = append(update.args, endTime)
+			sqlStmnts[0].args = append(sqlStmnts[0].args, endTime)
 
 		case "teams":
+			_, ok := v.([]interface{})
+			if !ok {
+				handleErr(fmt.Sprintf("Expected teams to be of type []interface{} but got %T\n", v))
+				break
+			}
 		case "items":
+			_, ok := v.([]interface{})
+			if !ok {
+				handleErr(fmt.Sprintf("Expected items to be of type []interface{} but got %T\n", v))
+				break
+			}
 		case "location":
+			_, ok := v.(map[string]interface{})
+			if !ok {
+				handleErr(fmt.Sprintf("Expected location to be of type map[string]interface{} but got %T\n", v))
+				break
+			}
 		default:
 		}
 	}
 
 	l := sqlb.Len()
-	update.sqlStatement = fmt.Sprintf("%s\n\t\tWHERE id = $%d", sqlb.String()[0:l-1], inc)
-	update.args = append(update.args, huntID)
-	log.Printf(update.sqlStatement)
-	log.Print(update.args...)
+	sqlStmnts[0].sql = fmt.Sprintf("%s\n\t\tWHERE id = $%d", sqlb.String()[0:l-1], inc)
+	sqlStmnts[0].args = append(sqlStmnts[0].args, huntID)
 
 	if encounteredError {
-		return update, errors.New(eb.String())
+		return &sqlStmnts, errors.New(eb.String())
 	} else {
-		return update, nil
+		return &sqlStmnts, nil
 	}
 }
