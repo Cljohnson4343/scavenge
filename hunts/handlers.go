@@ -55,8 +55,8 @@ func getHunts(ds HuntDataStore) func(http.ResponseWriter, *http.Request) {
 //
 // Responses:
 // 	200:
-// 	444:
-//  500:
+// 	404:
+//  400:
 func getHunt(ds HuntDataStore) func(http.ResponseWriter, *http.Request) {
 	return (func(w http.ResponseWriter, r *http.Request) {
 		huntID, err := strconv.Atoi(chi.URLParam(r, "huntID"))
@@ -93,7 +93,7 @@ func getHunt(ds HuntDataStore) func(http.ResponseWriter, *http.Request) {
 //
 // Responses:
 // 	200:
-//  500:
+//  400:
 func createHunt(ds HuntDataStore) func(http.ResponseWriter, *http.Request) {
 	return (func(w http.ResponseWriter, r *http.Request) {
 		hunt := new(models.Hunt)
@@ -166,6 +166,8 @@ func deleteHunt(ds HuntDataStore) func(http.ResponseWriter, *http.Request) {
 // Responses:
 // 	200:
 // 	400:
+// 	404:
+// 	500:
 func patchHunt(ds HuntDataStore) func(http.ResponseWriter, *http.Request) {
 	return (func(w http.ResponseWriter, r *http.Request) {
 		huntID, err := strconv.Atoi(chi.URLParam(r, "huntID"))
@@ -231,6 +233,49 @@ func getTeams(ds HuntDataStore) func(http.ResponseWriter, *http.Request) {
 		}
 
 		render.JSON(w, r, teams)
+		return
+	})
+}
+
+// swagger:route GET /hunts/{hunt_id}/teams/{id} team getTeam
+//
+// Gets the team with given id.
+//
+// Consumes:
+// 	- application/json
+//
+// Produces:
+//	- application/json
+//
+// Schemes: http, https
+//
+// Responses:
+// 	200:
+// 	400:
+// 	404:
+func getTeam(ds HuntDataStore) func(http.ResponseWriter, *http.Request) {
+	return (func(w http.ResponseWriter, r *http.Request) {
+		huntID, err := strconv.Atoi(chi.URLParam(r, "huntID"))
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		teamID, err := strconv.Atoi(chi.URLParam(r, "teamID"))
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		team, err := ds.getTeam(teamID)
+		if err != nil || team.HuntID != huntID {
+			w.WriteHeader(http.StatusNotFound)
+			w.Write([]byte("Oops! No such team."))
+			return
+		}
+
+		(*team).ID = teamID
+		render.JSON(w, r, team)
 		return
 	})
 }

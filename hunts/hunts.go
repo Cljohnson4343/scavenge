@@ -22,6 +22,7 @@ type HuntDataStore interface {
 	insertItem(item *models.Item, huntID int) (int, error)
 	deleteHunt(huntID int) error
 	updateHunt(huntID int, partialHunt *map[string]interface{}) (bool, error)
+	getTeam(teamID int) (*models.Team, error)
 }
 
 // AllHunts returns all Hunts from the database

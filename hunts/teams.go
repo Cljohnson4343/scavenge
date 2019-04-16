@@ -11,7 +11,7 @@ import (
 // getTeams populates the teams slice with all the teams for the given hunt
 func (env *Env) getTeams(huntID int) (*[]models.Team, error) {
 	sqlStatement := `
-		SELECT name FROM teams WHERE teams.hunt_id = $1;`
+		SELECT name, id, hunt_id FROM teams WHERE teams.hunt_id = $1;`
 
 	rows, err := env.db.Query(sqlStatement, huntID)
 	if err != nil {
@@ -23,7 +23,7 @@ func (env *Env) getTeams(huntID int) (*[]models.Team, error) {
 
 	team := models.Team{}
 	for rows.Next() {
-		err = rows.Scan(&team.Name)
+		err = rows.Scan(&team.Name, &team.ID, &team.HuntID)
 		if err != nil {
 			return nil, err
 		}
@@ -32,6 +32,20 @@ func (env *Env) getTeams(huntID int) (*[]models.Team, error) {
 	}
 
 	return teams, nil
+}
+
+// getTeam returns the Team with the given ID
+func (env *Env) getTeam(teamID int) (*models.Team, error) {
+	sqlStatement := `
+		SELECT name, hunt_id, id FROM teams WHERE teams.id = $1;`
+
+	team := new(models.Team)
+	err := env.db.QueryRow(sqlStatement, teamID).Scan(&team.Name, &team.HuntID, &team.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	return team, nil
 }
 
 // insertTeam inserts a Team into the db
