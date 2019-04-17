@@ -27,6 +27,21 @@ CREATE TABLE teams (
 );
 
 /*
+    one to many: a team has many locations
+*/ 
+DROP TABLE IF EXISTS locations CASCADE;
+CREATE TABLE locations (
+    id              serial,
+    team_id         int NOT NULL,
+    latitude        real NOT NULL,
+    longitude       real NOT NULL,
+    time_stamp      timestamp NOT NULL,
+    CONSTRAINT team_same_loc_and_time UNIQUE(time_stamp, team_id),
+    PRIMARY KEY(id),
+    FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE
+);
+
+/*
     one to many: Hunt has many items
 */
 DROP TABLE IF EXISTS items CASCADE;
