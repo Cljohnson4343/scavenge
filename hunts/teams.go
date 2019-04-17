@@ -135,3 +135,71 @@ func (env *Env) deleteTeam(huntID, teamID int) error {
 
 	return nil
 }
+
+// updateTeam executes a partial update of the team with the given id. NOTE:
+// team_id and hunt_id are not eligible to be changed
+func (env *Env) updateTeam(huntID, teamID int, partialTeam *map[string]interface{}) error {
+	sqlStmnt, err := getUpdateTeamSQLStatement(huntID, teamID, partialTeam)
+	if err != nil {
+		return err
+	}
+
+	res, err := sqlStmnt.exec(env.db)
+	if err != nil {
+		return err
+	}
+
+	n, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if n < 1 {
+		return errors.New("the team was not updated. Check the URL and request body to make sure teamID and huntID are valid")
+	}
+
+	return nil
+}
+
+// getUpdateTeamSQLStatement returns a sqlStatement struct for updating a team
+// NOTE: the hunt_id and the team_id are not editable
+func getUpdateTeamSQLStatement(huntID int, teamID int, partialTeam *map[string]interface{}) (*sqlStatement, error) {
+	var eb, sqlB strings.Builder
+
+	sqlB.WriteString(`
+		UPDATE teams
+		SET `)
+
+	eb.WriteString(fmt.Sprintf("error updating team %d:\n", teamID))
+	encounteredError := false
+
+	sqlStmnt := &sqlStatement{}
+
+	inc := 1
+	for k, v := range *partialTeam {
+		switch k {
+		case "name":
+			newName, ok := v.(string)
+			if !ok {
+				eb.WriteString(fmt.Sprintf("expected name to be of type string but got %T\n", v))
+				encounteredError = true
+			}
+
+			sqlB.WriteString(fmt.Sprintf("name=$%d,", inc))
+			inc++
+			sqlStmnt.args = append(sqlStmnt.args, newName)
+		}
+	}
+
+	// cut the trailing comma
+	sqlStrLen := sqlB.Len()
+	sqlStmnt.sql = fmt.Sprintf("%s\n\t\tWHERE id = $%d AND hunt_id = $%d;",
+		sqlB.String()[:sqlStrLen-1], inc, inc+1)
+	sqlStmnt.args = append(sqlStmnt.args, teamID, huntID)
+
+	if encounteredError {
+		return sqlStmnt, errors.New(eb.String())
+	}
+
+	return sqlStmnt, nil
+}

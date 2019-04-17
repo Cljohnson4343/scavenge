@@ -58,6 +58,7 @@ func Routes(env HuntDataStore) *chi.Mux {
 	router.Get("/{huntID}/teams/{teamID}", getTeam(env))
 	router.Delete("/{huntID}/teams/{teamID}", deleteTeam(env))
 	router.Post("/{huntID}/teams/", createTeam(env))
+	router.Patch("/{huntID}/teams/{teamID}", patchTeam(env))
 
 	return router
 }

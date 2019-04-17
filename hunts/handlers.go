@@ -363,3 +363,56 @@ func createTeam(ds HuntDataStore) func(http.ResponseWriter, *http.Request) {
 		return
 	})
 }
+
+// swagger:route PATCH /hunts/{huntID}/teams/{teamID} team patchTeam
+//
+// Partial update on the team with the given id.
+// The data that will be updated will be retrieved from
+// the request body. All valid keys from the request body
+// will update the corresponding team's value with that
+// key's value. To update the name of the team send
+// body: {"name": "New Team Name"}.
+//
+// Consumes:
+// 	- application/json
+//
+// Produces:
+//	- application/json
+//
+// Schemes: http, https
+//
+// Responses:
+// 	200:
+// 	400:
+func patchTeam(ds HuntDataStore) func(http.ResponseWriter, *http.Request) {
+	return (func(w http.ResponseWriter, r *http.Request) {
+		huntID, err := strconv.Atoi(chi.URLParam(r, "huntID"))
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		teamID, err := strconv.Atoi(chi.URLParam(r, "teamID"))
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		partialTeam := make(map[string]interface{})
+		err = render.DecodeJSON(r.Body, &partialTeam)
+		if err != nil {
+			log.Printf("unable to patch team: %s\n", err.Error())
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		err = ds.updateTeam(huntID, teamID, &partialTeam)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			log.Printf("error patching team: %s\n", err.Error())
+			return
+		}
+
+		return
+	})
+}
