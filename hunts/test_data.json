@@ -1,5 +1,5 @@
 [{
-    "title": "Huntsville Hunt",
+    "name": "Huntsville Hunt",
     "max_teams": 4,
     "id": 1,
     "start": "2019-04-21T10:00:00Z",
@@ -48,7 +48,7 @@
     }
 },
 {
-    "title": "Guntersvile Hunt",
+    "name": "Guntersvile Hunt",
     "max_teams": 6,
     "id": 2,
     "start": "2019-04-22T10:00:00Z",
@@ -94,7 +94,7 @@
     }
 },
 {
-    "title": "Birmingham Hunt",
+    "name": "Birmingham Hunt",
     "max_teams": 3,
     "id": 3,
     "start": "2019-04-21T12:00:00Z",
@@ -142,7 +142,7 @@
         }
     }
 },{
-    "title": "Mobile Hunt",
+    "name": "Mobile Hunt",
     "max_teams": 12,
     "id": 5,
     "start": "2019-04-24T14:00:00Z",
@@ -187,7 +187,7 @@
         }
     }
 },{
-    "title": "Atlante Hunt",
+    "name": "Atlante Hunt",
     "max_teams": 4,
     "id": 6,
     "start": "2019-04-21T18:00:00Z",
@@ -235,7 +235,7 @@
         }
     }
 },{
-    "title": "Denver Hunt",
+    "name": "Denver Hunt",
     "max_teams": 5,
     "id": 7,
     "start": "2019-04-25T14:00:00Z",
@@ -283,7 +283,7 @@
         }
     }
 },{
-    "title": "San Fran Hunt",
+    "name": "San Fran Hunt",
     "max_teams": 8,
     "id": 8,
     "start": "2019-04-23T10:00:00Z",
@@ -331,7 +331,7 @@
         }
     }
 },{
-    "title": "Seattle Hunt",
+    "name": "Seattle Hunt",
     "max_teams": 4,
     "id": 9,
     "start": "2019-04-21T10:00:00Z",
@@ -379,7 +379,7 @@
         }
     }
 },{
-    "title": "Chicago Hunt",
+    "name": "Chicago Hunt",
     "max_teams": 4,
     "id": 10,
     "start": "2019-04-28T10:00:00Z",
@@ -427,7 +427,7 @@
         }
     }
 },{
-    "title": "New York Hunt",
+    "name": "New York Hunt",
     "max_teams": 4,
     "id": 11,
     "start": "2019-04-20T10:00:00Z",
@@ -475,7 +475,7 @@
         }
     }
 },{
-    "title": "New Orleans Hunt",
+    "name": "New Orleans Hunt",
     "max_teams": 4,
     "id": 12,
     "start": "2019-04-22T18:00:00Z",
@@ -523,7 +523,7 @@
         }
     }
 },{
-    "title": "Jackson Hunt",
+    "name": "Jackson Hunt",
     "max_teams": 4,
     "id": 13,
     "start": "2019-05-21T10:00:00Z",
@@ -572,7 +572,7 @@
     }
 },
 {
-    "title": "Nashville Hunt",
+    "name": "Nashville Hunt",
     "max_teams": 4,
     "id": 14,
     "start": "2019-05-22T10:00:00Z",
@@ -621,7 +621,7 @@
     }
 },
 {
-    "title": "West H-Town Hunt",
+    "name": "West H-Town Hunt",
     "max_teams": 4,
     "id": 15,
     "start": "2019-04-19T10:00:00Z",
@@ -669,7 +669,7 @@
         }
     }
 },{
-    "title": "East H-Town Hunt",
+    "name": "East H-Town Hunt",
     "max_teams": 4,
     "id": 16,
     "start": "2019-04-21T10:30:00Z",
@@ -718,7 +718,7 @@
     }
 },
 {
-    "title": "Athens Hunt",
+    "name": "Athens Hunt",
     "max_teams": 4,
     "id": 17,
     "start": "2019-04-21T12:30:00Z",
@@ -767,7 +767,7 @@
     }
 },
 {
-    "title": "Madison Hunt",
+    "name": "Madison Hunt",
     "max_teams": 4,
     "id": 18,
     "start": "2019-04-22T18:00:00Z",
@@ -816,7 +816,7 @@
     }
 },
 {
-    "title": "Decatur Hunt",
+    "name": "Decatur Hunt",
     "max_teams": 4,
     "id": 19,
     "start": "2019-04-28T15:00:00Z",
@@ -865,7 +865,7 @@
     }
 },
 {
-    "title": "Monrovia Hunt",
+    "name": "Monrovia Hunt",
     "max_teams": 4,
     "id": 20,
     "start": "2019-05-01T19:30:00Z",
@@ -914,7 +914,7 @@
     }
 },
 {
-    "title": "Hazel Green Hunt",
+    "name": "Hazel Green Hunt",
     "max_teams": 4,
     "id": 21,
     "start": "2019-07-21T10:00:00Z",
@@ -963,7 +963,7 @@
     }
 },
 {
-    "title": "South H-Town Hunt",
+    "name": "South H-Town Hunt",
     "max_teams": 4,
     "id": 22,
     "start": "2019-08-21T10:00:00Z",
@@ -1012,7 +1012,7 @@
     }
 },
 {
-    "title": "Winchester Hunt",
+    "name": "Winchester Hunt",
     "max_teams": 4,
     "id": 23,
     "start": "2019-03-21T10:00:00Z",
@@ -1061,7 +1061,7 @@
     }
 },
 {
-    "title": "Knoxville Hunt",
+    "name": "Knoxville Hunt",
     "max_teams": 4,
     "id": 24,
     "start": "2019-06-21T10:00:00Z",
@@ -1110,7 +1110,7 @@
     }
 },
 {
-    "title": "Memphis Hunt",
+    "name": "Memphis Hunt",
     "max_teams": 4,
     "id": 25,
     "start": "2019-11-21T10:00:00Z",

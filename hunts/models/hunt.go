@@ -13,7 +13,7 @@ type Hunt struct {
 	//
 	// required: true
 	// maximum length: 255
-	Title string `json:"title"`
+	Name string `json:"name"`
 
 	// The maximum number of teams that can participate in the Hunt.
 	//

@@ -41,7 +41,7 @@ func (env *Env) allHunts() ([]*models.Hunt, error) {
 	hunts := make([]*models.Hunt, 0)
 	for rows.Next() {
 		hunt := new(models.Hunt)
-		err = rows.Scan(&hunt.ID, &hunt.Title, &hunt.MaxTeams, &hunt.Start,
+		err = rows.Scan(&hunt.ID, &hunt.Name, &hunt.MaxTeams, &hunt.Start,
 			&hunt.End, &hunt.Location.Coords.Latitude,
 			&hunt.Location.Coords.Longitude, &hunt.Location.Name)
 		if err != nil {
@@ -71,10 +71,10 @@ func (env *Env) allHunts() ([]*models.Hunt, error) {
 // getHunt returns a pointer to the hunt with the given ID.
 func (env *Env) getHunt(hunt *models.Hunt, huntID int) error {
 	sqlStatement := `
-		SELECT title, max_teams, start_time, end_time, latitude, longitude, location_name FROM hunts
+		SELECT name, max_teams, start_time, end_time, latitude, longitude, location_name FROM hunts
 		WHERE hunts.id = $1;`
 
-	err := env.db.QueryRow(sqlStatement, huntID).Scan(&hunt.Title, &hunt.MaxTeams, &hunt.Start,
+	err := env.db.QueryRow(sqlStatement, huntID).Scan(&hunt.Name, &hunt.MaxTeams, &hunt.Start,
 		&hunt.End, &hunt.Location.Coords.Latitude, &hunt.Location.Coords.Longitude, &hunt.Location.Name)
 	if err != nil {
 		return err
@@ -100,13 +100,13 @@ func (env *Env) getHunt(hunt *models.Hunt, huntID int) error {
 // insertHunt inserts the given hunt into the database and returns the id of the inserted hunt
 func (env *Env) insertHunt(hunt *models.Hunt) (int, error) {
 	sqlStatement := `
-		INSERT INTO hunts(title, max_teams, start_time, end_time, location_name, latitude, longitude)
+		INSERT INTO hunts(name, max_teams, start_time, end_time, location_name, latitude, longitude)
 		VALUES ($1, $2, $3, $4, $5, $6, $7)
 		RETURNING id AS hunt_id
 		`
 	// @TODO look into whether the row from queryrow needs to be closed
 	id := 0
-	err := env.db.QueryRow(sqlStatement, hunt.Title, hunt.MaxTeams, hunt.Start,
+	err := env.db.QueryRow(sqlStatement, hunt.Name, hunt.MaxTeams, hunt.Start,
 		hunt.End, hunt.Location.Name, hunt.Location.Coords.Latitude,
 		hunt.Location.Coords.Longitude).Scan(&id)
 	if err != nil {
@@ -199,15 +199,15 @@ func getUpdateHuntSQLStatement(huntID int, partialHunt *map[string]interface{}) 
 	inc := 1
 	for k, v := range *partialHunt {
 		switch k {
-		case "title":
-			newTitle, ok := v.(string)
+		case "name":
+			newName, ok := v.(string)
 			if !ok {
-				handleErr(fmt.Sprintf("Expected title to be of type string but got %T\n", v))
+				handleErr(fmt.Sprintf("Expected name to be of type string but got %T\n", v))
 				break
 			}
-			sqlb.WriteString(fmt.Sprintf(" title=$%d,", inc))
+			sqlb.WriteString(fmt.Sprintf(" name=$%d,", inc))
 			inc++
-			sqlStmnts[0].args = append(sqlStmnts[0].args, newTitle)
+			sqlStmnts[0].args = append(sqlStmnts[0].args, newName)
 		case "max_teams":
 			newMax, ok := v.(float64)
 			if !ok {
