@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -150,9 +151,10 @@ type Executioner interface {
 }
 
 // updateHunt updates the hunt with the given ID using the fields that are not nil in the
-// partial hunt. If the hunt was updated then true will be returned.
+// partial hunt. If the hunt was updated then true will be returned. id field can not be
+// updated.
 func (env *Env) updateHunt(huntID int, partialHunt *map[string]interface{}) (bool, error) {
-	sqlStmnts, err := getSQLHuntUpdater(huntID, partialHunt)
+	sqlStmnts, err := getUpdateHuntSQLStatement(huntID, partialHunt)
 	if err != nil {
 		return false, err
 	}
@@ -178,7 +180,7 @@ func (sqlStmnt *sqlStatement) exec(ex Executioner) (sql.Result, error) {
 	return ex.Exec(sqlStmnt.sql, sqlStmnt.args...)
 }
 
-func getSQLHuntUpdater(huntID int, partialHunt *map[string]interface{}) (*[]*sqlStatement, error) {
+func getUpdateHuntSQLStatement(huntID int, partialHunt *map[string]interface{}) (*[]*sqlStatement, error) {
 	var eb, sqlb strings.Builder
 
 	eb.WriteString("Error updating hunt: \n")
@@ -283,11 +285,35 @@ func getSQLHuntUpdater(huntID int, partialHunt *map[string]interface{}) (*[]*sql
 			sqlStmnts = append(sqlStmnts, newItemsStmnt)
 
 		case "location":
-			_, ok := v.(map[string]interface{})
+			partialLoc, ok := v.(map[string]interface{})
 			if !ok {
 				handleErr(fmt.Sprintf("Expected location to be of type map[string]interface{} but got %T\n", v))
 				break
 			}
+
+			locName, ok := partialLoc["name"].(string)
+			if ok {
+				sqlb.WriteString(fmt.Sprintf(" location_name=$%d,", inc))
+				inc++
+				sqlStmnts[0].args = append(sqlStmnts[0].args, locName)
+			}
+
+			coords, ok := partialLoc["coords"].(map[string]interface{})
+			if ok {
+				lat, ok := coords["latitude"].(float64)
+				if ok {
+					sqlb.WriteString(fmt.Sprintf(" latitude=$%d,", inc))
+					inc++
+					sqlStmnts[0].args = append(sqlStmnts[0].args, lat)
+				}
+				lon, ok := coords["longitude"].(float64)
+				if ok {
+					sqlb.WriteString(fmt.Sprintf(" longitude=$%d,", inc))
+					inc++
+					sqlStmnts[0].args = append(sqlStmnts[0].args, lon)
+				}
+			}
+
 		default:
 		}
 	}
@@ -296,6 +322,8 @@ func getSQLHuntUpdater(huntID int, partialHunt *map[string]interface{}) (*[]*sql
 	sqlStmnts[0].sql = fmt.Sprintf("%s\n\t\tWHERE id = $%d", sqlb.String()[0:l-1], inc)
 	sqlStmnts[0].args = append(sqlStmnts[0].args, huntID)
 
+	log.Println(sqlStmnts[0].sql)
+	log.Println(sqlStmnts[0].args...)
 	if encounteredError {
 		return &sqlStmnts, errors.New(eb.String())
 	}
