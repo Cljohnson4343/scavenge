@@ -311,6 +311,7 @@ func deleteTeam(ds HuntDataStore) func(http.ResponseWriter, *http.Request) {
 
 		err = ds.deleteTeam(huntID, teamID)
 		if err != nil {
+			log.Printf("Error deleting team: %s\n", err.Error())
 			w.WriteHeader(http.StatusBadRequest)
 		}
 
@@ -371,7 +372,8 @@ func createTeam(ds HuntDataStore) func(http.ResponseWriter, *http.Request) {
 // the request body. All valid keys from the request body
 // will update the corresponding team's value with that
 // key's value. To update the name of the team send
-// body: {"name": "New Team Name"}.
+// body: {"name": "New Team Name"}. NOTE that the id and
+// the hunt_id are not eligible to be changed.
 //
 // Consumes:
 // 	- application/json
@@ -410,6 +412,185 @@ func patchTeam(ds HuntDataStore) func(http.ResponseWriter, *http.Request) {
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			log.Printf("error patching team: %s\n", err.Error())
+			return
+		}
+
+		return
+	})
+}
+
+// swagger:route GET /hunts/{huntID}/items items getItems
+//
+// Lists the items for hunt with {huntID}.
+//
+// Consumes:
+// 	- application/json
+//
+// Produces:
+//	- application/json
+//
+// Schemes: http, https
+//
+// Responses:
+// 	200:
+// 	400:
+//  500:
+func getItems(ds HuntDataStore) func(http.ResponseWriter, *http.Request) {
+	return (func(w http.ResponseWriter, r *http.Request) {
+		huntID, err := strconv.Atoi(chi.URLParam(r, "huntID"))
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		items, err := ds.getItems(huntID)
+		if err != nil {
+			log.Printf("Failed to retrieve items for hunt %d: %s\n", huntID, err.Error())
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		render.JSON(w, r, items)
+		return
+	})
+}
+
+// swagger:route DELETE /hunts/{huntID}/items/{itemID} delete item deleteItem
+//
+// Deletes the given item.
+//
+// Consumes:
+// 	- application/json
+//
+// Produces:
+//	- application/json
+//
+// Schemes: http, https
+//
+// Responses:
+// 	200:
+//  400:
+func deleteItem(ds HuntDataStore) func(http.ResponseWriter, *http.Request) {
+	return (func(w http.ResponseWriter, r *http.Request) {
+		huntID, err := strconv.Atoi(chi.URLParam(r, "huntID"))
+		if err != nil {
+			log.Printf("error deleting item: %s\n", err.Error())
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		itemID, err := strconv.Atoi(chi.URLParam(r, "itemID"))
+		if err != nil {
+			log.Printf("error deleting item: %s\n", err.Error())
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		err = ds.deleteItem(huntID, itemID)
+		if err != nil {
+			log.Printf("error deleting item: %s\n", err.Error())
+			w.WriteHeader(http.StatusBadRequest)
+		}
+
+		return
+	})
+}
+
+// swagger:route POST /hunts/{huntID}/items item create createItem
+//
+// Creates the item described in the request body for the given hunt.
+//
+// Consumes:
+// 	- application/json
+//
+// Produces:
+//	- application/json
+//
+// Schemes: http, https
+//
+// Responses:
+// 	200:
+//  400:
+//  500:
+func createItem(ds HuntDataStore) func(http.ResponseWriter, *http.Request) {
+	return (func(w http.ResponseWriter, r *http.Request) {
+		huntID, err := strconv.Atoi(chi.URLParam(r, "huntID"))
+		if err != nil {
+			log.Printf("Error creating item: %s\n", err.Error())
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		item := new(models.Item)
+		err = render.DecodeJSON(r.Body, item)
+		if err != nil {
+			log.Printf("Unable to create item: %s\n", err.Error())
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		itemID, err := ds.insertItem(item, huntID)
+		if err != nil {
+			log.Printf("Error creating a item: %s\n", err.Error())
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		(*item).ID = itemID
+		render.JSON(w, r, item)
+		return
+	})
+}
+
+// swagger:route PATCH /hunts/{huntID}/items/{itemID} item update partial patchItem
+//
+// Partial update on the item with the given id.
+// The data that will be updated will be retrieved from
+// the request body. All valid keys from the request body
+// will update the corresponding item's value with that
+// key's value. To update the name of the item send
+// body: {"name": "New Item Name"}. NOTE that the id and hunt_id
+// are not eligible to be changed
+//
+// Consumes:
+// 	- application/json
+//
+// Produces:
+//	- application/json
+//
+// Schemes: http, https
+//
+// Responses:
+// 	200:
+// 	400:
+func patchItem(ds HuntDataStore) func(http.ResponseWriter, *http.Request) {
+	return (func(w http.ResponseWriter, r *http.Request) {
+		huntID, err := strconv.Atoi(chi.URLParam(r, "huntID"))
+		if err != nil {
+			log.Printf("error updating item: %s\n", err.Error())
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		itemID, err := strconv.Atoi(chi.URLParam(r, "itemID"))
+		if err != nil {
+			log.Printf("error updating item: %s\n", err.Error())
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		partialItem := make(map[string]interface{})
+		err = render.DecodeJSON(r.Body, &partialItem)
+		if err != nil {
+			log.Printf("error updating item: %s\n", err.Error())
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		err = ds.updateItem(huntID, itemID, &partialItem)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			log.Printf("error updating item: %s\n", err.Error())
 			return
 		}
 

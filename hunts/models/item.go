@@ -5,6 +5,17 @@ package models
 //
 // swagger:model item
 type Item struct {
+
+	// The id of the Hunt
+	//
+	// required: true
+	HuntID int `json:"hunt_id"`
+
+	// The id of the item
+	//
+	// required: true
+	ID int `json:"id"`
+
 	// the name of the item
 	//
 	// maximum length: 255
@@ -15,9 +26,4 @@ type Item struct {
 	//
 	// minimum: 1
 	Points uint `json:"points,omitempty"`
-
-	// whether or not this item has been found
-	//
-	// required true
-	IsDone bool `json:"is_done"`
 }

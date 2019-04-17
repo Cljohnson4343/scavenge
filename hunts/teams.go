@@ -31,7 +31,9 @@ func (env *Env) getTeams(huntID int) (*[]models.Team, error) {
 		*teams = append(*teams, team)
 	}
 
-	return teams, nil
+	err = rows.Err()
+
+	return teams, err
 }
 
 // getTeam returns the Team with the given ID

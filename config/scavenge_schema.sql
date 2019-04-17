@@ -33,7 +33,7 @@ DROP TABLE IF EXISTS items CASCADE;
 CREATE TABLE items (
     id              serial,
     hunt_id         int NOT NULL,
-    name            varchar(255) NOT NULL,
+    name            varchar(255) NOT NULL CHECK (length(name) > 0),
     points          smallint CHECK (points > 0),
     CONSTRAINT items_in_same_hunt_name UNIQUE(hunt_id, name),
     PRIMARY KEY(id),

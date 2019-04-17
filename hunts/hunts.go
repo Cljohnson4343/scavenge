@@ -15,7 +15,7 @@ import (
 type HuntDataStore interface {
 	allHunts() ([]*models.Hunt, error)
 	getHunt(hunt *models.Hunt, huntID int) error
-	getItems(items *[]models.Item, huntID int) error
+	getItems(huntID int) (*[]models.Item, error)
 	getTeams(huntID int) (*[]models.Team, error)
 	insertHunt(hunt *models.Hunt) (int, error)
 	insertTeam(team *models.Team, huntID int) (int, error)
@@ -25,6 +25,8 @@ type HuntDataStore interface {
 	getTeam(teamID int) (*models.Team, error)
 	deleteTeam(huntID, teamID int) error
 	updateTeam(huntID int, teamID int, partialTeam *map[string]interface{}) error
+	deleteItem(huntID, itemID int) error
+	updateItem(huntID int, itemID int, partialItem *map[string]interface{}) error
 }
 
 // AllHunts returns all Hunts from the database
@@ -51,10 +53,11 @@ func (env *Env) allHunts() ([]*models.Hunt, error) {
 		}
 		hunt.Teams = *teams
 
-		err = env.getItems(&hunt.Items, hunt.ID)
+		items, err := env.getItems(hunt.ID)
 		if err != nil {
 			return nil, err
 		}
+		hunt.Items = *items
 
 		hunts = append(hunts, hunt)
 	}
@@ -84,7 +87,11 @@ func (env *Env) getHunt(hunt *models.Hunt, huntID int) error {
 	}
 	hunt.Teams = *teams
 
-	err = env.getItems(&hunt.Items, huntID)
+	items, err := env.getItems(huntID)
+	if err != nil {
+		return err
+	}
+	hunt.Items = *items
 
 	return err
 }
