@@ -46,8 +46,8 @@ func (sqlStmnt *SQLStatement) Args() []interface{} {
 	return sqlStmnt.args
 }
 
-// DBConfig is a custom type to store info used to configure postgresql db
-type DBConfig struct {
+// Config is a custom type to store info used to configure postgresql db
+type Config struct {
 	Host     string `json:"host"`
 	Port     int    `json:"port"`
 	User     string `json:"user"`

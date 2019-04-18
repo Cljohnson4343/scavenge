@@ -13,7 +13,7 @@ import (
 
 // AllHunts returns all Hunts from the database
 func AllHunts(env *c.Env) ([]*Hunt, error) {
-	rows, err := env.DB().Query("SELECT id, name, max_teams, start_time, end_time, latitude, longitude, location_name, created_at FROM hunts;")
+	rows, err := env.Query("SELECT id, name, max_teams, start_time, end_time, latitude, longitude, location_name, created_at FROM hunts;")
 	if err != nil {
 		return nil, err
 	}
@@ -22,9 +22,8 @@ func AllHunts(env *c.Env) ([]*Hunt, error) {
 	hunts := make([]*Hunt, 0)
 	for rows.Next() {
 		hunt := new(Hunt)
-		err = rows.Scan(&hunt.ID, &hunt.Name, &hunt.MaxTeams, &hunt.Start,
-			&hunt.End, &hunt.Location.Coords.Latitude,
-			&hunt.Location.Coords.Longitude, &hunt.Location.Name, &hunt.CreationDate)
+		err = rows.Scan(&hunt.ID, &hunt.Name, &hunt.MaxTeams, &hunt.StartTime, &hunt.EndTime,
+			&hunt.Latitude, &hunt.Longitude, &hunt.LocationName, &hunt.CreatedAt)
 		if err != nil {
 			return nil, err
 		}
@@ -52,11 +51,11 @@ func AllHunts(env *c.Env) ([]*Hunt, error) {
 // GetHunt returns a pointer to the hunt with the given ID.
 func GetHunt(env *c.Env, hunt *Hunt, huntID int) error {
 	sqlStmnt := `
-		SELECT name, max_teams, start_time, end_time, latitude, longitude, location_name FROM hunts
+		SELECT name, max_teams, start_time, end_time, latitude, longitude, location_name, created_at FROM hunts
 		WHERE hunts.id = $1;`
 
-	err := env.DB().QueryRow(sqlStmnt, huntID).Scan(&hunt.Name, &hunt.MaxTeams, &hunt.Start,
-		&hunt.End, &hunt.Location.Coords.Latitude, &hunt.Location.Coords.Longitude, &hunt.Location.Name)
+	err := env.QueryRow(sqlStmnt, huntID).Scan(&hunt.Name, &hunt.MaxTeams, &hunt.StartTime,
+		&hunt.EndTime, &hunt.Latitude, &hunt.Longitude, &hunt.LocationName, &hunt.CreatedAt)
 	if err != nil {
 		return err
 	}
@@ -87,9 +86,9 @@ func InsertHunt(env *c.Env, hunt *Hunt) (int, error) {
 		`
 	// @TODO look into whether the row from queryrow needs to be closed
 	id := 0
-	err := env.DB().QueryRow(sqlStmnt, hunt.Name, hunt.MaxTeams, hunt.Start,
-		hunt.End, hunt.Location.Name, hunt.Location.Coords.Latitude,
-		hunt.Location.Coords.Longitude).Scan(&id)
+	err := env.QueryRow(sqlStmnt, hunt.Name, hunt.MaxTeams, hunt.StartTime,
+		hunt.EndTime, hunt.LocationName, hunt.Latitude,
+		hunt.Longitude).Scan(&id)
 	if err != nil {
 		return id, err
 	}
@@ -119,7 +118,7 @@ func DeleteHunt(env *c.Env, huntID int) error {
 		DELETE FROM hunts
 		WHERE hunts.id = $1`
 
-	_, err := env.DB().Exec(sqlStmnt, huntID)
+	_, err := env.Exec(sqlStmnt, huntID)
 	return err
 }
 
@@ -132,7 +131,7 @@ func UpdateHunt(env *c.Env, huntID int, partialHunt *map[string]interface{}) (bo
 		return false, err
 	}
 
-	tx, err := env.DB().Begin()
+	tx, err := env.Begin()
 	if err != nil {
 		return false, err
 	}

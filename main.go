@@ -35,7 +35,7 @@ func main() {
 	}
 	defer file.Close()
 
-	var dbConfig = new(db.DBConfig)
+	var dbConfig = new(db.Config)
 	err = json.NewDecoder(file).Decode(&dbConfig)
 	if err != nil {
 		log.Panicf("Error decoding config file: %s\n", err.Error())

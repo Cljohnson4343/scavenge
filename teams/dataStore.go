@@ -15,7 +15,7 @@ func GetTeams(env *c.Env) (*[]Team, error) {
 	sqlStmnt := `
 		SELECT name, id, hunt_id FROM teams;`
 
-	rows, err := env.DB().Query(sqlStmnt)
+	rows, err := env.Query(sqlStmnt)
 	if err != nil {
 		return nil, err
 	}
@@ -44,7 +44,7 @@ func GetTeamsForHunt(env *c.Env, huntID int) (*[]Team, error) {
 	sqlStmnt := `
 		SELECT name, id, hunt_id FROM teams WHERE hunt_id = $1;`
 
-	rows, err := env.DB().Query(sqlStmnt, huntID)
+	rows, err := env.Query(sqlStmnt, huntID)
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +73,7 @@ func GetTeam(env *c.Env, teamID int) (*Team, error) {
 		SELECT name, hunt_id, id FROM teams WHERE teams.id = $1;`
 
 	team := new(Team)
-	err := env.DB().QueryRow(sqlStmnt, teamID).Scan(&team.Name, &team.HuntID, &team.ID)
+	err := env.QueryRow(sqlStmnt, teamID).Scan(&team.Name, &team.HuntID, &team.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -89,7 +89,7 @@ func InsertTeam(env *c.Env, team *Team, huntID int) (int, error) {
 		RETURNING id`
 
 	id := 0
-	err := env.DB().QueryRow(sqlStmnt, huntID, team.Name).Scan(&id)
+	err := env.QueryRow(sqlStmnt, huntID, team.Name).Scan(&id)
 
 	return id, err
 }
@@ -154,7 +154,7 @@ func DeleteTeam(env *c.Env, teamID int) error {
 		DELETE FROM teams
 		WHERE id = $1;`
 
-	res, err := env.DB().Exec(sqlStmnt, teamID)
+	res, err := env.Exec(sqlStmnt, teamID)
 	if err != nil {
 		return err
 	}
@@ -179,7 +179,7 @@ func UpdateTeam(env *c.Env, teamID int, partialTeam *map[string]interface{}) err
 		return err
 	}
 
-	res, err := sqlStmnt.Exec(env.DB())
+	res, err := sqlStmnt.Exec(env)
 	if err != nil {
 		return err
 	}

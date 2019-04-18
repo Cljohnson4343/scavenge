@@ -15,7 +15,7 @@ func GetItems(env *c.Env, huntID int) (*[]models.Item, error) {
 	sqlStmnt := `
 		SELECT name, points, id FROM items WHERE items.hunt_id = $1;`
 
-	rows, err := env.DB().Query(sqlStmnt, huntID)
+	rows, err := env.Query(sqlStmnt, huntID)
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +46,7 @@ func InsertItem(env *c.Env, item *models.Item, huntID int) (int, error) {
 		RETURNING id`
 
 	id := 0
-	err := env.DB().QueryRow(sqlStmnt, huntID, item.Name, item.Points).Scan(&id)
+	err := env.QueryRow(sqlStmnt, huntID, item.Name, item.Points).Scan(&id)
 
 	return id, err
 }
@@ -122,7 +122,7 @@ func DeleteItem(env *c.Env, huntID, itemID int) error {
 		DELETE FROM items
 		WHERE id = $1 AND hunt_id = $2;`
 
-	res, err := env.DB().Exec(sqlStmnt, itemID, huntID)
+	res, err := env.Exec(sqlStmnt, itemID, huntID)
 	if err != nil {
 		return err
 	}
@@ -147,7 +147,7 @@ func UpdateItem(env *c.Env, huntID, itemID int, partialItem *map[string]interfac
 		return err
 	}
 
-	res, err := sqlStmnt.Exec(env.DB())
+	res, err := sqlStmnt.Exec(env)
 	if err != nil {
 		return err
 	}

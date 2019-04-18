@@ -10,11 +10,7 @@ import (
 // methods to be added. It is needed to implement the DataStore
 // interfaces of the other packages.
 type Env struct {
-	db *sql.DB
-}
-
-func (env *Env) DB() *sql.DB {
-	return env.db
+	*sql.DB
 }
 
 // CreateEnv instantiates a Env type
