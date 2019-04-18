@@ -126,7 +126,7 @@ func DeleteHunt(env *c.Env, huntID int) error {
 // partial hunt. If the hunt was updated then true will be returned. id field can not be
 // updated.
 func UpdateHunt(env *c.Env, huntID int, partialHunt *map[string]interface{}) (bool, error) {
-	sqlStmnts, err := getUpdateHuntSQLStatement(huntID, partialHunt)
+	sqlCmds, err := getUpdateHuntSQLCommand(huntID, partialHunt)
 	if err != nil {
 		return false, err
 	}
@@ -136,8 +136,8 @@ func UpdateHunt(env *c.Env, huntID int, partialHunt *map[string]interface{}) (bo
 		return false, err
 	}
 
-	// atempt to execute all the statements in this transaction
-	for _, v := range *sqlStmnts {
+	// attempt to execute all the statements in this transaction
+	for _, v := range *sqlCmds {
 		_, err := v.Exec(tx)
 		if err != nil {
 			tx.Rollback()
@@ -148,7 +148,7 @@ func UpdateHunt(env *c.Env, huntID int, partialHunt *map[string]interface{}) (bo
 	return true, tx.Commit()
 }
 
-func getUpdateHuntSQLStatement(huntID int, partialHunt *map[string]interface{}) (*[]*db.SQLStatement, error) {
+func getUpdateHuntSQLCommand(huntID int, partialHunt *map[string]interface{}) (*[]*db.SQLCommand, error) {
 	var eb, sqlb strings.Builder
 
 	eb.WriteString("Error updating hunt: \n")
@@ -159,8 +159,8 @@ func getUpdateHuntSQLStatement(huntID int, partialHunt *map[string]interface{}) 
 		eb.WriteString(errString)
 	}
 
-	sqlStmnts := make([]*db.SQLStatement, 0)
-	sqlStmnts = append(sqlStmnts, new(db.SQLStatement))
+	sqlCmds := make([]*db.SQLCommand, 0)
+	sqlCmds = append(sqlCmds, new(db.SQLCommand))
 
 	sqlb.WriteString("\n\t\tUPDATE hunts\n\t\tSET")
 
@@ -175,7 +175,7 @@ func getUpdateHuntSQLStatement(huntID int, partialHunt *map[string]interface{}) 
 			}
 			sqlb.WriteString(fmt.Sprintf(" name=$%d,", inc))
 			inc++
-			sqlStmnts[0].AppendArgs(newName)
+			sqlCmds[0].AppendArgs(newName)
 		case "max_teams":
 			newMax, ok := v.(float64)
 			if !ok {
@@ -184,7 +184,7 @@ func getUpdateHuntSQLStatement(huntID int, partialHunt *map[string]interface{}) 
 			}
 			sqlb.WriteString(fmt.Sprintf(" max_teams=$%d,", inc))
 			inc++
-			sqlStmnts[0].AppendArgs(int(newMax))
+			sqlCmds[0].AppendArgs(int(newMax))
 
 		case "start":
 			newStart, ok := v.(string)
@@ -202,7 +202,7 @@ func getUpdateHuntSQLStatement(huntID int, partialHunt *map[string]interface{}) 
 
 			sqlb.WriteString(fmt.Sprintf(" start_time=$%d,", inc))
 			inc++
-			sqlStmnts[0].AppendArgs(startTime)
+			sqlCmds[0].AppendArgs(startTime)
 
 		case "end":
 			newEnd, ok := v.(string)
@@ -218,7 +218,7 @@ func getUpdateHuntSQLStatement(huntID int, partialHunt *map[string]interface{}) 
 
 			sqlb.WriteString(fmt.Sprintf(" end_time=$%d,", inc))
 			inc++
-			sqlStmnts[0].AppendArgs(endTime)
+			sqlCmds[0].AppendArgs(endTime)
 
 		case "teams":
 			newTeams, ok := v.([]interface{})
@@ -228,13 +228,13 @@ func getUpdateHuntSQLStatement(huntID int, partialHunt *map[string]interface{}) 
 			}
 
 			// @TODO think about how to handle the case where an error is thrown(should we try partial execution?)
-			newTeamsStmnt, err := teams.GetUpsertTeamsSQLStatement(huntID, newTeams)
+			newTeamsCmd, err := teams.GetUpsertTeamsSQLCommand(huntID, newTeams)
 			if err != nil {
 				handleErr(fmt.Sprintf("%s\n", err.Error()))
 				break
 			}
 
-			sqlStmnts = append(sqlStmnts, newTeamsStmnt)
+			sqlCmds = append(sqlCmds, newTeamsCmd)
 
 		case "items":
 			newItems, ok := v.([]interface{})
@@ -244,13 +244,13 @@ func getUpdateHuntSQLStatement(huntID int, partialHunt *map[string]interface{}) 
 			}
 
 			// @TODO think about how to handle the case where an error is thrown(should we try partial execution?)
-			newItemsStmnt, err := getUpsertItemsSQLStatement(huntID, newItems)
+			newItemsCmd, err := getUpsertItemsSQLStatement(huntID, newItems)
 			if err != nil {
 				handleErr(fmt.Sprintf("%s\n", err.Error()))
 				break
 			}
 
-			sqlStmnts = append(sqlStmnts, newItemsStmnt)
+			sqlCmds = append(sqlCmds, newItemsCmd)
 
 		case "location":
 			partialLoc, ok := v.(map[string]interface{})
@@ -263,7 +263,7 @@ func getUpdateHuntSQLStatement(huntID int, partialHunt *map[string]interface{}) 
 			if ok {
 				sqlb.WriteString(fmt.Sprintf(" location_name=$%d,", inc))
 				inc++
-				sqlStmnts[0].AppendArgs(locName)
+				sqlCmds[0].AppendArgs(locName)
 			}
 
 			coords, ok := partialLoc["coords"].(map[string]interface{})
@@ -272,13 +272,13 @@ func getUpdateHuntSQLStatement(huntID int, partialHunt *map[string]interface{}) 
 				if ok {
 					sqlb.WriteString(fmt.Sprintf(" latitude=$%d,", inc))
 					inc++
-					sqlStmnts[0].AppendArgs(lat)
+					sqlCmds[0].AppendArgs(lat)
 				}
 				lon, ok := coords["longitude"].(float64)
 				if ok {
 					sqlb.WriteString(fmt.Sprintf(" longitude=$%d,", inc))
 					inc++
-					sqlStmnts[0].AppendArgs(lon)
+					sqlCmds[0].AppendArgs(lon)
 				}
 			}
 
@@ -287,12 +287,12 @@ func getUpdateHuntSQLStatement(huntID int, partialHunt *map[string]interface{}) 
 	}
 
 	l := sqlb.Len()
-	sqlStmnts[0].AppendScript(fmt.Sprintf("%s\n\t\tWHERE id = $%d", sqlb.String()[0:l-1], inc))
-	sqlStmnts[0].AppendArgs(huntID)
+	sqlCmds[0].AppendScript(fmt.Sprintf("%s\n\t\tWHERE id = $%d", sqlb.String()[0:l-1], inc))
+	sqlCmds[0].AppendArgs(huntID)
 
 	if encounteredError {
-		return &sqlStmnts, errors.New(eb.String())
+		return &sqlCmds, errors.New(eb.String())
 	}
 
-	return &sqlStmnts, nil
+	return &sqlCmds, nil
 }

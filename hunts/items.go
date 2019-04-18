@@ -51,7 +51,7 @@ func InsertItem(env *c.Env, item *models.Item, huntID int) (int, error) {
 	return id, err
 }
 
-func getUpsertItemsSQLStatement(huntID int, newItems []interface{}) (*db.SQLStatement, error) {
+func getUpsertItemsSQLStatement(huntID int, newItems []interface{}) (*db.SQLCommand, error) {
 	var eb, sqlValuesSB strings.Builder
 
 	eb.WriteString("Error updating items: \n")
@@ -65,7 +65,7 @@ func getUpsertItemsSQLStatement(huntID int, newItems []interface{}) (*db.SQLStat
 	sqlValuesSB.WriteString("(")
 	inc := 1
 
-	sqlStmnt := new(db.SQLStatement)
+	sqlStmnt := new(db.SQLCommand)
 
 	for _, value := range newItems {
 		item, ok := value.(map[string]interface{})
@@ -142,7 +142,7 @@ func DeleteItem(env *c.Env, huntID, itemID int) error {
 // UpdateItem executes a partial update of the item with the given id. NOTE:
 // item_id and hunt_id are not eligible to be changed
 func UpdateItem(env *c.Env, huntID, itemID int, partialItem *map[string]interface{}) error {
-	sqlStmnt, err := getUpdateItemSQLStatement(huntID, itemID, partialItem)
+	sqlStmnt, err := getUpdateItemSQLCommand(huntID, itemID, partialItem)
 	if err != nil {
 		return err
 	}
@@ -164,9 +164,9 @@ func UpdateItem(env *c.Env, huntID, itemID int, partialItem *map[string]interfac
 	return nil
 }
 
-// getUpdateItemSQLStatement returns a db.SQLStatement struct for updating an item
+// getUpdateItemSQLCommand returns a db.SQLCommand struct for updating an item
 // NOTE: the hunt_id and the item_id are not editable
-func getUpdateItemSQLStatement(huntID int, itemID int, partialItem *map[string]interface{}) (*db.SQLStatement, error) {
+func getUpdateItemSQLCommand(huntID int, itemID int, partialItem *map[string]interface{}) (*db.SQLCommand, error) {
 	var eb, sqlB strings.Builder
 
 	sqlB.WriteString(`
@@ -176,7 +176,7 @@ func getUpdateItemSQLStatement(huntID int, itemID int, partialItem *map[string]i
 	eb.WriteString(fmt.Sprintf("error updating item %d:\n", itemID))
 	encounteredError := false
 
-	sqlStmnt := &db.SQLStatement{}
+	sqlStmnt := &db.SQLCommand{}
 
 	inc := 1
 	for k, v := range *partialItem {

@@ -94,9 +94,9 @@ func InsertTeam(env *c.Env, team *Team, huntID int) (int, error) {
 	return id, err
 }
 
-// GetUpsertTeamsSQLStatement returns the db.SQLStatement that will update/insert the
+// GetUpsertTeamsSQLCommand returns the db.SQLCommand that will update/insert the
 // teams described by the slice parameter
-func GetUpsertTeamsSQLStatement(huntID int, newTeams []interface{}) (*db.SQLStatement, error) {
+func GetUpsertTeamsSQLCommand(huntID int, newTeams []interface{}) (*db.SQLCommand, error) {
 	var eb, sqlValuesSB strings.Builder
 
 	eb.WriteString("Error updating teams: \n")
@@ -110,7 +110,7 @@ func GetUpsertTeamsSQLStatement(huntID int, newTeams []interface{}) (*db.SQLStat
 	sqlValuesSB.WriteString("(")
 	inc := 1
 
-	sqlStmnt := new(db.SQLStatement)
+	sqlCmd := new(db.SQLCommand)
 
 	for _, value := range newTeams {
 		team, ok := value.(map[string]interface{})
@@ -131,21 +131,21 @@ func GetUpsertTeamsSQLStatement(huntID int, newTeams []interface{}) (*db.SQLStat
 			break
 		}
 
-		// make sure all validation is done before writing to sqlValueSB and adding to sqlStmnt.args
+		// make sure all validation is done before writing to sqlValueSB and adding to sqlCmd.args
 		sqlValuesSB.WriteString(fmt.Sprintf("$%d, $%d),(", inc, inc+1))
 		inc += 2
-		sqlStmnt.AppendArgs(huntID, name)
+		sqlCmd.AppendArgs(huntID, name)
 	}
 
 	valuesStr := (sqlValuesSB.String())[:sqlValuesSB.Len()-2]
 
-	sqlStmnt.AppendScript(fmt.Sprintf("\n\tINSERT INTO teams(hunt_id, name)\n\tVALUES\n\t\t%s\n\tON CONFLICT ON CONSTRAINT teams_in_same_hunt_name\n\tDO\n\t\tUPDATE\n\t\tSET name = EXCLUDED.name;", valuesStr))
+	sqlCmd.AppendScript(fmt.Sprintf("\n\tINSERT INTO teams(hunt_id, name)\n\tVALUES\n\t\t%s\n\tON CONFLICT ON CONSTRAINT teams_in_same_hunt_name\n\tDO\n\t\tUPDATE\n\t\tSET name = EXCLUDED.name;", valuesStr))
 
 	if encounteredError {
-		return sqlStmnt, errors.New(eb.String())
+		return sqlCmd, errors.New(eb.String())
 	}
 
-	return sqlStmnt, nil
+	return sqlCmd, nil
 }
 
 // DeleteTeam deletes the team with the given teamID
@@ -174,12 +174,12 @@ func DeleteTeam(env *c.Env, teamID int) error {
 // UpdateTeam executes a partial update of the team with the given id. NOTE:
 // team_id and hunt_id are not eligible to be changed
 func UpdateTeam(env *c.Env, teamID int, partialTeam *map[string]interface{}) error {
-	sqlStmnt, err := getUpdateTeamSQLStatement(teamID, partialTeam)
+	sqlCmd, err := getUpdateTeamSQLCommand(teamID, partialTeam)
 	if err != nil {
 		return err
 	}
 
-	res, err := sqlStmnt.Exec(env)
+	res, err := sqlCmd.Exec(env)
 	if err != nil {
 		return err
 	}
@@ -196,9 +196,9 @@ func UpdateTeam(env *c.Env, teamID int, partialTeam *map[string]interface{}) err
 	return nil
 }
 
-// getUpdateTeamSQLStatement returns a db.SQLStatement struct for updating a team
+// getUpdateTeamSQLCommand returns a db.SQLCommand struct for updating a team
 // NOTE: the hunt_id and the team_id are not editable
-func getUpdateTeamSQLStatement(teamID int, partialTeam *map[string]interface{}) (*db.SQLStatement, error) {
+func getUpdateTeamSQLCommand(teamID int, partialTeam *map[string]interface{}) (*db.SQLCommand, error) {
 	var eb, sqlB strings.Builder
 
 	sqlB.WriteString(`
@@ -208,7 +208,7 @@ func getUpdateTeamSQLStatement(teamID int, partialTeam *map[string]interface{}) 
 	eb.WriteString(fmt.Sprintf("error updating team %d:\n", teamID))
 	encounteredError := false
 
-	sqlStmnt := &db.SQLStatement{}
+	sqlCmd := &db.SQLCommand{}
 
 	inc := 1
 	for k, v := range *partialTeam {
@@ -222,21 +222,21 @@ func getUpdateTeamSQLStatement(teamID int, partialTeam *map[string]interface{}) 
 
 			sqlB.WriteString(fmt.Sprintf("name=$%d,", inc))
 			inc++
-			sqlStmnt.AppendArgs(newName)
+			sqlCmd.AppendArgs(newName)
 		}
 	}
 
 	// cut the trailing comma
 	sqlStrLen := sqlB.Len()
-	sqlStmnt.AppendScript(fmt.Sprintf("%s\n\t\tWHERE id = $%d;",
+	sqlCmd.AppendScript(fmt.Sprintf("%s\n\t\tWHERE id = $%d;",
 		sqlB.String()[:sqlStrLen-1], inc))
-	sqlStmnt.AppendArgs(teamID)
+	sqlCmd.AppendArgs(teamID)
 
-	log.Println(sqlStmnt.Script())
-	log.Println(sqlStmnt.Args())
+	log.Println(sqlCmd.Script())
+	log.Println(sqlCmd.Args())
 	if encounteredError {
-		return sqlStmnt, errors.New(eb.String())
+		return sqlCmd, errors.New(eb.String())
 	}
 
-	return sqlStmnt, nil
+	return sqlCmd, nil
 }
