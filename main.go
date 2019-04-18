@@ -9,6 +9,7 @@ import (
 	"os"
 
 	c "github.com/cljohnson4343/scavenge/config"
+	"github.com/cljohnson4343/scavenge/db"
 	"github.com/cljohnson4343/scavenge/hunts"
 	"github.com/cljohnson4343/scavenge/teams"
 	"github.com/go-chi/chi"
@@ -28,13 +29,13 @@ func Routes(db *sql.DB) *chi.Mux {
 }
 
 func main() {
-	file, err := os.Open("./config/db_info.json")
+	file, err := os.Open("./db/db_info.json")
 	if err != nil {
 		log.Panicf("Error configuring db: %s\n", err.Error())
 	}
 	defer file.Close()
 
-	var dbConfig = new(c.DBConfig)
+	var dbConfig = new(db.DBConfig)
 	err = json.NewDecoder(file).Decode(&dbConfig)
 	if err != nil {
 		log.Panicf("Error decoding config file: %s\n", err.Error())
@@ -43,7 +44,7 @@ func main() {
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
 		dbConfig.Host, dbConfig.Port, dbConfig.User, dbConfig.Password, dbConfig.DBName)
 
-	db, err := c.NewDB(psqlInfo)
+	db, err := db.NewDB(psqlInfo)
 	if err != nil {
 		log.Panicf("Error initializing the db: %s\n", err.Error())
 	}

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	c "github.com/cljohnson4343/scavenge/config"
+	"github.com/cljohnson4343/scavenge/db"
 	"github.com/cljohnson4343/scavenge/hunts/models"
 )
 
@@ -50,7 +51,7 @@ func InsertItem(env *c.Env, item *models.Item, huntID int) (int, error) {
 	return id, err
 }
 
-func getUpsertItemsSQLStatement(huntID int, newItems []interface{}) (*c.SQLStatement, error) {
+func getUpsertItemsSQLStatement(huntID int, newItems []interface{}) (*db.SQLStatement, error) {
 	var eb, sqlValuesSB strings.Builder
 
 	eb.WriteString("Error updating items: \n")
@@ -64,7 +65,7 @@ func getUpsertItemsSQLStatement(huntID int, newItems []interface{}) (*c.SQLState
 	sqlValuesSB.WriteString("(")
 	inc := 1
 
-	sqlStmnt := new(c.SQLStatement)
+	sqlStmnt := new(db.SQLStatement)
 
 	for _, value := range newItems {
 		item, ok := value.(map[string]interface{})
@@ -163,9 +164,9 @@ func UpdateItem(env *c.Env, huntID, itemID int, partialItem *map[string]interfac
 	return nil
 }
 
-// getUpdateItemSQLStatement returns a c.SQLStatement struct for updating an item
+// getUpdateItemSQLStatement returns a db.SQLStatement struct for updating an item
 // NOTE: the hunt_id and the item_id are not editable
-func getUpdateItemSQLStatement(huntID int, itemID int, partialItem *map[string]interface{}) (*c.SQLStatement, error) {
+func getUpdateItemSQLStatement(huntID int, itemID int, partialItem *map[string]interface{}) (*db.SQLStatement, error) {
 	var eb, sqlB strings.Builder
 
 	sqlB.WriteString(`
@@ -175,7 +176,7 @@ func getUpdateItemSQLStatement(huntID int, itemID int, partialItem *map[string]i
 	eb.WriteString(fmt.Sprintf("error updating item %d:\n", itemID))
 	encounteredError := false
 
-	sqlStmnt := &c.SQLStatement{}
+	sqlStmnt := &db.SQLStatement{}
 
 	inc := 1
 	for k, v := range *partialItem {

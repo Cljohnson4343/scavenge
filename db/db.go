@@ -1,4 +1,4 @@
-package config
+package db
 
 import (
 	"database/sql"
@@ -6,13 +6,6 @@ import (
 
 	_ "github.com/lib/pq"
 )
-
-// Env is a custom type that wraps the database and allows for
-// methods to be added. It is needed to implement the DataStore
-// interfaces of the other packages.
-type Env struct {
-	db *sql.DB
-}
 
 // SQLStatement is a struct that keeps both a sql script and the associated values
 // for the script. It is meant to store everything database/sql package needs to
@@ -51,16 +44,6 @@ func (sqlStmnt *SQLStatement) Script() string {
 
 func (sqlStmnt *SQLStatement) Args() []interface{} {
 	return sqlStmnt.args
-}
-
-// DB returns the database
-func (env *Env) DB() *sql.DB {
-	return env.db
-}
-
-// CreateEnv instantiates a Env type
-func CreateEnv(db *sql.DB) *Env {
-	return &Env{db}
 }
 
 // DBConfig is a custom type to store info used to configure postgresql db

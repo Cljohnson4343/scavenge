@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	c "github.com/cljohnson4343/scavenge/config"
+	"github.com/cljohnson4343/scavenge/db"
 )
 
 // GetTeams populates the teams slice with all the teams
@@ -93,9 +94,9 @@ func InsertTeam(env *c.Env, team *Team, huntID int) (int, error) {
 	return id, err
 }
 
-// GetUpsertTeamsSQLStatement returns the c.SQLStatement that will update/insert the
+// GetUpsertTeamsSQLStatement returns the db.SQLStatement that will update/insert the
 // teams described by the slice parameter
-func GetUpsertTeamsSQLStatement(huntID int, newTeams []interface{}) (*c.SQLStatement, error) {
+func GetUpsertTeamsSQLStatement(huntID int, newTeams []interface{}) (*db.SQLStatement, error) {
 	var eb, sqlValuesSB strings.Builder
 
 	eb.WriteString("Error updating teams: \n")
@@ -109,7 +110,7 @@ func GetUpsertTeamsSQLStatement(huntID int, newTeams []interface{}) (*c.SQLState
 	sqlValuesSB.WriteString("(")
 	inc := 1
 
-	sqlStmnt := new(c.SQLStatement)
+	sqlStmnt := new(db.SQLStatement)
 
 	for _, value := range newTeams {
 		team, ok := value.(map[string]interface{})
@@ -195,9 +196,9 @@ func UpdateTeam(env *c.Env, teamID int, partialTeam *map[string]interface{}) err
 	return nil
 }
 
-// getUpdateTeamSQLStatement returns a c.SQLStatement struct for updating a team
+// getUpdateTeamSQLStatement returns a db.SQLStatement struct for updating a team
 // NOTE: the hunt_id and the team_id are not editable
-func getUpdateTeamSQLStatement(teamID int, partialTeam *map[string]interface{}) (*c.SQLStatement, error) {
+func getUpdateTeamSQLStatement(teamID int, partialTeam *map[string]interface{}) (*db.SQLStatement, error) {
 	var eb, sqlB strings.Builder
 
 	sqlB.WriteString(`
@@ -207,7 +208,7 @@ func getUpdateTeamSQLStatement(teamID int, partialTeam *map[string]interface{}) 
 	eb.WriteString(fmt.Sprintf("error updating team %d:\n", teamID))
 	encounteredError := false
 
-	sqlStmnt := &c.SQLStatement{}
+	sqlStmnt := &db.SQLStatement{}
 
 	inc := 1
 	for k, v := range *partialTeam {

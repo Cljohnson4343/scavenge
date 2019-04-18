@@ -7,6 +7,7 @@ import (
 	"time"
 
 	c "github.com/cljohnson4343/scavenge/config"
+	"github.com/cljohnson4343/scavenge/db"
 	"github.com/cljohnson4343/scavenge/teams"
 )
 
@@ -148,7 +149,7 @@ func UpdateHunt(env *c.Env, huntID int, partialHunt *map[string]interface{}) (bo
 	return true, tx.Commit()
 }
 
-func getUpdateHuntSQLStatement(huntID int, partialHunt *map[string]interface{}) (*[]*c.SQLStatement, error) {
+func getUpdateHuntSQLStatement(huntID int, partialHunt *map[string]interface{}) (*[]*db.SQLStatement, error) {
 	var eb, sqlb strings.Builder
 
 	eb.WriteString("Error updating hunt: \n")
@@ -159,8 +160,8 @@ func getUpdateHuntSQLStatement(huntID int, partialHunt *map[string]interface{}) 
 		eb.WriteString(errString)
 	}
 
-	sqlStmnts := make([]*c.SQLStatement, 0)
-	sqlStmnts = append(sqlStmnts, new(c.SQLStatement))
+	sqlStmnts := make([]*db.SQLStatement, 0)
+	sqlStmnts = append(sqlStmnts, new(db.SQLStatement))
 
 	sqlb.WriteString("\n\t\tUPDATE hunts\n\t\tSET")
 
