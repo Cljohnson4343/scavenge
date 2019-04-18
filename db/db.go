@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"strings"
 
+	// @TODO look into whether this blank import is necessary. GoLint seems to
+	// have a problem with it.
 	_ "github.com/lib/pq"
 )
 
@@ -42,8 +44,9 @@ func (sqlStmnt *SQLStatement) Script() string {
 	return sqlStmnt.script.String()
 }
 
+// Args returns a copy of the args slice.
 func (sqlStmnt *SQLStatement) Args() []interface{} {
-	return sqlStmnt.args
+	return sqlStmnt.args[:]
 }
 
 // Config is a custom type to store info used to configure postgresql db

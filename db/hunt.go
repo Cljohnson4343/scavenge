@@ -4,8 +4,7 @@ import (
 	"time"
 )
 
-// A HuntDB is the representation of a hunt from the database's
-// hunts table.
+// A HuntDB is the representation of a row from the hunts table
 //
 // swagger:model Hunt
 type HuntDB struct {
