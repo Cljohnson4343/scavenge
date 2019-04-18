@@ -8,8 +8,9 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/cljohnson4343/scavenge/config"
+	c "github.com/cljohnson4343/scavenge/config"
 	"github.com/cljohnson4343/scavenge/hunts"
+	"github.com/cljohnson4343/scavenge/teams"
 	"github.com/go-chi/chi"
 )
 
@@ -17,9 +18,10 @@ import (
 func Routes(db *sql.DB) *chi.Mux {
 	router := chi.NewRouter()
 
-	env := hunts.CreateEnv(db)
+	env := c.CreateEnv(db)
 	router.Route("/api/v0", func(r chi.Router) {
 		r.Mount("/hunts", hunts.Routes(env))
+		r.Mount("/teams", teams.Routes(env))
 	})
 
 	return router
@@ -32,7 +34,7 @@ func main() {
 	}
 	defer file.Close()
 
-	var dbConfig = new(config.DBConfig)
+	var dbConfig = new(c.DBConfig)
 	err = json.NewDecoder(file).Decode(&dbConfig)
 	if err != nil {
 		log.Panicf("Error decoding config file: %s\n", err.Error())
@@ -41,7 +43,7 @@ func main() {
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
 		dbConfig.Host, dbConfig.Port, dbConfig.User, dbConfig.Password, dbConfig.DBName)
 
-	db, err := config.NewDB(psqlInfo)
+	db, err := c.NewDB(psqlInfo)
 	if err != nil {
 		log.Panicf("Error initializing the db: %s\n", err.Error())
 	}

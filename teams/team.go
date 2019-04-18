@@ -1,4 +1,4 @@
-package models
+package teams
 
 // A Team is a representation of a Team
 //

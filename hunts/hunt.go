@@ -1,7 +1,10 @@
-package models
+package hunts
 
 import (
 	"time"
+
+	"github.com/cljohnson4343/scavenge/hunts/models"
+	"github.com/cljohnson4343/scavenge/teams"
 )
 
 // A Hunt is the representation of a scavenger hunt.
@@ -38,14 +41,20 @@ type Hunt struct {
 	// swagger:strfmt date
 	End time.Time `json:"end"`
 
+	// The creation time for the Hunt
+	//
+	// required: true
+	// swagger:strfmt date
+	CreationDate time.Time `json:"created_at"`
+
 	// the teams for this hunt
-	Teams []Team `json:"teams"`
+	Teams []teams.Team `json:"teams"`
 
 	// the items for this hunt
 	//
 	// min length: 1
-	Items []Item `json:"items"`
+	Items []models.Item `json:"items"`
 
 	// the location information for this hunt
-	Location Location `json:"location"`
+	Location models.Location `json:"location"`
 }

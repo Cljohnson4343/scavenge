@@ -25,46 +25,26 @@
 package hunts
 
 import (
-	"database/sql"
-
+	c "github.com/cljohnson4343/scavenge/config"
 	"github.com/go-chi/chi"
 )
 
-// Env is a custom type that wraps the database and allows for
-// methods to be added. It is needed to implement the HuntDataStore
-// interface.
-type Env struct {
-	db *sql.DB
-}
-
-// CreateEnv instantiates a Env type
-func CreateEnv(db *sql.DB) *Env {
-	return &Env{db}
-}
-
 // Routes returns a router that serves the hunts routes
-func Routes(env HuntDataStore) *chi.Mux {
+func Routes(env *c.Env) *chi.Mux {
 	router := chi.NewRouter()
 
 	// /hunts routes
-	router.Get("/", getHunts(env))
-	router.Get("/{huntID}", getHunt(env))
-	router.Post("/", createHunt(env))
-	router.Delete("/{huntID}", deleteHunt(env))
-	router.Patch("/{huntID}", patchHunt(env))
-
-	// /hunts/{huntID}/teams routes
-	router.Get("/{huntID}/teams/", getTeams(env))
-	router.Get("/{huntID}/teams/{teamID}", getTeam(env))
-	router.Delete("/{huntID}/teams/{teamID}", deleteTeam(env))
-	router.Post("/{huntID}/teams/", createTeam(env))
-	router.Patch("/{huntID}/teams/{teamID}", patchTeam(env))
+	router.Get("/", getHuntsHandler(env))
+	router.Get("/{huntID}", getHuntHandler(env))
+	router.Post("/", createHuntHandler(env))
+	router.Delete("/{huntID}", deleteHuntHandler(env))
+	router.Patch("/{huntID}", patchHuntHandler(env))
 
 	// /hunts/{huntID}/items routes
-	router.Get("/{huntID}/items/", getItems(env))
-	router.Delete("/{huntID}/items/{itemID}", deleteItem(env))
-	router.Post("/{huntID}/items/", createItem(env))
-	router.Patch("/{huntID}/items/{itemID}", patchItem(env))
+	router.Get("/{huntID}/items/", getItemsHandler(env))
+	router.Delete("/{huntID}/items/{itemID}", deleteItemHandler(env))
+	router.Post("/{huntID}/items/", createItemHandler(env))
+	router.Patch("/{huntID}/items/{itemID}", patchItemHandler(env))
 
 	return router
 }

@@ -5,13 +5,12 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/cljohnson4343/scavenge/hunts/models"
 	"github.com/go-chi/chi"
 )
 
 // mockDB needs to implement the HuntDataStore interface
 type mockDB struct {
-	db []*models.Hunt
+	db []*Hunt
 }
 
 func checkErr(err error, t *testing.T) {
