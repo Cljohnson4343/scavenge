@@ -14,10 +14,10 @@ type Hunt struct {
 	db.HuntDB
 
 	// the teams for this hunt
-	Teams []teams.Team `json:"teams"`
+	Teams []*teams.Team `json:"teams"`
 
 	// the items for this hunt
 	//
 	// min length: 1
-	Items []models.Item `json:"items"`
+	Items []*models.Item `json:"items"`
 }

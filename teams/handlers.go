@@ -1,11 +1,11 @@
 package teams
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 
 	c "github.com/cljohnson4343/scavenge/config"
+	"github.com/cljohnson4343/scavenge/request"
 	"github.com/cljohnson4343/scavenge/response"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
@@ -71,7 +71,6 @@ func getTeamHandler(env *c.Env) http.HandlerFunc {
 			return
 		}
 
-		(*team).ID = teamID
 		render.JSON(w, r, team)
 		return
 	})
@@ -128,28 +127,21 @@ func deleteTeamHandler(env *c.Env) http.HandlerFunc {
 //  500:
 func createTeamHandler(env *c.Env) http.HandlerFunc {
 	return (func(w http.ResponseWriter, r *http.Request) {
-		team := new(Team)
-		err := render.DecodeJSON(r.Body, team)
-		if err != nil {
-			e := response.NewError(fmt.Sprintf("error decoding request json: %s", err.Error()), http.StatusBadRequest)
-			e.Handle(w)
-			return
-		}
-
-		if team.HuntID < 1 {
-			e := response.NewError("'hunt_id' field is required for posting a team", http.StatusBadRequest)
-			e.Handle(w)
-			return
-		}
-
-		teamID, e := InsertTeam(env, team, team.HuntID)
+		team := Team{}
+		e := request.DecodeAndValidate(r, &team)
 		if e != nil {
 			e.Handle(w)
 			return
 		}
 
-		(*team).ID = teamID
-		render.JSON(w, r, team)
+		teamID, e := InsertTeam(env, &team, team.HuntID)
+		if e != nil {
+			e.Handle(w)
+			return
+		}
+
+		team.ID = teamID
+		render.JSON(w, r, &team)
 		return
 	})
 }

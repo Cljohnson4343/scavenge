@@ -1,14 +1,15 @@
 package hunts
 
 import (
-	"log"
 	"net/http"
 	"strconv"
 
+	"github.com/cljohnson4343/scavenge/request"
+
+	"github.com/cljohnson4343/scavenge/hunts/models"
 	"github.com/cljohnson4343/scavenge/response"
 
 	c "github.com/cljohnson4343/scavenge/config"
-	"github.com/cljohnson4343/scavenge/hunts/models"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 )
@@ -68,15 +69,15 @@ func getHuntHandler(env *c.Env) http.HandlerFunc {
 			return
 		}
 
-		hunt := new(Hunt)
-		e := GetHunt(env, hunt, huntID)
+		hunt := Hunt{}
+		e := GetHunt(env, &hunt, huntID)
 		if e != nil {
 			e.Handle(w)
 			return
 		}
 
-		(*hunt).ID = huntID
-		render.JSON(w, r, hunt)
+		hunt.ID = huntID
+		render.JSON(w, r, &hunt)
 		return
 	})
 }
@@ -98,19 +99,19 @@ func getHuntHandler(env *c.Env) http.HandlerFunc {
 //  400:
 func createHuntHandler(env *c.Env) http.HandlerFunc {
 	return (func(w http.ResponseWriter, r *http.Request) {
-		hunt := new(Hunt)
-		err := render.DecodeJSON(r.Body, hunt)
-		if err != nil {
-			e := response.NewError(err.Error(), http.StatusBadRequest)
+		hunt := Hunt{}
+		e := request.DecodeAndValidate(r, &hunt)
+		if e != nil {
 			e.Handle(w)
 			return
 		}
 
-		_, e := InsertHunt(env, hunt)
+		_, e = InsertHunt(env, &hunt)
 		if e != nil {
 			e.Handle(w)
 		}
 
+		render.JSON(w, r, &hunt)
 		return
 	})
 }
@@ -229,10 +230,9 @@ func getItemsHandler(env *c.Env) http.HandlerFunc {
 			return
 		}
 
-		items, err := GetItems(env, huntID)
-		if err != nil {
-			log.Printf("Failed to retrieve items for hunt %d: %s\n", huntID, err.Error())
-			w.WriteHeader(http.StatusInternalServerError)
+		items, e := GetItems(env, huntID)
+		if e != nil {
+			e.Handle(w)
 			return
 		}
 
@@ -306,22 +306,20 @@ func createItemHandler(env *c.Env) http.HandlerFunc {
 			return
 		}
 
-		item := new(models.Item)
-		err = render.DecodeJSON(r.Body, item)
-		if err != nil {
-			e := response.NewError(err.Error(), http.StatusBadRequest)
-			e.Handle(w)
-			return
-		}
-
-		itemID, e := InsertItem(env, item, huntID)
+		item := models.Item{}
+		e := request.DecodeAndValidate(r, &item)
 		if e != nil {
 			e.Handle(w)
 			return
 		}
 
-		(*item).ID = itemID
-		render.JSON(w, r, item)
+		_, e = InsertItem(env, &item, huntID)
+		if e != nil {
+			e.Handle(w)
+			return
+		}
+
+		render.JSON(w, r, &item)
 		return
 	})
 }

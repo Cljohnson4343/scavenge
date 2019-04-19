@@ -92,22 +92,21 @@ func InsertHunt(env *c.Env, hunt *Hunt) (int, *response.Error) {
 	sqlStmnt := `
 		INSERT INTO hunts(name, max_teams, start_time, end_time, location_name, latitude, longitude)
 		VALUES ($1, $2, $3, $4, $5, $6, $7)
-		RETURNING id AS hunt_id
+		RETURNING id, created_at;
 		`
 	// @TODO look into whether the row from queryrow needs to be closed
-	id := 0
 	err := env.QueryRow(sqlStmnt, hunt.Name, hunt.MaxTeams, hunt.StartTime,
 		hunt.EndTime, hunt.LocationName, hunt.Latitude,
-		hunt.Longitude).Scan(&id)
+		hunt.Longitude).Scan(&hunt.ID, &hunt.CreatedAt)
 	if err != nil {
-		return id, response.NewError(err.Error(), http.StatusInternalServerError)
+		return hunt.ID, response.NewError(err.Error(), http.StatusInternalServerError)
 	}
 
 	e := response.NewNilError()
 	// @TODO look into better error handling. Right now a failed team or item creation
 	// will skip and wipe the error
 	for _, v := range hunt.Teams {
-		_, teamErr := teams.InsertTeam(env, &v, id)
+		_, teamErr := teams.InsertTeam(env, v, hunt.ID)
 		if teamErr != nil {
 			e.AddError(teamErr.Error(), teamErr.Code())
 			break
@@ -115,14 +114,14 @@ func InsertHunt(env *c.Env, hunt *Hunt) (int, *response.Error) {
 	}
 
 	for _, v := range hunt.Items {
-		_, itemErr := InsertItem(env, &v, id)
+		_, itemErr := InsertItem(env, v, hunt.ID)
 		if itemErr != nil {
 			e.AddError(itemErr.Error(), itemErr.Code())
 			break
 		}
 	}
 
-	return id, e.GetError()
+	return hunt.ID, e.GetError()
 }
 
 // DeleteHunt deletes the hunt with the given ID. All associated data will also be deleted.

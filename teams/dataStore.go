@@ -45,7 +45,7 @@ func GetTeams(env *c.Env) (*[]Team, *response.Error) {
 
 // GetTeamsForHunt populates the teams slice with all the teams
 // of the given hunt
-func GetTeamsForHunt(env *c.Env, huntID int) (*[]Team, *response.Error) {
+func GetTeamsForHunt(env *c.Env, huntID int) (*[]*Team, *response.Error) {
 	sqlStmnt := `
 		SELECT name, id, hunt_id FROM teams WHERE hunt_id = $1;`
 
@@ -55,18 +55,16 @@ func GetTeamsForHunt(env *c.Env, huntID int) (*[]Team, *response.Error) {
 	}
 	defer rows.Close()
 
-	teams := new([]Team)
-
+	teams := make([]*Team, 0)
 	e := response.NewNilError()
-
-	team := Team{}
 	for rows.Next() {
+		team := Team{}
 		err = rows.Scan(&team.Name, &team.ID, &team.HuntID)
 		if err != nil {
 			e.AddError(err.Error(), http.StatusInternalServerError)
 		}
 
-		*teams = append(*teams, team)
+		teams = append(teams, &team)
 	}
 
 	err = rows.Err()
@@ -74,7 +72,7 @@ func GetTeamsForHunt(env *c.Env, huntID int) (*[]Team, *response.Error) {
 		e.AddError(err.Error(), http.StatusInternalServerError)
 	}
 
-	return teams, e.GetError()
+	return &teams, e.GetError()
 }
 
 // GetTeam returns the Team with the given ID
@@ -96,15 +94,14 @@ func InsertTeam(env *c.Env, team *Team, huntID int) (int, *response.Error) {
 	sqlStmnt := `
 		INSERT INTO teams(hunt_id, name)
 		VALUES ($1, $2)
-		RETURNING id`
+		RETURNING id, hunt_id`
 
-	id := 0
-	err := env.QueryRow(sqlStmnt, huntID, team.Name).Scan(&id)
+	err := env.QueryRow(sqlStmnt, huntID, team.Name).Scan(&team.ID, &team.HuntID)
 	if err != nil {
 		return 0, response.NewError(err.Error(), http.StatusBadRequest)
 	}
 
-	return id, nil
+	return team.ID, nil
 }
 
 // GetUpsertTeamsSQLCommand returns the pgsql.Command that will update/insert the

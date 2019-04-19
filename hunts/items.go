@@ -13,7 +13,7 @@ import (
 )
 
 // GetItems returns the items for the given hunt
-func GetItems(env *c.Env, huntID int) (*[]models.Item, *response.Error) {
+func GetItems(env *c.Env, huntID int) (*[]*models.Item, *response.Error) {
 	sqlStmnt := `
 		SELECT name, points, id FROM items WHERE items.hunt_id = $1;`
 
@@ -24,9 +24,9 @@ func GetItems(env *c.Env, huntID int) (*[]models.Item, *response.Error) {
 	defer rows.Close()
 
 	e := response.NewNilError()
-	items := new([]models.Item)
-	item := models.Item{}
+	items := make([]*models.Item, 0)
 	for rows.Next() {
+		item := models.Item{}
 		err = rows.Scan(&item.Name, &item.Points, &item.ID)
 		if err != nil {
 			e.AddError(err.Error(), http.StatusInternalServerError)
@@ -34,15 +34,15 @@ func GetItems(env *c.Env, huntID int) (*[]models.Item, *response.Error) {
 		}
 
 		item.HuntID = huntID
-		*items = append(*items, item)
+		items = append(items, &item)
 	}
 
 	err = rows.Err()
 	if err != nil {
-		return items, response.NewError(err.Error(), http.StatusInternalServerError)
+		return &items, response.NewError(err.Error(), http.StatusInternalServerError)
 	}
 
-	return items, e.GetError()
+	return &items, e.GetError()
 }
 
 // InsertItem inserts an Item into the db
@@ -50,10 +50,10 @@ func InsertItem(env *c.Env, item *models.Item, huntID int) (int, *response.Error
 	sqlStmnt := `
 		INSERT INTO items(hunt_id, name, points)
 		VALUES ($1, $2, $3)
-		RETURNING id`
+		RETURNING id, hunt_id;`
 
 	id := 0
-	err := env.QueryRow(sqlStmnt, huntID, item.Name, item.Points).Scan(&id)
+	err := env.QueryRow(sqlStmnt, huntID, item.Name, item.Points).Scan(&item.ID, &item.HuntID)
 	if err != nil {
 		return id, response.NewError(err.Error(), http.StatusInternalServerError)
 	}

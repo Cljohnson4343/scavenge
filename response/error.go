@@ -99,7 +99,15 @@ func (err *Error) AddError(msg string, httpCode int) {
 		err.code = httpCode
 	}
 
-	err.WriteString(fmt.Sprintf("; %s", msg))
+	// handle the case where NewNilError was used and there isn't a msg
+	// in the buffer
+	var sep string
+	if err.Len() == 0 {
+		sep = ""
+	} else {
+		sep = "; "
+	}
+	err.WriteString(fmt.Sprintf("%s%s", sep, msg))
 }
 
 // LowestPriorityCode returns an int that will always be overridden when AddError()
