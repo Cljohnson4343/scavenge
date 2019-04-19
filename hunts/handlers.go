@@ -30,7 +30,7 @@ import (
 // Responses:
 // 	200:
 //  500:
-func getHuntsHandler(env *c.Env) func(http.ResponseWriter, *http.Request) {
+func getHuntsHandler(env *c.Env) http.HandlerFunc {
 	return (func(w http.ResponseWriter, r *http.Request) {
 		hunts, e := AllHunts(env)
 		if e != nil {
@@ -59,7 +59,7 @@ func getHuntsHandler(env *c.Env) func(http.ResponseWriter, *http.Request) {
 // 	200:
 // 	404:
 //  400:
-func getHuntHandler(env *c.Env) func(http.ResponseWriter, *http.Request) {
+func getHuntHandler(env *c.Env) http.HandlerFunc {
 	return (func(w http.ResponseWriter, r *http.Request) {
 		huntID, err := strconv.Atoi(chi.URLParam(r, "huntID"))
 		if err != nil {
@@ -96,7 +96,7 @@ func getHuntHandler(env *c.Env) func(http.ResponseWriter, *http.Request) {
 // Responses:
 // 	200:
 //  400:
-func createHuntHandler(env *c.Env) func(http.ResponseWriter, *http.Request) {
+func createHuntHandler(env *c.Env) http.HandlerFunc {
 	return (func(w http.ResponseWriter, r *http.Request) {
 		hunt := new(Hunt)
 		err := render.DecodeJSON(r.Body, hunt)
@@ -130,7 +130,7 @@ func createHuntHandler(env *c.Env) func(http.ResponseWriter, *http.Request) {
 // Responses:
 // 	200:
 //  400:
-func deleteHuntHandler(env *c.Env) func(http.ResponseWriter, *http.Request) {
+func deleteHuntHandler(env *c.Env) http.HandlerFunc {
 	return (func(w http.ResponseWriter, r *http.Request) {
 		huntID, err := strconv.Atoi(chi.URLParam(r, "huntID"))
 		if err != nil {
@@ -170,7 +170,7 @@ func deleteHuntHandler(env *c.Env) func(http.ResponseWriter, *http.Request) {
 // 	400:
 // 	404:
 // 	500:
-func patchHuntHandler(env *c.Env) func(http.ResponseWriter, *http.Request) {
+func patchHuntHandler(env *c.Env) http.HandlerFunc {
 	return (func(w http.ResponseWriter, r *http.Request) {
 		huntID, err := strconv.Atoi(chi.URLParam(r, "huntID"))
 		if err != nil {
@@ -180,7 +180,7 @@ func patchHuntHandler(env *c.Env) func(http.ResponseWriter, *http.Request) {
 		}
 
 		partialHunt := make(map[string]interface{})
-		err = render.DecodeJSON(r.Body, &partialHunt)
+		err = render.DecodeJSON(r.Body, partialHunt)
 		if err != nil {
 			e := response.NewError(err.Error(), http.StatusBadRequest)
 			e.Handle(w)
@@ -220,7 +220,7 @@ func patchHuntHandler(env *c.Env) func(http.ResponseWriter, *http.Request) {
 // 	200:
 // 	400:
 //  500:
-func getItemsHandler(env *c.Env) func(http.ResponseWriter, *http.Request) {
+func getItemsHandler(env *c.Env) http.HandlerFunc {
 	return (func(w http.ResponseWriter, r *http.Request) {
 		huntID, err := strconv.Atoi(chi.URLParam(r, "huntID"))
 		if err != nil {
@@ -256,7 +256,7 @@ func getItemsHandler(env *c.Env) func(http.ResponseWriter, *http.Request) {
 // Responses:
 // 	200:
 //  400:
-func deleteItemHandler(env *c.Env) func(http.ResponseWriter, *http.Request) {
+func deleteItemHandler(env *c.Env) http.HandlerFunc {
 	return (func(w http.ResponseWriter, r *http.Request) {
 		huntID, err := strconv.Atoi(chi.URLParam(r, "huntID"))
 		if err != nil {
@@ -297,7 +297,7 @@ func deleteItemHandler(env *c.Env) func(http.ResponseWriter, *http.Request) {
 // 	200:
 //  400:
 //  500:
-func createItemHandler(env *c.Env) func(http.ResponseWriter, *http.Request) {
+func createItemHandler(env *c.Env) http.HandlerFunc {
 	return (func(w http.ResponseWriter, r *http.Request) {
 		huntID, err := strconv.Atoi(chi.URLParam(r, "huntID"))
 		if err != nil {
@@ -347,7 +347,7 @@ func createItemHandler(env *c.Env) func(http.ResponseWriter, *http.Request) {
 // Responses:
 // 	200:
 // 	400:
-func patchItemHandler(env *c.Env) func(http.ResponseWriter, *http.Request) {
+func patchItemHandler(env *c.Env) http.HandlerFunc {
 	return (func(w http.ResponseWriter, r *http.Request) {
 		huntID, err := strconv.Atoi(chi.URLParam(r, "huntID"))
 		if err != nil {

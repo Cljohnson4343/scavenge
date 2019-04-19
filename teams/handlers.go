@@ -27,7 +27,7 @@ import (
 // 	200:
 // 	400:
 //  500:
-func getTeamsHandler(env *c.Env) func(http.ResponseWriter, *http.Request) {
+func getTeamsHandler(env *c.Env) http.HandlerFunc {
 	return (func(w http.ResponseWriter, r *http.Request) {
 		teams, e := GetTeams(env)
 		if e != nil {
@@ -56,7 +56,7 @@ func getTeamsHandler(env *c.Env) func(http.ResponseWriter, *http.Request) {
 // 	200:
 // 	400:
 // 	404:
-func getTeamHandler(env *c.Env) func(http.ResponseWriter, *http.Request) {
+func getTeamHandler(env *c.Env) http.HandlerFunc {
 	return (func(w http.ResponseWriter, r *http.Request) {
 		teamID, err := strconv.Atoi(chi.URLParam(r, "teamID"))
 		if err != nil {
@@ -92,7 +92,7 @@ func getTeamHandler(env *c.Env) func(http.ResponseWriter, *http.Request) {
 // Responses:
 // 	200:
 //  400:
-func deleteTeamHandler(env *c.Env) func(http.ResponseWriter, *http.Request) {
+func deleteTeamHandler(env *c.Env) http.HandlerFunc {
 	return (func(w http.ResponseWriter, r *http.Request) {
 		teamID, err := strconv.Atoi(chi.URLParam(r, "teamID"))
 		if err != nil {
@@ -126,7 +126,7 @@ func deleteTeamHandler(env *c.Env) func(http.ResponseWriter, *http.Request) {
 // 	200:
 //  400:
 //  500:
-func createTeamHandler(env *c.Env) func(http.ResponseWriter, *http.Request) {
+func createTeamHandler(env *c.Env) http.HandlerFunc {
 	return (func(w http.ResponseWriter, r *http.Request) {
 		team := new(Team)
 		err := render.DecodeJSON(r.Body, team)
@@ -175,7 +175,7 @@ func createTeamHandler(env *c.Env) func(http.ResponseWriter, *http.Request) {
 // Responses:
 // 	200:
 // 	400:
-func patchTeamHandler(env *c.Env) func(http.ResponseWriter, *http.Request) {
+func patchTeamHandler(env *c.Env) http.HandlerFunc {
 	return (func(w http.ResponseWriter, r *http.Request) {
 		teamID, err := strconv.Atoi(chi.URLParam(r, "teamID"))
 		if err != nil {
