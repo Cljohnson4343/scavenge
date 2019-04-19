@@ -28,19 +28,19 @@ func AllHunts(env *c.Env) ([]*Hunt, *response.Error) {
 		err = rows.Scan(&hunt.ID, &hunt.Name, &hunt.MaxTeams, &hunt.StartTime, &hunt.EndTime,
 			&hunt.Latitude, &hunt.Longitude, &hunt.LocationName, &hunt.CreatedAt)
 		if err != nil {
-			e.AddError(err.Error(), http.StatusInternalServerError)
+			e.Add(err.Error(), http.StatusInternalServerError)
 			break
 		}
 
 		teams, teamErr := teams.GetTeamsForHunt(env, hunt.ID)
 		if teamErr != nil {
-			e.AddError(teamErr.Error(), teamErr.Code())
+			e.Add(teamErr.Error(), teamErr.Code())
 		}
 		hunt.Teams = *teams
 
 		items, itemErr := GetItems(env, hunt.ID)
 		if itemErr != nil {
-			e.AddError(itemErr.Error(), itemErr.Code())
+			e.Add(itemErr.Error(), itemErr.Code())
 		}
 		hunt.Items = *items
 
@@ -49,7 +49,7 @@ func AllHunts(env *c.Env) ([]*Hunt, *response.Error) {
 
 	err = rows.Err()
 	if err != nil {
-		e.AddError(err.Error(), http.StatusInternalServerError)
+		e.Add(err.Error(), http.StatusInternalServerError)
 	}
 
 	return hunts, e.GetError()
@@ -72,14 +72,14 @@ func GetHunt(env *c.Env, hunt *Hunt, huntID int) *response.Error {
 	// get items
 	teams, teamErr := teams.GetTeamsForHunt(env, huntID)
 	if teamErr != nil {
-		e.AddError(teamErr.Error(), teamErr.Code())
+		e.Add(teamErr.Error(), teamErr.Code())
 	} else {
 		hunt.Teams = *teams
 	}
 
 	items, itemErr := GetItems(env, huntID)
 	if itemErr != nil {
-		e.AddError(itemErr.Error(), itemErr.Code())
+		e.Add(itemErr.Error(), itemErr.Code())
 	} else {
 		hunt.Items = *items
 	}
@@ -108,7 +108,7 @@ func InsertHunt(env *c.Env, hunt *Hunt) (int, *response.Error) {
 	for _, v := range hunt.Teams {
 		_, teamErr := teams.InsertTeam(env, v, hunt.ID)
 		if teamErr != nil {
-			e.AddError(teamErr.Error(), teamErr.Code())
+			e.Add(teamErr.Error(), teamErr.Code())
 			break
 		}
 	}
@@ -116,7 +116,7 @@ func InsertHunt(env *c.Env, hunt *Hunt) (int, *response.Error) {
 	for _, v := range hunt.Items {
 		_, itemErr := InsertItem(env, v, hunt.ID)
 		if itemErr != nil {
-			e.AddError(itemErr.Error(), itemErr.Code())
+			e.Add(itemErr.Error(), itemErr.Code())
 			break
 		}
 	}
@@ -183,7 +183,7 @@ func getUpdateHuntSQLCommand(huntID int, partialHunt *map[string]interface{}) (*
 		case "name":
 			newName, ok := v.(string)
 			if !ok {
-				e.AddError("name field has to be type string", http.StatusBadRequest)
+				e.Add("name field has to be type string", http.StatusBadRequest)
 				break
 			}
 			sqlb.WriteString(fmt.Sprintf(" name=$%d,", inc))
@@ -192,7 +192,7 @@ func getUpdateHuntSQLCommand(huntID int, partialHunt *map[string]interface{}) (*
 		case "max_teams":
 			newMax, ok := v.(float64)
 			if !ok {
-				e.AddError("max_teams field has to be type float64", http.StatusBadRequest)
+				e.Add("max_teams field has to be type float64", http.StatusBadRequest)
 				break
 			}
 			sqlb.WriteString(fmt.Sprintf(" max_teams=$%d,", inc))
@@ -202,14 +202,14 @@ func getUpdateHuntSQLCommand(huntID int, partialHunt *map[string]interface{}) (*
 		case "start_time":
 			newStart, ok := v.(string)
 			if !ok {
-				e.AddError("start_time field has to be type float64", http.StatusBadRequest)
+				e.Add("start_time field has to be type float64", http.StatusBadRequest)
 				break
 
 			}
 
 			startTime, err := time.Parse(time.RFC3339, newStart)
 			if err != nil {
-				e.AddError(err.Error(), http.StatusBadRequest)
+				e.Add(err.Error(), http.StatusBadRequest)
 				break
 			}
 
@@ -220,12 +220,12 @@ func getUpdateHuntSQLCommand(huntID int, partialHunt *map[string]interface{}) (*
 		case "end_time":
 			newEnd, ok := v.(string)
 			if !ok {
-				e.AddError("end_time field has to be of type string", http.StatusBadRequest)
+				e.Add("end_time field has to be of type string", http.StatusBadRequest)
 				break
 			}
 			endTime, err := time.Parse(time.RFC3339, newEnd)
 			if err != nil {
-				e.AddError(err.Error(), http.StatusBadRequest)
+				e.Add(err.Error(), http.StatusBadRequest)
 				break
 			}
 
@@ -236,13 +236,13 @@ func getUpdateHuntSQLCommand(huntID int, partialHunt *map[string]interface{}) (*
 		case "teams":
 			newTeams, ok := v.([]interface{})
 			if !ok {
-				e.AddError("teams field is invalid", http.StatusBadRequest)
+				e.Add("teams field is invalid", http.StatusBadRequest)
 				break
 			}
 
 			newTeamsCmd, teamErr := teams.GetUpsertTeamsSQLCommand(huntID, newTeams)
 			if teamErr != nil {
-				e.AddError(teamErr.Error(), teamErr.Code())
+				e.Add(teamErr.Error(), teamErr.Code())
 				break
 			}
 
@@ -251,14 +251,14 @@ func getUpdateHuntSQLCommand(huntID int, partialHunt *map[string]interface{}) (*
 		case "items":
 			newItems, ok := v.([]interface{})
 			if !ok {
-				e.AddError("items field is invalid", http.StatusBadRequest)
+				e.Add("items field is invalid", http.StatusBadRequest)
 				break
 			}
 
 			// @TODO think about how to handle the case where an error is thrown(should we try partial execution?)
 			newItemsCmd, itemErr := getUpsertItemsSQLStatement(huntID, newItems)
 			if itemErr != nil {
-				e.AddError(itemErr.Error(), itemErr.Code())
+				e.Add(itemErr.Error(), itemErr.Code())
 				break
 			}
 
@@ -267,7 +267,7 @@ func getUpdateHuntSQLCommand(huntID int, partialHunt *map[string]interface{}) (*
 		case "location_name":
 			locName, ok := v.(string)
 			if !ok {
-				e.AddError("location_name field has to be of type string", http.StatusBadRequest)
+				e.Add("location_name field has to be of type string", http.StatusBadRequest)
 				break
 			}
 
@@ -278,7 +278,7 @@ func getUpdateHuntSQLCommand(huntID int, partialHunt *map[string]interface{}) (*
 		case "latitude":
 			lat, ok := v.(float64)
 			if !ok {
-				e.AddError("latitude field has to be of type float64", http.StatusBadRequest)
+				e.Add("latitude field has to be of type float64", http.StatusBadRequest)
 				break
 			}
 
@@ -289,7 +289,7 @@ func getUpdateHuntSQLCommand(huntID int, partialHunt *map[string]interface{}) (*
 		case "longitude":
 			lon, ok := v.(float64)
 			if !ok {
-				e.AddError("longitude field has to be of type float64", http.StatusBadRequest)
+				e.Add("longitude field has to be of type float64", http.StatusBadRequest)
 				break
 			}
 

@@ -46,7 +46,7 @@ type HuntDB struct {
 	//
 	// required: true
 	// swagger:strfmt date
-	CreatedAt time.Time `json:"created_at" valid:"isNil~created_at: can not be specified,optional"`
+	CreatedAt time.Time `json:"created_at" valid:"-"`
 
 	// The name of the location of the Hunt
 	//

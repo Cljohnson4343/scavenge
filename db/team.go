@@ -1,6 +1,7 @@
 package db
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -66,6 +67,25 @@ func (t *TeamDB) Validate(r *http.Request) *response.Error {
 	_, err := govalidator.ValidateStruct(t)
 	if err != nil {
 		return response.NewError(err.Error(), http.StatusBadRequest)
+	}
+
+	return nil
+}
+
+// ValidateWithoutHuntID is a special case func for when the HuntID isn't
+// required.
+func (t *TeamDB) ValidateWithoutHuntID(r *http.Request) *response.Error {
+	_, err := govalidator.ValidateStruct(t)
+	errMap := govalidator.ErrorsByField(err)
+
+	delete(errMap, "hunt_id")
+
+	if len(errMap) > 0 {
+		e := response.NewNilError()
+		for k, v := range errMap {
+			e.Add(fmt.Sprintf("%s: %s", k, v), http.StatusBadRequest)
+		}
+		return e
 	}
 
 	return nil

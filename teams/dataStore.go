@@ -29,7 +29,7 @@ func GetTeams(env *c.Env) (*[]Team, *response.Error) {
 	for rows.Next() {
 		err = rows.Scan(&team.Name, &team.ID, &team.HuntID)
 		if err != nil {
-			e.AddError(err.Error(), http.StatusInternalServerError)
+			e.Add(err.Error(), http.StatusInternalServerError)
 		}
 
 		*teams = append(*teams, team)
@@ -37,7 +37,7 @@ func GetTeams(env *c.Env) (*[]Team, *response.Error) {
 
 	err = rows.Err()
 	if err != nil {
-		e.AddError(err.Error(), http.StatusInternalServerError)
+		e.Add(err.Error(), http.StatusInternalServerError)
 	}
 
 	return teams, e.GetError()
@@ -61,7 +61,7 @@ func GetTeamsForHunt(env *c.Env, huntID int) (*[]*Team, *response.Error) {
 		team := Team{}
 		err = rows.Scan(&team.Name, &team.ID, &team.HuntID)
 		if err != nil {
-			e.AddError(err.Error(), http.StatusInternalServerError)
+			e.Add(err.Error(), http.StatusInternalServerError)
 		}
 
 		teams = append(teams, &team)
@@ -69,7 +69,7 @@ func GetTeamsForHunt(env *c.Env, huntID int) (*[]*Team, *response.Error) {
 
 	err = rows.Err()
 	if err != nil {
-		e.AddError(err.Error(), http.StatusInternalServerError)
+		e.Add(err.Error(), http.StatusInternalServerError)
 	}
 
 	return &teams, e.GetError()
@@ -116,19 +116,19 @@ func GetUpsertTeamsSQLCommand(huntID int, newTeams []interface{}) (*pgsql.Comman
 	for k, value := range newTeams {
 		team, ok := value.(map[string]interface{})
 		if !ok {
-			e.AddError(fmt.Sprintf("request json is invalid. Check the %d indexed team.", k), http.StatusBadRequest)
+			e.Add(fmt.Sprintf("request json is invalid. Check the %d indexed team.", k), http.StatusBadRequest)
 			break
 		}
 
 		v, ok := team["name"]
 		if !ok {
-			e.AddError("the name field is required", http.StatusBadRequest)
+			e.Add("the name field is required", http.StatusBadRequest)
 			break
 		}
 
 		name, ok := v.(string)
 		if !ok {
-			e.AddError("name field should be of type string", http.StatusBadRequest)
+			e.Add("name field should be of type string", http.StatusBadRequest)
 			break
 		}
 
@@ -210,7 +210,7 @@ func getUpdateTeamSQLCommand(teamID int, partialTeam *map[string]interface{}) (*
 		case "name":
 			newName, ok := v.(string)
 			if !ok {
-				e.AddError("name field has to be of type string", http.StatusBadRequest)
+				e.Add("name field has to be of type string", http.StatusBadRequest)
 			}
 
 			sqlB.WriteString(fmt.Sprintf("name=$%d,", inc))

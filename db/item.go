@@ -39,16 +39,15 @@ type ItemDB struct {
 
 // Validate validates a ItemDB struct
 func (i *ItemDB) Validate(r *http.Request) *response.Error {
-	huntID, err := strconv.Atoi(chi.URLParam(r, "huntID"))
-	if err != nil {
-		return response.NewError(err.Error(), http.StatusBadRequest)
-	}
+	// it is possible to get here without the huntID parameter being specified so don't catch
+	// the Atoi error
+	huntID, _ := strconv.Atoi(chi.URLParam(r, "huntID"))
 
 	e := response.NewNilError()
 
 	// make sure HuntID is either 0, client prob didn't specify it, or == to URL hunt_id
 	if huntID != i.HuntID && i.HuntID != 0 {
-		e.AddError("hunt_id: field must either be the same as the URL huntID or not specified", http.StatusBadRequest)
+		e.Add("hunt_id: field must either be the same as the URL huntID or not specified", http.StatusBadRequest)
 	}
 
 	// set points to default if they weren't specified
@@ -58,7 +57,7 @@ func (i *ItemDB) Validate(r *http.Request) *response.Error {
 
 	_, structErr := govalidator.ValidateStruct(i)
 	if structErr != nil {
-		e.AddError(structErr.Error(), http.StatusBadRequest)
+		e.Add(structErr.Error(), http.StatusBadRequest)
 	}
 
 	return e.GetError()

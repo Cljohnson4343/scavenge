@@ -29,7 +29,7 @@ func GetItems(env *c.Env, huntID int) (*[]*models.Item, *response.Error) {
 		item := models.Item{}
 		err = rows.Scan(&item.Name, &item.Points, &item.ID)
 		if err != nil {
-			e.AddError(err.Error(), http.StatusInternalServerError)
+			e.Add(err.Error(), http.StatusInternalServerError)
 			break
 		}
 
@@ -71,31 +71,31 @@ func getUpsertItemsSQLStatement(huntID int, newItems []interface{}) (*pgsql.Comm
 	for _, value := range newItems {
 		item, ok := value.(map[string]interface{})
 		if !ok {
-			e.AddError("request json is not valid", http.StatusBadRequest)
+			e.Add("request json is not valid", http.StatusBadRequest)
 			break
 		}
 
 		v, ok := item["name"]
 		if !ok {
-			e.AddError("name field is required", http.StatusBadRequest)
+			e.Add("name field is required", http.StatusBadRequest)
 			break
 		}
 
 		name, ok := v.(string)
 		if !ok {
-			e.AddError("name field has to be a string", http.StatusBadRequest)
+			e.Add("name field has to be a string", http.StatusBadRequest)
 			break
 		}
 
 		ptsV, ok := item["points"]
 		if !ok {
-			e.AddError("points field is required", http.StatusBadRequest)
+			e.Add("points field is required", http.StatusBadRequest)
 			break
 		}
 
 		pts, ok := ptsV.(float64)
 		if !ok {
-			e.AddError("points field has to be a float64 > 0", http.StatusBadRequest)
+			e.Add("points field has to be a float64 > 0", http.StatusBadRequest)
 			break
 		}
 
@@ -177,7 +177,7 @@ func getUpdateItemSQLCommand(huntID int, itemID int, partialItem *map[string]int
 		case "name":
 			newName, ok := v.(string)
 			if !ok {
-				e.AddError("name field has to be of type string", http.StatusBadRequest)
+				e.Add("name field has to be of type string", http.StatusBadRequest)
 				break
 			}
 
@@ -188,7 +188,7 @@ func getUpdateItemSQLCommand(huntID int, itemID int, partialItem *map[string]int
 		case "points":
 			newPts, ok := v.(float64)
 			if !ok {
-				e.AddError("points field has to be of type float64", http.StatusBadRequest)
+				e.Add("points field has to be of type float64", http.StatusBadRequest)
 				break
 			}
 

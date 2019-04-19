@@ -47,7 +47,7 @@ func NewError(msg string, httpCode int) *Error {
 //		err = rows.Scan(&team.Name, &team.ID, &team.HuntID)
 //		if err != nil {
 //			encounteredErr = true
-//			e.AddError(err.Error(), http.StatusInternalServerError)
+//			e.Add(err.Error(), http.StatusInternalServerError)
 //		}
 //
 //		*teams = append(*teams, team)
@@ -65,7 +65,7 @@ func NewError(msg string, httpCode int) *Error {
 //	for rows.Next() {
 //		err = rows.Scan(&team.Name, &team.ID, &team.HuntID)
 //		if err != nil {
-//			e.AddError(err.Error(), http.StatusInternalServerError)
+//			e.Add(err.Error(), http.StatusInternalServerError)
 //		}
 //
 //		*teams = append(*teams, team)
@@ -88,12 +88,12 @@ func (err *Error) GetError() *Error {
 	return nil
 }
 
-// AddError adds an additional error to the Error. The msg
+// Add adds an additional error to the Error. The msg
 // will be appended to the generated json's 'detail' field. The
 // Error's http status code might be updated depending on
 // priority. Each Error only has one status code with more
 // general codes being given higher priority.
-func (err *Error) AddError(msg string, httpCode int) {
+func (err *Error) Add(msg string, httpCode int) {
 	err.flag = true
 	if err.code > httpCode {
 		err.code = httpCode
@@ -110,7 +110,12 @@ func (err *Error) AddError(msg string, httpCode int) {
 	err.WriteString(fmt.Sprintf("%s%s", sep, msg))
 }
 
-// LowestPriorityCode returns an int that will always be overridden when AddError()
+// AddError is a convenience func for Add()
+func (err *Error) AddError(e *Error) {
+	err.Add(e.Error(), e.Code())
+}
+
+// LowestPriorityCode returns an int that will always be overridden when Add()
 // is used.
 const LowestPriorityCode = math.MaxInt32
 
