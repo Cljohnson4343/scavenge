@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/cljohnson4343/scavenge/response"
+
 	c "github.com/cljohnson4343/scavenge/config"
 	"github.com/cljohnson4343/scavenge/hunts/models"
 	"github.com/go-chi/chi"
@@ -30,10 +32,9 @@ import (
 //  500:
 func getHuntsHandler(env *c.Env) func(http.ResponseWriter, *http.Request) {
 	return (func(w http.ResponseWriter, r *http.Request) {
-		hunts, err := AllHunts(env)
-		if err != nil {
-			log.Printf("Failed to retrieve hunts: %s\n", err.Error())
-			w.WriteHeader(http.StatusInternalServerError)
+		hunts, e := AllHunts(env)
+		if e != nil {
+			e.Handle(w)
 			return
 		}
 
@@ -62,15 +63,15 @@ func getHuntHandler(env *c.Env) func(http.ResponseWriter, *http.Request) {
 	return (func(w http.ResponseWriter, r *http.Request) {
 		huntID, err := strconv.Atoi(chi.URLParam(r, "huntID"))
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
+			e := response.NewError(err.Error(), http.StatusBadRequest)
+			e.Handle(w)
 			return
 		}
 
 		hunt := new(Hunt)
-		err = GetHunt(env, hunt, huntID)
-		if err != nil {
-			w.WriteHeader(http.StatusNotFound)
-			w.Write([]byte("Oops! No such hunt."))
+		e := GetHunt(env, hunt, huntID)
+		if e != nil {
+			e.Handle(w)
 			return
 		}
 
@@ -100,15 +101,14 @@ func createHuntHandler(env *c.Env) func(http.ResponseWriter, *http.Request) {
 		hunt := new(Hunt)
 		err := render.DecodeJSON(r.Body, hunt)
 		if err != nil {
-			log.Printf("error decoding request: %s\n", err.Error())
-			w.WriteHeader(http.StatusBadRequest)
+			e := response.NewError(err.Error(), http.StatusBadRequest)
+			e.Handle(w)
 			return
 		}
 
-		_, err = InsertHunt(env, hunt)
-		if err != nil {
-			log.Printf("Unable to create hunt: %s\n", err.Error())
-			return
+		_, e := InsertHunt(env, hunt)
+		if e != nil {
+			e.Handle(w)
 		}
 
 		return
@@ -134,13 +134,14 @@ func deleteHuntHandler(env *c.Env) func(http.ResponseWriter, *http.Request) {
 	return (func(w http.ResponseWriter, r *http.Request) {
 		huntID, err := strconv.Atoi(chi.URLParam(r, "huntID"))
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
+			e := response.NewError(err.Error(), http.StatusBadRequest)
+			e.Handle(w)
 			return
 		}
 
-		err = DeleteHunt(env, huntID)
-		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
+		e := DeleteHunt(env, huntID)
+		if e != nil {
+			e.Handle(w)
 		}
 
 		return
@@ -173,27 +174,28 @@ func patchHuntHandler(env *c.Env) func(http.ResponseWriter, *http.Request) {
 	return (func(w http.ResponseWriter, r *http.Request) {
 		huntID, err := strconv.Atoi(chi.URLParam(r, "huntID"))
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
+			e := response.NewError(err.Error(), http.StatusBadRequest)
+			e.Handle(w)
 			return
 		}
 
 		partialHunt := make(map[string]interface{})
 		err = render.DecodeJSON(r.Body, &partialHunt)
 		if err != nil {
-			log.Printf("Unable to patch hunt: %s\n", err.Error())
-			w.WriteHeader(http.StatusBadRequest)
+			e := response.NewError(err.Error(), http.StatusBadRequest)
+			e.Handle(w)
 			return
 		}
 
-		rowsAffected, err := UpdateHunt(env, huntID, &partialHunt)
-		if err != nil {
-			log.Printf("Error patching hunt: %s\n", err.Error())
-			w.WriteHeader(http.StatusInternalServerError)
+		rowsAffected, e := UpdateHunt(env, huntID, &partialHunt)
+		if e != nil {
+			e.Handle(w)
 			return
 		}
 
 		if !rowsAffected {
-			w.WriteHeader(http.StatusNotFound)
+			e := response.NewError("cannot patch a hunt that doesn't exist", http.StatusBadRequest)
+			e.Handle(w)
 			return
 		}
 
@@ -222,7 +224,8 @@ func getItemsHandler(env *c.Env) func(http.ResponseWriter, *http.Request) {
 	return (func(w http.ResponseWriter, r *http.Request) {
 		huntID, err := strconv.Atoi(chi.URLParam(r, "huntID"))
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
+			e := response.NewError(err.Error(), http.StatusBadRequest)
+			e.Handle(w)
 			return
 		}
 
@@ -257,22 +260,21 @@ func deleteItemHandler(env *c.Env) func(http.ResponseWriter, *http.Request) {
 	return (func(w http.ResponseWriter, r *http.Request) {
 		huntID, err := strconv.Atoi(chi.URLParam(r, "huntID"))
 		if err != nil {
-			log.Printf("error deleting item: %s\n", err.Error())
-			w.WriteHeader(http.StatusBadRequest)
+			e := response.NewError(err.Error(), http.StatusBadRequest)
+			e.Handle(w)
 			return
 		}
 
 		itemID, err := strconv.Atoi(chi.URLParam(r, "itemID"))
 		if err != nil {
-			log.Printf("error deleting item: %s\n", err.Error())
-			w.WriteHeader(http.StatusBadRequest)
+			e := response.NewError(err.Error(), http.StatusBadRequest)
+			e.Handle(w)
 			return
 		}
 
-		err = DeleteItem(env, huntID, itemID)
-		if err != nil {
-			log.Printf("error deleting item: %s\n", err.Error())
-			w.WriteHeader(http.StatusBadRequest)
+		e := DeleteItem(env, huntID, itemID)
+		if e != nil {
+			e.Handle(w)
 		}
 
 		return
@@ -299,23 +301,22 @@ func createItemHandler(env *c.Env) func(http.ResponseWriter, *http.Request) {
 	return (func(w http.ResponseWriter, r *http.Request) {
 		huntID, err := strconv.Atoi(chi.URLParam(r, "huntID"))
 		if err != nil {
-			log.Printf("Error creating item: %s\n", err.Error())
-			w.WriteHeader(http.StatusBadRequest)
+			e := response.NewError(err.Error(), http.StatusBadRequest)
+			e.Handle(w)
 			return
 		}
 
 		item := new(models.Item)
 		err = render.DecodeJSON(r.Body, item)
 		if err != nil {
-			log.Printf("Unable to create item: %s\n", err.Error())
-			w.WriteHeader(http.StatusBadRequest)
+			e := response.NewError(err.Error(), http.StatusBadRequest)
+			e.Handle(w)
 			return
 		}
 
-		itemID, err := InsertItem(env, item, huntID)
-		if err != nil {
-			log.Printf("Error creating a item: %s\n", err.Error())
-			w.WriteHeader(http.StatusInternalServerError)
+		itemID, e := InsertItem(env, item, huntID)
+		if e != nil {
+			e.Handle(w)
 			return
 		}
 
@@ -350,31 +351,29 @@ func patchItemHandler(env *c.Env) func(http.ResponseWriter, *http.Request) {
 	return (func(w http.ResponseWriter, r *http.Request) {
 		huntID, err := strconv.Atoi(chi.URLParam(r, "huntID"))
 		if err != nil {
-			log.Printf("error updating item: %s\n", err.Error())
-			w.WriteHeader(http.StatusBadRequest)
+			e := response.NewError(err.Error(), http.StatusBadRequest)
+			e.Handle(w)
 			return
 		}
 
 		itemID, err := strconv.Atoi(chi.URLParam(r, "itemID"))
 		if err != nil {
-			log.Printf("error updating item: %s\n", err.Error())
-			w.WriteHeader(http.StatusBadRequest)
+			e := response.NewError(err.Error(), http.StatusBadRequest)
+			e.Handle(w)
 			return
 		}
 
 		partialItem := make(map[string]interface{})
 		err = render.DecodeJSON(r.Body, &partialItem)
 		if err != nil {
-			log.Printf("error updating item: %s\n", err.Error())
-			w.WriteHeader(http.StatusBadRequest)
+			e := response.NewError(err.Error(), http.StatusBadRequest)
+			e.Handle(w)
 			return
 		}
 
-		err = UpdateItem(env, huntID, itemID, &partialItem)
-		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			log.Printf("error updating item: %s\n", err.Error())
-			return
+		e := UpdateItem(env, huntID, itemID, &partialItem)
+		if e != nil {
+			e.Handle(w)
 		}
 
 		return

@@ -1,10 +1,12 @@
 package hunts
 
 import (
-	"errors"
 	"fmt"
+	"net/http"
 	"strings"
 	"time"
+
+	"github.com/cljohnson4343/scavenge/response"
 
 	c "github.com/cljohnson4343/scavenge/config"
 	"github.com/cljohnson4343/scavenge/db"
@@ -12,31 +14,33 @@ import (
 )
 
 // AllHunts returns all Hunts from the database
-func AllHunts(env *c.Env) ([]*Hunt, error) {
+func AllHunts(env *c.Env) ([]*Hunt, *response.Error) {
 	rows, err := env.Query("SELECT id, name, max_teams, start_time, end_time, latitude, longitude, location_name, created_at FROM hunts;")
 	if err != nil {
-		return nil, err
+		return nil, response.NewError(err.Error(), http.StatusInternalServerError)
 	}
 	defer rows.Close()
 
+	e := response.NewNilError()
 	hunts := make([]*Hunt, 0)
 	for rows.Next() {
 		hunt := new(Hunt)
 		err = rows.Scan(&hunt.ID, &hunt.Name, &hunt.MaxTeams, &hunt.StartTime, &hunt.EndTime,
 			&hunt.Latitude, &hunt.Longitude, &hunt.LocationName, &hunt.CreatedAt)
 		if err != nil {
-			return nil, err
+			e.AddError(err.Error(), http.StatusInternalServerError)
+			break
 		}
 
-		teams, err := teams.GetTeamsForHunt(env, hunt.ID)
-		if err != nil {
-			return nil, err
+		teams, teamErr := teams.GetTeamsForHunt(env, hunt.ID)
+		if teamErr != nil {
+			e.AddError(teamErr.Error(), teamErr.Code())
 		}
 		hunt.Teams = *teams
 
-		items, err := GetItems(env, hunt.ID)
-		if err != nil {
-			return nil, err
+		items, itemErr := GetItems(env, hunt.ID)
+		if itemErr != nil {
+			e.AddError(itemErr.Error(), itemErr.Code())
 		}
 		hunt.Items = *items
 
@@ -44,12 +48,15 @@ func AllHunts(env *c.Env) ([]*Hunt, error) {
 	}
 
 	err = rows.Err()
+	if err != nil {
+		e.AddError(err.Error(), http.StatusInternalServerError)
+	}
 
-	return hunts, err
+	return hunts, e.GetError()
 }
 
 // GetHunt returns a pointer to the hunt with the given ID.
-func GetHunt(env *c.Env, hunt *Hunt, huntID int) error {
+func GetHunt(env *c.Env, hunt *Hunt, huntID int) *response.Error {
 	sqlStmnt := `
 		SELECT name, max_teams, start_time, end_time, latitude, longitude, location_name, created_at FROM hunts
 		WHERE hunts.id = $1;`
@@ -57,28 +64,31 @@ func GetHunt(env *c.Env, hunt *Hunt, huntID int) error {
 	err := env.QueryRow(sqlStmnt, huntID).Scan(&hunt.Name, &hunt.MaxTeams, &hunt.StartTime,
 		&hunt.EndTime, &hunt.Latitude, &hunt.Longitude, &hunt.LocationName, &hunt.CreatedAt)
 	if err != nil {
-		return err
+		return response.NewError(err.Error(), http.StatusBadRequest)
 	}
 
+	e := response.NewNilError()
 	// @TODO make sure geteams doesnt return an error if no teams are found. we need to still
 	// get items
-	teams, err := teams.GetTeamsForHunt(env, huntID)
-	if err != nil {
-		return err
+	teams, teamErr := teams.GetTeamsForHunt(env, huntID)
+	if teamErr != nil {
+		e.AddError(teamErr.Error(), teamErr.Code())
+	} else {
+		hunt.Teams = *teams
 	}
-	hunt.Teams = *teams
 
-	items, err := GetItems(env, huntID)
-	if err != nil {
-		return err
+	items, itemErr := GetItems(env, huntID)
+	if itemErr != nil {
+		e.AddError(itemErr.Error(), itemErr.Code())
+	} else {
+		hunt.Items = *items
 	}
-	hunt.Items = *items
 
-	return err
+	return e.GetError()
 }
 
 // InsertHunt inserts the given hunt into the database and returns the id of the inserted hunt
-func InsertHunt(env *c.Env, hunt *Hunt) (int, error) {
+func InsertHunt(env *c.Env, hunt *Hunt) (int, *response.Error) {
 	sqlStmnt := `
 		INSERT INTO hunts(name, max_teams, start_time, end_time, location_name, latitude, longitude)
 		VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -90,50 +100,57 @@ func InsertHunt(env *c.Env, hunt *Hunt) (int, error) {
 		hunt.EndTime, hunt.LocationName, hunt.Latitude,
 		hunt.Longitude).Scan(&id)
 	if err != nil {
-		return id, err
+		return id, response.NewError(err.Error(), http.StatusInternalServerError)
 	}
 
+	e := response.NewNilError()
 	// @TODO look into better error handling. Right now a failed team or item creation
 	// will skip and wipe the error
 	for _, v := range hunt.Teams {
-		_, err = teams.InsertTeam(env, &v, id)
-		if err != nil {
+		_, teamErr := teams.InsertTeam(env, &v, id)
+		if teamErr != nil {
+			e.AddError(teamErr.Error(), teamErr.Code())
 			break
 		}
 	}
 
 	for _, v := range hunt.Items {
-		_, err = InsertItem(env, &v, id)
-		if err != nil {
+		_, itemErr := InsertItem(env, &v, id)
+		if itemErr != nil {
+			e.AddError(itemErr.Error(), itemErr.Code())
 			break
 		}
 	}
 
-	return id, err
+	return id, e.GetError()
 }
 
 // DeleteHunt deletes the hunt with the given ID. All associated data will also be deleted.
-func DeleteHunt(env *c.Env, huntID int) error {
+func DeleteHunt(env *c.Env, huntID int) *response.Error {
 	sqlStmnt := `
 		DELETE FROM hunts
 		WHERE hunts.id = $1`
 
 	_, err := env.Exec(sqlStmnt, huntID)
-	return err
+	if err != nil {
+		return response.NewError(err.Error(), http.StatusInternalServerError)
+	}
+
+	return nil
 }
 
 // UpdateHunt updates the hunt with the given ID using the fields that are not nil in the
 // partial hunt. If the hunt was updated then true will be returned. id field can not be
 // updated.
-func UpdateHunt(env *c.Env, huntID int, partialHunt *map[string]interface{}) (bool, error) {
-	sqlCmds, err := getUpdateHuntSQLCommand(huntID, partialHunt)
-	if err != nil {
-		return false, err
+func UpdateHunt(env *c.Env, huntID int, partialHunt *map[string]interface{}) (bool, *response.Error) {
+	sqlCmds, e := getUpdateHuntSQLCommand(huntID, partialHunt)
+	if e != nil {
+		return false, e
 	}
 
 	tx, err := env.Begin()
 	if err != nil {
-		return false, err
+		return false, response.NewError(err.Error(), http.StatusInternalServerError)
 	}
 
 	// attempt to execute all the statements in this transaction
@@ -141,36 +158,33 @@ func UpdateHunt(env *c.Env, huntID int, partialHunt *map[string]interface{}) (bo
 		_, err := v.Exec(tx)
 		if err != nil {
 			tx.Rollback()
-			return false, err
+			return false, response.NewError(err.Error(), http.StatusInternalServerError)
 		}
 	}
 
-	return true, tx.Commit()
+	err = tx.Commit()
+	if err != nil {
+		return false, response.NewError(err.Error(), http.StatusInternalServerError)
+	}
+
+	return true, nil
 }
 
-func getUpdateHuntSQLCommand(huntID int, partialHunt *map[string]interface{}) (*[]*db.SQLCommand, error) {
-	var eb, sqlb strings.Builder
-
-	eb.WriteString("Error updating hunt: \n")
-	encounteredError := false
-
-	handleErr := func(errString string) {
-		encounteredError = true
-		eb.WriteString(errString)
-	}
+func getUpdateHuntSQLCommand(huntID int, partialHunt *map[string]interface{}) (*[]*db.SQLCommand, *response.Error) {
+	var sqlb strings.Builder
+	sqlb.WriteString("\n\t\tUPDATE hunts\n\t\tSET")
 
 	sqlCmds := make([]*db.SQLCommand, 0)
 	sqlCmds = append(sqlCmds, new(db.SQLCommand))
 
-	sqlb.WriteString("\n\t\tUPDATE hunts\n\t\tSET")
-
+	e := response.NewNilError()
 	inc := 1
 	for k, v := range *partialHunt {
 		switch k {
 		case "name":
 			newName, ok := v.(string)
 			if !ok {
-				handleErr(fmt.Sprintf("Expected name to be of type string but got %T\n", v))
+				e.AddError("name field has to be type string", http.StatusBadRequest)
 				break
 			}
 			sqlb.WriteString(fmt.Sprintf(" name=$%d,", inc))
@@ -179,24 +193,24 @@ func getUpdateHuntSQLCommand(huntID int, partialHunt *map[string]interface{}) (*
 		case "max_teams":
 			newMax, ok := v.(float64)
 			if !ok {
-				handleErr(fmt.Sprintf("Expected max_teams to be of type float64 but got %T\n", v))
+				e.AddError("max_teams field has to be type float64", http.StatusBadRequest)
 				break
 			}
 			sqlb.WriteString(fmt.Sprintf(" max_teams=$%d,", inc))
 			inc++
 			sqlCmds[0].AppendArgs(int(newMax))
 
-		case "start":
+		case "start_time":
 			newStart, ok := v.(string)
 			if !ok {
-				handleErr(fmt.Sprintf("Expected start to be of type string but got %T\n", v))
+				e.AddError("start_time field has to be type float64", http.StatusBadRequest)
 				break
 
 			}
 
 			startTime, err := time.Parse(time.RFC3339, newStart)
 			if err != nil {
-				handleErr(fmt.Sprintf("%s\n", err.Error()))
+				e.AddError(err.Error(), http.StatusBadRequest)
 				break
 			}
 
@@ -204,15 +218,15 @@ func getUpdateHuntSQLCommand(huntID int, partialHunt *map[string]interface{}) (*
 			inc++
 			sqlCmds[0].AppendArgs(startTime)
 
-		case "end":
+		case "end_time":
 			newEnd, ok := v.(string)
 			if !ok {
-				handleErr(fmt.Sprintf("Expected end to be of type string but got %T\n", v))
+				e.AddError("end_time field has to be of type string", http.StatusBadRequest)
 				break
 			}
 			endTime, err := time.Parse(time.RFC3339, newEnd)
 			if err != nil {
-				handleErr(fmt.Sprintf("%s\n", err.Error()))
+				e.AddError(err.Error(), http.StatusBadRequest)
 				break
 			}
 
@@ -223,14 +237,13 @@ func getUpdateHuntSQLCommand(huntID int, partialHunt *map[string]interface{}) (*
 		case "teams":
 			newTeams, ok := v.([]interface{})
 			if !ok {
-				handleErr(fmt.Sprintf("Expected teams to be of type []interface{} but got %T\n", v))
+				e.AddError("teams field is invalid", http.StatusBadRequest)
 				break
 			}
 
-			// @TODO think about how to handle the case where an error is thrown(should we try partial execution?)
-			newTeamsCmd, err := teams.GetUpsertTeamsSQLCommand(huntID, newTeams)
-			if err != nil {
-				handleErr(fmt.Sprintf("%s\n", err.Error()))
+			newTeamsCmd, teamErr := teams.GetUpsertTeamsSQLCommand(huntID, newTeams)
+			if teamErr != nil {
+				e.AddError(teamErr.Error(), teamErr.Code())
 				break
 			}
 
@@ -239,50 +252,51 @@ func getUpdateHuntSQLCommand(huntID int, partialHunt *map[string]interface{}) (*
 		case "items":
 			newItems, ok := v.([]interface{})
 			if !ok {
-				handleErr(fmt.Sprintf("Expected items to be of type []interface{} but got %T\n", v))
+				e.AddError("items field is invalid", http.StatusBadRequest)
 				break
 			}
 
 			// @TODO think about how to handle the case where an error is thrown(should we try partial execution?)
-			newItemsCmd, err := getUpsertItemsSQLStatement(huntID, newItems)
-			if err != nil {
-				handleErr(fmt.Sprintf("%s\n", err.Error()))
+			newItemsCmd, itemErr := getUpsertItemsSQLStatement(huntID, newItems)
+			if itemErr != nil {
+				e.AddError(itemErr.Error(), itemErr.Code())
 				break
 			}
 
 			sqlCmds = append(sqlCmds, newItemsCmd)
 
-		case "location":
-			partialLoc, ok := v.(map[string]interface{})
+		case "location_name":
+			locName, ok := v.(string)
 			if !ok {
-				handleErr(fmt.Sprintf("Expected location to be of type map[string]interface{} but got %T\n", v))
+				e.AddError("location_name field has to be of type string", http.StatusBadRequest)
 				break
 			}
 
-			locName, ok := partialLoc["name"].(string)
-			if ok {
-				sqlb.WriteString(fmt.Sprintf(" location_name=$%d,", inc))
-				inc++
-				sqlCmds[0].AppendArgs(locName)
+			sqlb.WriteString(fmt.Sprintf(" location_name=$%d,", inc))
+			inc++
+			sqlCmds[0].AppendArgs(locName)
+
+		case "latitude":
+			lat, ok := v.(float64)
+			if !ok {
+				e.AddError("latitude field has to be of type float64", http.StatusBadRequest)
+				break
 			}
 
-			coords, ok := partialLoc["coords"].(map[string]interface{})
-			if ok {
-				lat, ok := coords["latitude"].(float64)
-				if ok {
-					sqlb.WriteString(fmt.Sprintf(" latitude=$%d,", inc))
-					inc++
-					sqlCmds[0].AppendArgs(lat)
-				}
-				lon, ok := coords["longitude"].(float64)
-				if ok {
-					sqlb.WriteString(fmt.Sprintf(" longitude=$%d,", inc))
-					inc++
-					sqlCmds[0].AppendArgs(lon)
-				}
+			sqlb.WriteString(fmt.Sprintf(" latitude=$%d,", inc))
+			inc++
+			sqlCmds[0].AppendArgs(lat)
+
+		case "longitude":
+			lon, ok := v.(float64)
+			if !ok {
+				e.AddError("longitude field has to be of type float64", http.StatusBadRequest)
+				break
 			}
 
-		default:
+			sqlb.WriteString(fmt.Sprintf(" longitude=$%d,", inc))
+			inc++
+			sqlCmds[0].AppendArgs(lon)
 		}
 	}
 
@@ -290,9 +304,5 @@ func getUpdateHuntSQLCommand(huntID int, partialHunt *map[string]interface{}) (*
 	sqlCmds[0].AppendScript(fmt.Sprintf("%s\n\t\tWHERE id = $%d", sqlb.String()[0:l-1], inc))
 	sqlCmds[0].AppendArgs(huntID)
 
-	if encounteredError {
-		return &sqlCmds, errors.New(eb.String())
-	}
-
-	return &sqlCmds, nil
+	return &sqlCmds, e.GetError()
 }

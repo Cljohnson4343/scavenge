@@ -1,9 +1,11 @@
 package hunts
 
 import (
-	"errors"
 	"fmt"
+	"net/http"
 	"strings"
+
+	"github.com/cljohnson4343/scavenge/response"
 
 	c "github.com/cljohnson4343/scavenge/config"
 	"github.com/cljohnson4343/scavenge/db"
@@ -11,22 +13,24 @@ import (
 )
 
 // GetItems returns the items for the given hunt
-func GetItems(env *c.Env, huntID int) (*[]models.Item, error) {
+func GetItems(env *c.Env, huntID int) (*[]models.Item, *response.Error) {
 	sqlStmnt := `
 		SELECT name, points, id FROM items WHERE items.hunt_id = $1;`
 
 	rows, err := env.Query(sqlStmnt, huntID)
 	if err != nil {
-		return nil, err
+		return nil, response.NewError(err.Error(), http.StatusInternalServerError)
 	}
 	defer rows.Close()
 
+	e := response.NewNilError()
 	items := new([]models.Item)
 	item := models.Item{}
 	for rows.Next() {
 		err = rows.Scan(&item.Name, &item.Points, &item.ID)
 		if err != nil {
-			return nil, err
+			e.AddError(err.Error(), http.StatusInternalServerError)
+			break
 		}
 
 		item.HuntID = huntID
@@ -34,12 +38,15 @@ func GetItems(env *c.Env, huntID int) (*[]models.Item, error) {
 	}
 
 	err = rows.Err()
+	if err != nil {
+		return items, response.NewError(err.Error(), http.StatusInternalServerError)
+	}
 
-	return items, err
+	return items, e.GetError()
 }
 
 // InsertItem inserts an Item into the db
-func InsertItem(env *c.Env, item *models.Item, huntID int) (int, error) {
+func InsertItem(env *c.Env, item *models.Item, huntID int) (int, *response.Error) {
 	sqlStmnt := `
 		INSERT INTO items(hunt_id, name, points)
 		VALUES ($1, $2, $3)
@@ -47,93 +54,83 @@ func InsertItem(env *c.Env, item *models.Item, huntID int) (int, error) {
 
 	id := 0
 	err := env.QueryRow(sqlStmnt, huntID, item.Name, item.Points).Scan(&id)
-
-	return id, err
-}
-
-func getUpsertItemsSQLStatement(huntID int, newItems []interface{}) (*db.SQLCommand, error) {
-	var eb, sqlValuesSB strings.Builder
-
-	eb.WriteString("Error updating items: \n")
-	encounteredError := false
-
-	handleErr := func(errString string) {
-		encounteredError = true
-		eb.WriteString(errString)
+	if err != nil {
+		return id, response.NewError(err.Error(), http.StatusInternalServerError)
 	}
 
+	return id, nil
+}
+
+func getUpsertItemsSQLStatement(huntID int, newItems []interface{}) (*db.SQLCommand, *response.Error) {
+	var sqlValuesSB strings.Builder
 	sqlValuesSB.WriteString("(")
 	inc := 1
 
-	sqlStmnt := new(db.SQLCommand)
-
+	sqlCmd := new(db.SQLCommand)
+	e := response.NewNilError()
 	for _, value := range newItems {
 		item, ok := value.(map[string]interface{})
 		if !ok {
-			handleErr(fmt.Sprintf("Expected newItems to be type map[string]interface{} but got %T\n", value))
+			e.AddError("request json is not valid", http.StatusBadRequest)
 			break
 		}
 
 		v, ok := item["name"]
 		if !ok {
-			handleErr("Expected a name value for items.\n")
+			e.AddError("name field is required", http.StatusBadRequest)
 			break
 		}
 
 		name, ok := v.(string)
 		if !ok {
-			handleErr(fmt.Sprintf("Expected a name type of string but got %T\n", v))
+			e.AddError("name field has to be a string", http.StatusBadRequest)
 			break
 		}
 
 		ptsV, ok := item["points"]
 		if !ok {
-			handleErr(fmt.Sprintf("Expected a points value for item with name %s\n", name))
+			e.AddError("points field is required", http.StatusBadRequest)
 			break
 		}
 
 		pts, ok := ptsV.(float64)
 		if !ok {
-			handleErr(fmt.Sprintf("Expected a points type of float64 but got %T for item with name %s\n", ptsV, name))
-			pts = 1
+			e.AddError("points field has to be a float64 > 0", http.StatusBadRequest)
+			break
 		}
 
-		// make sure all validation is done before writing to sqlValueSB and adding to sqlStmnt.args
+		// make sure all validation is done before writing to sqlValueSB and adding to sqlCmd.args
 		sqlValuesSB.WriteString(fmt.Sprintf("$%d, $%d, $%d),(", inc, inc+1, inc+2))
 		inc += 3
-		sqlStmnt.AppendArgs(huntID, name, int(pts))
+		sqlCmd.AppendArgs(huntID, name, int(pts))
 	}
 
 	// drop the extra ',(' from value string
 	valuesStr := (sqlValuesSB.String())[:sqlValuesSB.Len()-2]
 
-	sqlStmnt.AppendScript(fmt.Sprintf("\n\tINSERT INTO items(hunt_id, name, points)\n\tVALUES\n\t\t%s\n\tON CONFLICT ON CONSTRAINT items_in_same_hunt_name\n\tDO\n\t\tUPDATE\n\t\tSET name = EXCLUDED.name, points = EXCLUDED.points;", valuesStr))
+	sqlCmd.AppendScript(fmt.Sprintf("\n\tINSERT INTO items(hunt_id, name, points)\n\tVALUES\n\t\t%s\n\tON CONFLICT ON CONSTRAINT items_in_same_hunt_name\n\tDO\n\t\tUPDATE\n\t\tSET name = EXCLUDED.name, points = EXCLUDED.points;", valuesStr))
 
-	if encounteredError {
-		return sqlStmnt, errors.New(eb.String())
-	}
-
-	return sqlStmnt, nil
+	return sqlCmd, e.GetError()
 }
 
 // DeleteItem deletes the item with the given itemID AND huntID
-func DeleteItem(env *c.Env, huntID, itemID int) error {
+func DeleteItem(env *c.Env, huntID, itemID int) *response.Error {
 	sqlStmnt := `
 		DELETE FROM items
 		WHERE id = $1 AND hunt_id = $2;`
 
 	res, err := env.Exec(sqlStmnt, itemID, huntID)
 	if err != nil {
-		return err
+		return response.NewError(err.Error(), http.StatusInternalServerError)
 	}
 
 	numRows, err := res.RowsAffected()
 	if err != nil {
-		return err
+		return response.NewError(err.Error(), http.StatusInternalServerError)
 	}
 
 	if numRows < 1 {
-		return fmt.Errorf("hunt w/ id %d does not have an item w/ id %d", huntID, itemID)
+		return response.NewError("hunt does not have an item with that id", http.StatusBadRequest)
 	}
 
 	return nil
@@ -141,24 +138,24 @@ func DeleteItem(env *c.Env, huntID, itemID int) error {
 
 // UpdateItem executes a partial update of the item with the given id. NOTE:
 // item_id and hunt_id are not eligible to be changed
-func UpdateItem(env *c.Env, huntID, itemID int, partialItem *map[string]interface{}) error {
-	sqlStmnt, err := getUpdateItemSQLCommand(huntID, itemID, partialItem)
-	if err != nil {
-		return err
+func UpdateItem(env *c.Env, huntID, itemID int, partialItem *map[string]interface{}) *response.Error {
+	sqlCmd, e := getUpdateItemSQLCommand(huntID, itemID, partialItem)
+	if e != nil {
+		return e
 	}
 
-	res, err := sqlStmnt.Exec(env)
+	res, err := sqlCmd.Exec(env)
 	if err != nil {
-		return err
+		return response.NewError(err.Error(), http.StatusInternalServerError)
 	}
 
 	n, err := res.RowsAffected()
 	if err != nil {
-		return err
+		return response.NewError(err.Error(), http.StatusInternalServerError)
 	}
 
 	if n < 1 {
-		return errors.New("the item was not updated. Check the URL and request body to make sure itemID and huntID are valid")
+		return response.NewError("make sure that huntID and teamID are valid", http.StatusBadRequest)
 	}
 
 	return nil
@@ -166,56 +163,46 @@ func UpdateItem(env *c.Env, huntID, itemID int, partialItem *map[string]interfac
 
 // getUpdateItemSQLCommand returns a db.SQLCommand struct for updating an item
 // NOTE: the hunt_id and the item_id are not editable
-func getUpdateItemSQLCommand(huntID int, itemID int, partialItem *map[string]interface{}) (*db.SQLCommand, error) {
-	var eb, sqlB strings.Builder
-
+func getUpdateItemSQLCommand(huntID int, itemID int, partialItem *map[string]interface{}) (*db.SQLCommand, *response.Error) {
+	var sqlB strings.Builder
 	sqlB.WriteString(`
 		UPDATE items
 		SET `)
 
-	eb.WriteString(fmt.Sprintf("error updating item %d:\n", itemID))
-	encounteredError := false
-
-	sqlStmnt := &db.SQLCommand{}
-
+	sqlCmd := &db.SQLCommand{}
+	e := response.NewNilError()
 	inc := 1
 	for k, v := range *partialItem {
 		switch k {
 		case "name":
 			newName, ok := v.(string)
 			if !ok {
-				eb.WriteString(fmt.Sprintf("expected name to be of type string but got %T\n", v))
-				encounteredError = true
+				e.AddError("name field has to be of type string", http.StatusBadRequest)
 				break
 			}
 
 			sqlB.WriteString(fmt.Sprintf("name=$%d,", inc))
 			inc++
-			sqlStmnt.AppendArgs(newName)
+			sqlCmd.AppendArgs(newName)
 
 		case "points":
 			newPts, ok := v.(float64)
 			if !ok {
-				eb.WriteString(fmt.Sprintf("expected points to be of type float64 but got %T\n", v))
-				encounteredError = true
+				e.AddError("points field has to be of type float64", http.StatusBadRequest)
 				break
 			}
 
 			sqlB.WriteString(fmt.Sprintf("points=$%d,", inc))
 			inc++
-			sqlStmnt.AppendArgs(int(newPts))
+			sqlCmd.AppendArgs(int(newPts))
 		}
 	}
 
 	// cut the trailing comma
 	sqlStrLen := sqlB.Len()
-	sqlStmnt.AppendScript(fmt.Sprintf("%s\n\t\tWHERE id = $%d AND hunt_id = $%d;",
+	sqlCmd.AppendScript(fmt.Sprintf("%s\n\t\tWHERE id = $%d AND hunt_id = $%d;",
 		sqlB.String()[:sqlStrLen-1], inc, inc+1))
-	sqlStmnt.AppendArgs(itemID, huntID)
+	sqlCmd.AppendArgs(itemID, huntID)
 
-	if encounteredError {
-		return sqlStmnt, errors.New(eb.String())
-	}
-
-	return sqlStmnt, nil
+	return sqlCmd, e.GetError()
 }

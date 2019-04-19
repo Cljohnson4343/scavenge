@@ -1,88 +1,98 @@
 package teams
 
 import (
-	"errors"
 	"fmt"
-	"log"
+	"net/http"
 	"strings"
 
 	c "github.com/cljohnson4343/scavenge/config"
 	"github.com/cljohnson4343/scavenge/db"
+	"github.com/cljohnson4343/scavenge/response"
 )
 
 // GetTeams populates the teams slice with all the teams
-func GetTeams(env *c.Env) (*[]Team, error) {
+func GetTeams(env *c.Env) (*[]Team, *response.Error) {
 	sqlStmnt := `
 		SELECT name, id, hunt_id FROM teams;`
 
 	rows, err := env.Query(sqlStmnt)
 	if err != nil {
-		return nil, err
+		return nil, response.NewError(err.Error(), http.StatusBadRequest)
 	}
 	defer rows.Close()
 
 	teams := new([]Team)
 
+	e := response.NewNilError()
+
 	team := Team{}
 	for rows.Next() {
 		err = rows.Scan(&team.Name, &team.ID, &team.HuntID)
 		if err != nil {
-			return nil, err
+			e.AddError(err.Error(), http.StatusInternalServerError)
 		}
 
 		*teams = append(*teams, team)
 	}
 
 	err = rows.Err()
+	if err != nil {
+		e.AddError(err.Error(), http.StatusInternalServerError)
+	}
 
-	return teams, err
+	return teams, e.GetError()
 }
 
 // GetTeamsForHunt populates the teams slice with all the teams
 // of the given hunt
-func GetTeamsForHunt(env *c.Env, huntID int) (*[]Team, error) {
+func GetTeamsForHunt(env *c.Env, huntID int) (*[]Team, *response.Error) {
 	sqlStmnt := `
 		SELECT name, id, hunt_id FROM teams WHERE hunt_id = $1;`
 
 	rows, err := env.Query(sqlStmnt, huntID)
 	if err != nil {
-		return nil, err
+		return nil, response.NewError(err.Error(), http.StatusInternalServerError)
 	}
 	defer rows.Close()
 
 	teams := new([]Team)
 
+	e := response.NewNilError()
+
 	team := Team{}
 	for rows.Next() {
 		err = rows.Scan(&team.Name, &team.ID, &team.HuntID)
 		if err != nil {
-			return nil, err
+			e.AddError(err.Error(), http.StatusInternalServerError)
 		}
 
 		*teams = append(*teams, team)
 	}
 
 	err = rows.Err()
+	if err != nil {
+		e.AddError(err.Error(), http.StatusInternalServerError)
+	}
 
-	return teams, err
+	return teams, e.GetError()
 }
 
 // GetTeam returns the Team with the given ID
-func GetTeam(env *c.Env, teamID int) (*Team, error) {
+func GetTeam(env *c.Env, teamID int) (*Team, *response.Error) {
 	sqlStmnt := `
 		SELECT name, hunt_id, id FROM teams WHERE teams.id = $1;`
 
 	team := new(Team)
 	err := env.QueryRow(sqlStmnt, teamID).Scan(&team.Name, &team.HuntID, &team.ID)
 	if err != nil {
-		return nil, err
+		return nil, response.NewError(err.Error(), http.StatusBadRequest)
 	}
 
 	return team, nil
 }
 
 // InsertTeam inserts a Team into the db
-func InsertTeam(env *c.Env, team *Team, huntID int) (int, error) {
+func InsertTeam(env *c.Env, team *Team, huntID int) (int, *response.Error) {
 	sqlStmnt := `
 		INSERT INTO teams(hunt_id, name)
 		VALUES ($1, $2)
@@ -90,44 +100,38 @@ func InsertTeam(env *c.Env, team *Team, huntID int) (int, error) {
 
 	id := 0
 	err := env.QueryRow(sqlStmnt, huntID, team.Name).Scan(&id)
+	if err != nil {
+		return 0, response.NewError(err.Error(), http.StatusBadRequest)
+	}
 
-	return id, err
+	return id, nil
 }
 
 // GetUpsertTeamsSQLCommand returns the db.SQLCommand that will update/insert the
 // teams described by the slice parameter
-func GetUpsertTeamsSQLCommand(huntID int, newTeams []interface{}) (*db.SQLCommand, error) {
-	var eb, sqlValuesSB strings.Builder
-
-	eb.WriteString("Error updating teams: \n")
-	encounteredError := false
-
-	handleErr := func(errString string) {
-		encounteredError = true
-		eb.WriteString(errString)
-	}
-
+func GetUpsertTeamsSQLCommand(huntID int, newTeams []interface{}) (*db.SQLCommand, *response.Error) {
+	var sqlValuesSB strings.Builder
 	sqlValuesSB.WriteString("(")
 	inc := 1
 
+	e := response.NewNilError()
 	sqlCmd := new(db.SQLCommand)
-
-	for _, value := range newTeams {
+	for k, value := range newTeams {
 		team, ok := value.(map[string]interface{})
 		if !ok {
-			handleErr(fmt.Sprintf("Expected newTeams to be type map[string]interface{} but got %T\n", value))
+			e.AddError(fmt.Sprintf("request json is invalid. Check the %d indexed team.", k), http.StatusBadRequest)
 			break
 		}
 
 		v, ok := team["name"]
 		if !ok {
-			handleErr("Expected a name value.\n")
+			e.AddError("the name field is required", http.StatusBadRequest)
 			break
 		}
 
 		name, ok := v.(string)
 		if !ok {
-			handleErr(fmt.Sprintf("Expected a name type of string but got %T\n", v))
+			e.AddError("name field should be of type string", http.StatusBadRequest)
 			break
 		}
 
@@ -137,35 +141,31 @@ func GetUpsertTeamsSQLCommand(huntID int, newTeams []interface{}) (*db.SQLComman
 		sqlCmd.AppendArgs(huntID, name)
 	}
 
+	// strip the unnecessary ,( at the end of the string
 	valuesStr := (sqlValuesSB.String())[:sqlValuesSB.Len()-2]
-
 	sqlCmd.AppendScript(fmt.Sprintf("\n\tINSERT INTO teams(hunt_id, name)\n\tVALUES\n\t\t%s\n\tON CONFLICT ON CONSTRAINT teams_in_same_hunt_name\n\tDO\n\t\tUPDATE\n\t\tSET name = EXCLUDED.name;", valuesStr))
 
-	if encounteredError {
-		return sqlCmd, errors.New(eb.String())
-	}
-
-	return sqlCmd, nil
+	return sqlCmd, e.GetError()
 }
 
 // DeleteTeam deletes the team with the given teamID
-func DeleteTeam(env *c.Env, teamID int) error {
+func DeleteTeam(env *c.Env, teamID int) *response.Error {
 	sqlStmnt := `
 		DELETE FROM teams
 		WHERE id = $1;`
 
 	res, err := env.Exec(sqlStmnt, teamID)
 	if err != nil {
-		return err
+		return response.NewError(fmt.Sprintf("error deleting team with id %d", teamID), http.StatusInternalServerError)
 	}
 
 	numRows, err := res.RowsAffected()
 	if err != nil {
-		return err
+		return response.NewError(fmt.Sprintf("error deleting team with id %d", teamID), http.StatusInternalServerError)
 	}
 
 	if numRows < 1 {
-		return fmt.Errorf("there is no team with id %d", teamID)
+		return response.NewError(fmt.Sprintf("there is no team with id %d", teamID), http.StatusBadRequest)
 	}
 
 	return nil
@@ -173,24 +173,25 @@ func DeleteTeam(env *c.Env, teamID int) error {
 
 // UpdateTeam executes a partial update of the team with the given id. NOTE:
 // team_id and hunt_id are not eligible to be changed
-func UpdateTeam(env *c.Env, teamID int, partialTeam *map[string]interface{}) error {
-	sqlCmd, err := getUpdateTeamSQLCommand(teamID, partialTeam)
-	if err != nil {
-		return err
+func UpdateTeam(env *c.Env, teamID int, partialTeam *map[string]interface{}) *response.Error {
+	sqlCmd, e := getUpdateTeamSQLCommand(teamID, partialTeam)
+	if e != nil {
+		return e
 	}
 
 	res, err := sqlCmd.Exec(env)
 	if err != nil {
-		return err
+		return response.NewError(fmt.Sprintf("error updating team %d", teamID), http.StatusInternalServerError)
 	}
 
 	n, err := res.RowsAffected()
 	if err != nil {
-		return err
+		return response.NewError(fmt.Sprintf("error updating team %d", teamID), http.StatusInternalServerError)
 	}
 
 	if n < 1 {
-		return errors.New("the team was not updated. Check the URL and request body to make sure teamID and huntID are valid")
+		return response.NewError(fmt.Sprintf("team %d was not updated. Check to make sure teamID and huntID are valid",
+			teamID), http.StatusInternalServerError)
 	}
 
 	return nil
@@ -198,26 +199,21 @@ func UpdateTeam(env *c.Env, teamID int, partialTeam *map[string]interface{}) err
 
 // getUpdateTeamSQLCommand returns a db.SQLCommand struct for updating a team
 // NOTE: the hunt_id and the team_id are not editable
-func getUpdateTeamSQLCommand(teamID int, partialTeam *map[string]interface{}) (*db.SQLCommand, error) {
-	var eb, sqlB strings.Builder
-
+func getUpdateTeamSQLCommand(teamID int, partialTeam *map[string]interface{}) (*db.SQLCommand, *response.Error) {
+	var sqlB strings.Builder
 	sqlB.WriteString(`
 		UPDATE teams
 		SET `)
 
-	eb.WriteString(fmt.Sprintf("error updating team %d:\n", teamID))
-	encounteredError := false
-
+	e := response.NewNilError()
 	sqlCmd := &db.SQLCommand{}
-
 	inc := 1
 	for k, v := range *partialTeam {
 		switch k {
 		case "name":
 			newName, ok := v.(string)
 			if !ok {
-				eb.WriteString(fmt.Sprintf("expected name to be of type string but got %T\n", v))
-				encounteredError = true
+				e.AddError("name field has to be of type string", http.StatusBadRequest)
 			}
 
 			sqlB.WriteString(fmt.Sprintf("name=$%d,", inc))
@@ -228,15 +224,8 @@ func getUpdateTeamSQLCommand(teamID int, partialTeam *map[string]interface{}) (*
 
 	// cut the trailing comma
 	sqlStrLen := sqlB.Len()
-	sqlCmd.AppendScript(fmt.Sprintf("%s\n\t\tWHERE id = $%d;",
-		sqlB.String()[:sqlStrLen-1], inc))
+	sqlCmd.AppendScript(fmt.Sprintf("%s\n\t\tWHERE id = $%d;", sqlB.String()[:sqlStrLen-1], inc))
 	sqlCmd.AppendArgs(teamID)
 
-	log.Println(sqlCmd.Script())
-	log.Println(sqlCmd.Args())
-	if encounteredError {
-		return sqlCmd, errors.New(eb.String())
-	}
-
-	return sqlCmd, nil
+	return sqlCmd, e.GetError()
 }
