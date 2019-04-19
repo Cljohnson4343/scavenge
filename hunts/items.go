@@ -8,8 +8,8 @@ import (
 	"github.com/cljohnson4343/scavenge/response"
 
 	c "github.com/cljohnson4343/scavenge/config"
-	"github.com/cljohnson4343/scavenge/db"
 	"github.com/cljohnson4343/scavenge/hunts/models"
+	"github.com/cljohnson4343/scavenge/pgsql"
 )
 
 // GetItems returns the items for the given hunt
@@ -61,12 +61,12 @@ func InsertItem(env *c.Env, item *models.Item, huntID int) (int, *response.Error
 	return id, nil
 }
 
-func getUpsertItemsSQLStatement(huntID int, newItems []interface{}) (*db.SQLCommand, *response.Error) {
+func getUpsertItemsSQLStatement(huntID int, newItems []interface{}) (*pgsql.Command, *response.Error) {
 	var sqlValuesSB strings.Builder
 	sqlValuesSB.WriteString("(")
 	inc := 1
 
-	sqlCmd := new(db.SQLCommand)
+	sqlCmd := new(pgsql.Command)
 	e := response.NewNilError()
 	for _, value := range newItems {
 		item, ok := value.(map[string]interface{})
@@ -161,15 +161,15 @@ func UpdateItem(env *c.Env, huntID, itemID int, partialItem *map[string]interfac
 	return nil
 }
 
-// getUpdateItemSQLCommand returns a db.SQLCommand struct for updating an item
+// getUpdateItemSQLCommand returns a pgsql.Command struct for updating an item
 // NOTE: the hunt_id and the item_id are not editable
-func getUpdateItemSQLCommand(huntID int, itemID int, partialItem *map[string]interface{}) (*db.SQLCommand, *response.Error) {
+func getUpdateItemSQLCommand(huntID int, itemID int, partialItem *map[string]interface{}) (*pgsql.Command, *response.Error) {
 	var sqlB strings.Builder
 	sqlB.WriteString(`
 		UPDATE items
 		SET `)
 
-	sqlCmd := &db.SQLCommand{}
+	sqlCmd := &pgsql.Command{}
 	e := response.NewNilError()
 	inc := 1
 	for k, v := range *partialItem {

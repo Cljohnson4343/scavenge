@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	c "github.com/cljohnson4343/scavenge/config"
-	"github.com/cljohnson4343/scavenge/db"
+	"github.com/cljohnson4343/scavenge/pgsql"
 	"github.com/cljohnson4343/scavenge/response"
 )
 
@@ -107,15 +107,15 @@ func InsertTeam(env *c.Env, team *Team, huntID int) (int, *response.Error) {
 	return id, nil
 }
 
-// GetUpsertTeamsSQLCommand returns the db.SQLCommand that will update/insert the
+// GetUpsertTeamsSQLCommand returns the pgsql.Command that will update/insert the
 // teams described by the slice parameter
-func GetUpsertTeamsSQLCommand(huntID int, newTeams []interface{}) (*db.SQLCommand, *response.Error) {
+func GetUpsertTeamsSQLCommand(huntID int, newTeams []interface{}) (*pgsql.Command, *response.Error) {
 	var sqlValuesSB strings.Builder
 	sqlValuesSB.WriteString("(")
 	inc := 1
 
 	e := response.NewNilError()
-	sqlCmd := new(db.SQLCommand)
+	sqlCmd := new(pgsql.Command)
 	for k, value := range newTeams {
 		team, ok := value.(map[string]interface{})
 		if !ok {
@@ -197,16 +197,16 @@ func UpdateTeam(env *c.Env, teamID int, partialTeam *map[string]interface{}) *re
 	return nil
 }
 
-// getUpdateTeamSQLCommand returns a db.SQLCommand struct for updating a team
+// getUpdateTeamSQLCommand returns a pgsql.Command struct for updating a team
 // NOTE: the hunt_id and the team_id are not editable
-func getUpdateTeamSQLCommand(teamID int, partialTeam *map[string]interface{}) (*db.SQLCommand, *response.Error) {
+func getUpdateTeamSQLCommand(teamID int, partialTeam *map[string]interface{}) (*pgsql.Command, *response.Error) {
 	var sqlB strings.Builder
 	sqlB.WriteString(`
 		UPDATE teams
 		SET `)
 
 	e := response.NewNilError()
-	sqlCmd := &db.SQLCommand{}
+	sqlCmd := &pgsql.Command{}
 	inc := 1
 	for k, v := range *partialTeam {
 		switch k {

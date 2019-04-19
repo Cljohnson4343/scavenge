@@ -9,7 +9,7 @@ import (
 	"github.com/cljohnson4343/scavenge/response"
 
 	c "github.com/cljohnson4343/scavenge/config"
-	"github.com/cljohnson4343/scavenge/db"
+	"github.com/cljohnson4343/scavenge/pgsql"
 	"github.com/cljohnson4343/scavenge/teams"
 )
 
@@ -170,12 +170,12 @@ func UpdateHunt(env *c.Env, huntID int, partialHunt *map[string]interface{}) (bo
 	return true, nil
 }
 
-func getUpdateHuntSQLCommand(huntID int, partialHunt *map[string]interface{}) (*[]*db.SQLCommand, *response.Error) {
+func getUpdateHuntSQLCommand(huntID int, partialHunt *map[string]interface{}) (*[]*pgsql.Command, *response.Error) {
 	var sqlb strings.Builder
 	sqlb.WriteString("\n\t\tUPDATE hunts\n\t\tSET")
 
-	sqlCmds := make([]*db.SQLCommand, 0)
-	sqlCmds = append(sqlCmds, new(db.SQLCommand))
+	sqlCmds := make([]*pgsql.Command, 0)
+	sqlCmds = append(sqlCmds, new(pgsql.Command))
 
 	e := response.NewNilError()
 	inc := 1
