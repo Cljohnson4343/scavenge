@@ -361,15 +361,15 @@ func patchItemHandler(env *c.Env) http.HandlerFunc {
 			return
 		}
 
-		partialItem := make(map[string]interface{})
-		err = render.DecodeJSON(r.Body, &partialItem)
-		if err != nil {
-			e := response.NewError(err.Error(), http.StatusBadRequest)
+		item := models.PartialItem{}
+
+		e := request.DecodeAndValidate(r, &item)
+		if e != nil {
 			e.Handle(w)
 			return
 		}
 
-		e := UpdateItem(env, huntID, itemID, &partialItem)
+		e = UpdateItem(env, huntID, itemID, &item)
 		if e != nil {
 			e.Handle(w)
 		}

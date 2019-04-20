@@ -8,11 +8,6 @@ import (
 	_ "github.com/lib/pq"
 )
 
-// Executioner is an interface that is needed for database/sql polymorphism
-type Executioner interface {
-	Exec(query string, args ...interface{}) (sql.Result, error)
-}
-
 // Config is a custom type to store info used to configure postgresql db
 type Config struct {
 	Host     string `json:"host"`
