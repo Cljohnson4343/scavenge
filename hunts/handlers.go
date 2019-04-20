@@ -2,7 +2,6 @@ package hunts
 
 import (
 	"net/http"
-	"strconv"
 
 	"github.com/cljohnson4343/scavenge/request"
 
@@ -10,7 +9,6 @@ import (
 	"github.com/cljohnson4343/scavenge/response"
 
 	c "github.com/cljohnson4343/scavenge/config"
-	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 )
 
@@ -62,15 +60,14 @@ func getHuntsHandler(env *c.Env) http.HandlerFunc {
 //  400:
 func getHuntHandler(env *c.Env) http.HandlerFunc {
 	return (func(w http.ResponseWriter, r *http.Request) {
-		huntID, err := strconv.Atoi(chi.URLParam(r, "huntID"))
-		if err != nil {
-			e := response.NewError(err.Error(), http.StatusBadRequest)
+		huntID, e := request.GetIntURLParam(r, "huntID")
+		if e != nil {
 			e.Handle(w)
 			return
 		}
 
 		hunt := Hunt{}
-		e := GetHunt(env, &hunt, huntID)
+		e = GetHunt(env, &hunt, huntID)
 		if e != nil {
 			e.Handle(w)
 			return
@@ -133,14 +130,13 @@ func createHuntHandler(env *c.Env) http.HandlerFunc {
 //  400:
 func deleteHuntHandler(env *c.Env) http.HandlerFunc {
 	return (func(w http.ResponseWriter, r *http.Request) {
-		huntID, err := strconv.Atoi(chi.URLParam(r, "huntID"))
-		if err != nil {
-			e := response.NewError(err.Error(), http.StatusBadRequest)
+		huntID, e := request.GetIntURLParam(r, "huntID")
+		if e != nil {
 			e.Handle(w)
 			return
 		}
 
-		e := DeleteHunt(env, huntID)
+		e = DeleteHunt(env, huntID)
 		if e != nil {
 			e.Handle(w)
 		}
@@ -173,15 +169,14 @@ func deleteHuntHandler(env *c.Env) http.HandlerFunc {
 // 	500:
 func patchHuntHandler(env *c.Env) http.HandlerFunc {
 	return (func(w http.ResponseWriter, r *http.Request) {
-		huntID, err := strconv.Atoi(chi.URLParam(r, "huntID"))
-		if err != nil {
-			e := response.NewError(err.Error(), http.StatusBadRequest)
+		huntID, e := request.GetIntURLParam(r, "huntID")
+		if e != nil {
 			e.Handle(w)
 			return
 		}
 
 		partialHunt := make(map[string]interface{})
-		err = render.DecodeJSON(r.Body, partialHunt)
+		err := render.DecodeJSON(r.Body, partialHunt)
 		if err != nil {
 			e := response.NewError(err.Error(), http.StatusBadRequest)
 			e.Handle(w)
@@ -223,9 +218,8 @@ func patchHuntHandler(env *c.Env) http.HandlerFunc {
 //  500:
 func getItemsHandler(env *c.Env) http.HandlerFunc {
 	return (func(w http.ResponseWriter, r *http.Request) {
-		huntID, err := strconv.Atoi(chi.URLParam(r, "huntID"))
-		if err != nil {
-			e := response.NewError(err.Error(), http.StatusBadRequest)
+		huntID, e := request.GetIntURLParam(r, "huntID")
+		if e != nil {
 			e.Handle(w)
 			return
 		}
@@ -258,21 +252,19 @@ func getItemsHandler(env *c.Env) http.HandlerFunc {
 //  400:
 func deleteItemHandler(env *c.Env) http.HandlerFunc {
 	return (func(w http.ResponseWriter, r *http.Request) {
-		huntID, err := strconv.Atoi(chi.URLParam(r, "huntID"))
-		if err != nil {
-			e := response.NewError(err.Error(), http.StatusBadRequest)
+		huntID, e := request.GetIntURLParam(r, "huntID")
+		if e != nil {
 			e.Handle(w)
 			return
 		}
 
-		itemID, err := strconv.Atoi(chi.URLParam(r, "itemID"))
-		if err != nil {
-			e := response.NewError(err.Error(), http.StatusBadRequest)
+		itemID, e := request.GetIntURLParam(r, "itemID")
+		if e != nil {
 			e.Handle(w)
 			return
 		}
 
-		e := DeleteItem(env, huntID, itemID)
+		e = DeleteItem(env, huntID, itemID)
 		if e != nil {
 			e.Handle(w)
 		}
@@ -299,15 +291,14 @@ func deleteItemHandler(env *c.Env) http.HandlerFunc {
 //  500:
 func createItemHandler(env *c.Env) http.HandlerFunc {
 	return (func(w http.ResponseWriter, r *http.Request) {
-		huntID, err := strconv.Atoi(chi.URLParam(r, "huntID"))
-		if err != nil {
-			e := response.NewError(err.Error(), http.StatusBadRequest)
+		huntID, e := request.GetIntURLParam(r, "huntID")
+		if e != nil {
 			e.Handle(w)
 			return
 		}
 
 		item := models.Item{}
-		e := request.DecodeAndValidate(r, &item)
+		e = request.DecodeAndValidate(r, &item)
 		if e != nil {
 			e.Handle(w)
 			return
@@ -347,23 +338,21 @@ func createItemHandler(env *c.Env) http.HandlerFunc {
 // 	400:
 func patchItemHandler(env *c.Env) http.HandlerFunc {
 	return (func(w http.ResponseWriter, r *http.Request) {
-		huntID, err := strconv.Atoi(chi.URLParam(r, "huntID"))
-		if err != nil {
-			e := response.NewError(err.Error(), http.StatusBadRequest)
+		huntID, e := request.GetIntURLParam(r, "huntID")
+		if e != nil {
 			e.Handle(w)
 			return
 		}
 
-		itemID, err := strconv.Atoi(chi.URLParam(r, "itemID"))
-		if err != nil {
-			e := response.NewError(err.Error(), http.StatusBadRequest)
+		itemID, e := request.GetIntURLParam(r, "itemID")
+		if e != nil {
 			e.Handle(w)
 			return
 		}
 
 		item := models.PartialItem{}
 
-		e := request.DecodeAndValidate(r, &item)
+		e = request.DecodeAndValidate(r, &item)
 		if e != nil {
 			e.Handle(w)
 			return

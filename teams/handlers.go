@@ -2,12 +2,10 @@ package teams
 
 import (
 	"net/http"
-	"strconv"
 
 	c "github.com/cljohnson4343/scavenge/config"
 	"github.com/cljohnson4343/scavenge/request"
 	"github.com/cljohnson4343/scavenge/response"
-	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 )
 
@@ -58,9 +56,8 @@ func getTeamsHandler(env *c.Env) http.HandlerFunc {
 // 	404:
 func getTeamHandler(env *c.Env) http.HandlerFunc {
 	return (func(w http.ResponseWriter, r *http.Request) {
-		teamID, err := strconv.Atoi(chi.URLParam(r, "teamID"))
-		if err != nil {
-			e := response.NewError(err.Error(), http.StatusBadRequest)
+		teamID, e := request.GetIntURLParam(r, "teamID")
+		if e != nil {
 			e.Handle(w)
 			return
 		}
@@ -93,14 +90,13 @@ func getTeamHandler(env *c.Env) http.HandlerFunc {
 //  400:
 func deleteTeamHandler(env *c.Env) http.HandlerFunc {
 	return (func(w http.ResponseWriter, r *http.Request) {
-		teamID, err := strconv.Atoi(chi.URLParam(r, "teamID"))
-		if err != nil {
-			e := response.NewError(err.Error(), http.StatusBadRequest)
+		teamID, e := request.GetIntURLParam(r, "teamID")
+		if e != nil {
 			e.Handle(w)
 			return
 		}
 
-		e := DeleteTeam(env, teamID)
+		e = DeleteTeam(env, teamID)
 		if e != nil {
 			e.Handle(w)
 		}
@@ -169,22 +165,21 @@ func createTeamHandler(env *c.Env) http.HandlerFunc {
 // 	400:
 func patchTeamHandler(env *c.Env) http.HandlerFunc {
 	return (func(w http.ResponseWriter, r *http.Request) {
-		teamID, err := strconv.Atoi(chi.URLParam(r, "teamID"))
-		if err != nil {
-			e := response.NewError(err.Error(), http.StatusBadRequest)
+		teamID, e := request.GetIntURLParam(r, "teamID")
+		if e != nil {
 			e.Handle(w)
 			return
 		}
 
 		partialTeam := make(map[string]interface{})
-		err = render.DecodeJSON(r.Body, &partialTeam)
+		err := render.DecodeJSON(r.Body, &partialTeam)
 		if err != nil {
 			e := response.NewError(err.Error(), http.StatusBadRequest)
 			e.Handle(w)
 			return
 		}
 
-		e := UpdateTeam(env, teamID, &partialTeam)
+		e = UpdateTeam(env, teamID, &partialTeam)
 		if e != nil {
 			e.Handle(w)
 		}
