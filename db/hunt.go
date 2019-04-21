@@ -117,7 +117,7 @@ func (h *HuntDB) GetTableColumnMap() pgsql.TableColumnMap {
 		tblColMap[HuntTbl]["location_name"] = h.LocationName
 	}
 
-	if z.CreatedAt.Equal(h.CreatedAt) {
+	if !h.CreatedAt.IsZero() {
 		tblColMap[HuntTbl]["created_at"] = h.CreatedAt
 	}
 
