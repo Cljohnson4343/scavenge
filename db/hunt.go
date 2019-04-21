@@ -4,9 +4,16 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/cljohnson4343/scavenge/request"
+
+	"github.com/cljohnson4343/scavenge/pgsql"
+
 	"github.com/asaskevich/govalidator"
 	"github.com/cljohnson4343/scavenge/response"
 )
+
+// HuntTbl is the name of the hunts db table
+const HuntTbl string = "hunts"
 
 // A HuntDB is the representation of a row from the hunts table
 //
@@ -65,6 +72,58 @@ type HuntDB struct {
 	Longitude float32 `json:"longitude" valid:"longitude"`
 }
 
+// GetTableColumnMap maps all non-zero value fields of a HuntDB to the
+// associated table, column name, and value
+func (h *HuntDB) GetTableColumnMap() pgsql.TableColumnMap {
+	tblColMap := make(pgsql.TableColumnMap)
+	tblColMap[HuntTbl] = make(pgsql.ColumnMap)
+
+	// get zero value HuntDB
+	z := HuntDB{}
+
+	if z.ID != h.ID {
+		tblColMap[HuntTbl]["id"] = h.ID
+	}
+
+	if z.Name != h.Name {
+		tblColMap[HuntTbl]["name"] = h.Name
+	}
+
+	if z.MaxTeams != h.MaxTeams {
+		tblColMap[HuntTbl]["max_teams"] = h.MaxTeams
+	}
+
+	if z.StartTime.Equal(h.StartTime) {
+		tblColMap[HuntTbl]["start_time"] = h.StartTime
+	}
+
+	if z.EndTime.Equal(h.EndTime) {
+		tblColMap[HuntTbl]["end_time"] = h.EndTime
+	}
+
+	// because we are comparing whether or not h is the zero
+	// value we can use regular comparison for float value
+	if z.Latitude != h.Latitude {
+		tblColMap[HuntTbl]["latitude"] = h.Latitude
+	}
+
+	// because we are comparing whether or not h is the zero
+	// value we can use regular comparison for float value
+	if z.Longitude != h.Longitude {
+		tblColMap[HuntTbl]["longitude"] = h.Longitude
+	}
+
+	if z.LocationName != h.LocationName {
+		tblColMap[HuntTbl]["location_name"] = h.LocationName
+	}
+
+	if z.CreatedAt.Equal(h.CreatedAt) {
+		tblColMap[HuntTbl]["created_at"] = h.CreatedAt
+	}
+
+	return tblColMap
+}
+
 // Validate validates a HuntDB
 func (h *HuntDB) Validate(r *http.Request) *response.Error {
 	_, err := govalidator.ValidateStruct(h)
@@ -73,4 +132,18 @@ func (h *HuntDB) Validate(r *http.Request) *response.Error {
 	}
 
 	return nil
+}
+
+// PartialHuntDB wraps a HuntDB but overshadow's validate to allow parital
+// validation
+type PartialHuntDB struct {
+	HuntDB
+}
+
+// Validate overshadows HuntDB's validate() and only validates the non-zero
+// value fields
+func (pHunt *PartialHuntDB) Validate(r *http.Request) *response.Error {
+	tblColMap := pHunt.GetTableColumnMap()
+
+	return request.ValidatePartial(tblColMap[HuntTbl], pHunt.HuntDB)
 }

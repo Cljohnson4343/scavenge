@@ -5,7 +5,6 @@ import (
 
 	c "github.com/cljohnson4343/scavenge/config"
 	"github.com/cljohnson4343/scavenge/request"
-	"github.com/cljohnson4343/scavenge/response"
 	"github.com/go-chi/render"
 )
 
@@ -171,10 +170,11 @@ func patchTeamHandler(env *c.Env) http.HandlerFunc {
 			return
 		}
 
-		partialTeam := make(map[string]interface{})
-		err := render.DecodeJSON(r.Body, &partialTeam)
-		if err != nil {
-			e := response.NewError(err.Error(), http.StatusBadRequest)
+		partialTeam := PartialTeam{}
+		partialTeam.ID = teamID
+
+		e = request.DecodeAndValidate(r, &partialTeam)
+		if e != nil {
 			e.Handle(w)
 			return
 		}

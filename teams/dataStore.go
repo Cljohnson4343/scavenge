@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	c "github.com/cljohnson4343/scavenge/config"
+	"github.com/cljohnson4343/scavenge/db"
 	"github.com/cljohnson4343/scavenge/pgsql"
 	"github.com/cljohnson4343/scavenge/response"
 )
@@ -170,8 +171,8 @@ func DeleteTeam(env *c.Env, teamID int) *response.Error {
 
 // UpdateTeam executes a partial update of the team with the given id. NOTE:
 // team_id and hunt_id are not eligible to be changed
-func UpdateTeam(env *c.Env, teamID int, partialTeam *map[string]interface{}) *response.Error {
-	sqlCmd, e := getUpdateTeamSQLCommand(teamID, partialTeam)
+func UpdateTeam(env *c.Env, teamID int, partialTeam *PartialTeam) *response.Error {
+	sqlCmd, e := GetUpdateTeamSQLCommand(partialTeam)
 	if e != nil {
 		return e
 	}
@@ -194,35 +195,15 @@ func UpdateTeam(env *c.Env, teamID int, partialTeam *map[string]interface{}) *re
 	return nil
 }
 
-// getUpdateTeamSQLCommand returns a pgsql.Command struct for updating a team
+// GetUpdateTeamSQLCommand returns a pgsql.Command struct for updating a team
 // NOTE: the hunt_id and the team_id are not editable
-func getUpdateTeamSQLCommand(teamID int, partialTeam *map[string]interface{}) (*pgsql.Command, *response.Error) {
-	var sqlB strings.Builder
-	sqlB.WriteString(`
-		UPDATE teams
-		SET `)
+func GetUpdateTeamSQLCommand(team pgsql.TableColumnMapper) (*pgsql.Command, *response.Error) {
+	tblColMap := team.GetTableColumnMap()
 
-	e := response.NewNilError()
-	sqlCmd := &pgsql.Command{}
-	inc := 1
-	for k, v := range *partialTeam {
-		switch k {
-		case "name":
-			newName, ok := v.(string)
-			if !ok {
-				e.Add("name field has to be of type string", http.StatusBadRequest)
-			}
-
-			sqlB.WriteString(fmt.Sprintf("name=$%d,", inc))
-			inc++
-			sqlCmd.AppendArgs(newName)
-		}
+	cmd, e := pgsql.GetUpdateSQLCommand(tblColMap[db.TeamTbl], db.TeamTbl)
+	if e != nil {
+		return nil, e
 	}
 
-	// cut the trailing comma
-	sqlStrLen := sqlB.Len()
-	sqlCmd.AppendScript(fmt.Sprintf("%s\n\t\tWHERE id = $%d;", sqlB.String()[:sqlStrLen-1], inc))
-	sqlCmd.AppendArgs(teamID)
-
-	return sqlCmd, e.GetError()
+	return cmd, nil
 }

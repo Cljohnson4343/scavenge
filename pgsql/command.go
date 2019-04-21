@@ -18,6 +18,15 @@ type Command struct {
 	args    []interface{}
 }
 
+// GetNewCommand returns a Command that has its internals initialized with the
+// given capacity to cut down on memory allocations.
+func GetNewCommand(cap int) *Command {
+	cmd := Command{}
+	cmd.args = make([]interface{}, 0, cap)
+
+	return &cmd
+}
+
 // Exec executes its sql statement using the given Executioner.
 func (cmd *Command) Exec(ex Executioner) (sql.Result, error) {
 	return ex.Exec(cmd.Script(), cmd.args...)

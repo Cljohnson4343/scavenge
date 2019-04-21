@@ -8,6 +8,7 @@ import (
 	"github.com/cljohnson4343/scavenge/response"
 
 	c "github.com/cljohnson4343/scavenge/config"
+	"github.com/cljohnson4343/scavenge/db"
 	"github.com/cljohnson4343/scavenge/hunts/models"
 	"github.com/cljohnson4343/scavenge/pgsql"
 )
@@ -138,28 +139,18 @@ func DeleteItem(env *c.Env, huntID, itemID int) *response.Error {
 
 // UpdateItem executes a partial update of the item with the given id. NOTE:
 // item_id and hunt_id are not eligible to be changed
-func UpdateItem(env *c.Env, huntID, itemID int, partialItem *models.PartialItem) *response.Error {
-	//@TODO restructure the UpdateItem path to use GetTableColumnMap
-	/*
-		sqlCmd, e := getUpdateItemSQLCommand(huntID, itemID, partialItem)
-		if e != nil {
-			return e
-		}
+func UpdateItem(env *c.Env, partialItem *models.PartialItem) *response.Error {
+	colTblMap := partialItem.GetTableColumnMap()
+	cmd, e := pgsql.GetUpdateSQLCommand(colTblMap[db.ItemTbl], db.ItemTbl)
+	if e != nil {
+		return e
+	}
 
-		res, err := sqlCmd.Exec(env)
-		if err != nil {
-			return response.NewError(err.Error(), http.StatusInternalServerError)
-		}
+	_, err := cmd.Exec(env)
+	if err != nil {
+		return response.NewError(err.Error(), http.StatusInternalServerError)
+	}
 
-		n, err := res.RowsAffected()
-		if err != nil {
-			return response.NewError(err.Error(), http.StatusInternalServerError)
-		}
-
-		if n < 1 {
-			return response.NewError("make sure that huntID and teamID are valid", http.StatusBadRequest)
-		}
-	*/
 	return nil
 }
 

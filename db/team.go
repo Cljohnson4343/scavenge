@@ -6,9 +6,16 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/cljohnson4343/scavenge/pgsql"
+
+	"github.com/cljohnson4343/scavenge/request"
+
 	"github.com/asaskevich/govalidator"
 	"github.com/cljohnson4343/scavenge/response"
 )
+
+// TeamTbl is the name of the db table for the TeamDB struct
+const TeamTbl string = "teams"
 
 func init() {
 	govalidator.SetFieldsRequiredByDefault(true)
@@ -89,4 +96,41 @@ func (t *TeamDB) ValidateWithoutHuntID(r *http.Request) *response.Error {
 	}
 
 	return nil
+}
+
+// GetTableColumnMap returns a mapping between the table, column name,
+// and value for each non=zero field in the TeamDB
+func (t *TeamDB) GetTableColumnMap() pgsql.TableColumnMap {
+	tblColMap := make(pgsql.TableColumnMap)
+	tblColMap[TeamTbl] = make(pgsql.ColumnMap)
+
+	// zero value Team for comparison sake
+	z := TeamDB{}
+
+	if z.ID != t.ID {
+		tblColMap[TeamTbl]["id"] = t.ID
+	}
+
+	if z.HuntID != t.HuntID {
+		tblColMap[TeamTbl]["hunt_id"] = t.HuntID
+	}
+
+	if z.Name != t.Name {
+		tblColMap[TeamTbl]["name"] = t.Name
+	}
+
+	return tblColMap
+}
+
+// PartialTeamDB is a wrapper around a TeamDB that overshadow's the validate()
+// method to allow for a TeamDB with zero or more fields provided.
+type PartialTeamDB struct {
+	TeamDB `valid:"-"`
+}
+
+// Validate validates only the non-zero values for a PartialTeamDB
+func (pTeam *PartialTeamDB) Validate(r *http.Request) *response.Error {
+	tblColMap := pTeam.GetTableColumnMap()
+
+	return request.ValidatePartial(tblColMap[TeamTbl], pTeam.TeamDB)
 }

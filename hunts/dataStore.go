@@ -1,10 +1,7 @@
 package hunts
 
 import (
-	"fmt"
 	"net/http"
-	"strings"
-	"time"
 
 	"github.com/cljohnson4343/scavenge/response"
 
@@ -141,8 +138,8 @@ func DeleteHunt(env *c.Env, huntID int) *response.Error {
 // UpdateHunt updates the hunt with the given ID using the fields that are not nil in the
 // partial hunt. If the hunt was updated then true will be returned. id field can not be
 // updated.
-func UpdateHunt(env *c.Env, huntID int, partialHunt *map[string]interface{}) (bool, *response.Error) {
-	sqlCmds, e := getUpdateHuntSQLCommand(huntID, partialHunt)
+func UpdateHunt(env *c.Env, partialHunt *PartialHunt) (bool, *response.Error) {
+	sqlCmds, e := getUpdateHuntSQLCommand(partialHunt)
 	if e != nil {
 		return false, e
 	}
@@ -169,139 +166,27 @@ func UpdateHunt(env *c.Env, huntID int, partialHunt *map[string]interface{}) (bo
 	return true, nil
 }
 
-func getUpdateHuntSQLCommand(huntID int, partialHunt *map[string]interface{}) (*[]*pgsql.Command, *response.Error) {
-	var sqlb strings.Builder
-	sqlb.WriteString("\n\t\tUPDATE hunts\n\t\tSET")
+// getUpdateHuntSQLCommand returns the commands to update the db based on the provided hunt
+// the partial hunt. The given hunt should only provide data that needs to be updated
+func getUpdateHuntSQLCommand(hunt *PartialHunt) (*[]*pgsql.Command, *response.Error) {
+	// get all the mappings for all hunt's entities to their table, column name, and value
+	tblColMaps := hunt.GetTableColumnMaps()
 
-	sqlCmds := make([]*pgsql.Command, 0)
-	sqlCmds = append(sqlCmds, new(pgsql.Command))
+	// use the number of cmds that will be needed to avoid unnecessary memory allocations
+	sqlCmds := make([]*pgsql.Command, 0, len(tblColMaps))
 
 	e := response.NewNilError()
-	inc := 1
-	for k, v := range *partialHunt {
-		switch k {
-		case "name":
-			newName, ok := v.(string)
-			if !ok {
-				e.Add("name field has to be type string", http.StatusBadRequest)
+
+	for _, tblColMap := range tblColMaps {
+		for tbl, colMap := range tblColMap {
+			cmd, cmdErr := pgsql.GetUpdateSQLCommand(colMap, tbl)
+			if cmdErr != nil {
+				e.AddError(cmdErr)
 				break
 			}
-			sqlb.WriteString(fmt.Sprintf(" name=$%d,", inc))
-			inc++
-			sqlCmds[0].AppendArgs(newName)
-		case "max_teams":
-			newMax, ok := v.(float64)
-			if !ok {
-				e.Add("max_teams field has to be type float64", http.StatusBadRequest)
-				break
-			}
-			sqlb.WriteString(fmt.Sprintf(" max_teams=$%d,", inc))
-			inc++
-			sqlCmds[0].AppendArgs(int(newMax))
-
-		case "start_time":
-			newStart, ok := v.(string)
-			if !ok {
-				e.Add("start_time field has to be type float64", http.StatusBadRequest)
-				break
-
-			}
-
-			startTime, err := time.Parse(time.RFC3339, newStart)
-			if err != nil {
-				e.Add(err.Error(), http.StatusBadRequest)
-				break
-			}
-
-			sqlb.WriteString(fmt.Sprintf(" start_time=$%d,", inc))
-			inc++
-			sqlCmds[0].AppendArgs(startTime)
-
-		case "end_time":
-			newEnd, ok := v.(string)
-			if !ok {
-				e.Add("end_time field has to be of type string", http.StatusBadRequest)
-				break
-			}
-			endTime, err := time.Parse(time.RFC3339, newEnd)
-			if err != nil {
-				e.Add(err.Error(), http.StatusBadRequest)
-				break
-			}
-
-			sqlb.WriteString(fmt.Sprintf(" end_time=$%d,", inc))
-			inc++
-			sqlCmds[0].AppendArgs(endTime)
-
-		case "teams":
-			newTeams, ok := v.([]interface{})
-			if !ok {
-				e.Add("teams field is invalid", http.StatusBadRequest)
-				break
-			}
-
-			newTeamsCmd, teamErr := teams.GetUpsertTeamsSQLCommand(huntID, newTeams)
-			if teamErr != nil {
-				e.Add(teamErr.Error(), teamErr.Code())
-				break
-			}
-
-			sqlCmds = append(sqlCmds, newTeamsCmd)
-
-		case "items":
-			newItems, ok := v.([]interface{})
-			if !ok {
-				e.Add("items field is invalid", http.StatusBadRequest)
-				break
-			}
-
-			// @TODO think about how to handle the case where an error is thrown(should we try partial execution?)
-			newItemsCmd, itemErr := getUpsertItemsSQLStatement(huntID, newItems)
-			if itemErr != nil {
-				e.Add(itemErr.Error(), itemErr.Code())
-				break
-			}
-
-			sqlCmds = append(sqlCmds, newItemsCmd)
-
-		case "location_name":
-			locName, ok := v.(string)
-			if !ok {
-				e.Add("location_name field has to be of type string", http.StatusBadRequest)
-				break
-			}
-
-			sqlb.WriteString(fmt.Sprintf(" location_name=$%d,", inc))
-			inc++
-			sqlCmds[0].AppendArgs(locName)
-
-		case "latitude":
-			lat, ok := v.(float64)
-			if !ok {
-				e.Add("latitude field has to be of type float64", http.StatusBadRequest)
-				break
-			}
-
-			sqlb.WriteString(fmt.Sprintf(" latitude=$%d,", inc))
-			inc++
-			sqlCmds[0].AppendArgs(lat)
-
-		case "longitude":
-			lon, ok := v.(float64)
-			if !ok {
-				e.Add("longitude field has to be of type float64", http.StatusBadRequest)
-				break
-			}
-
-			sqlb.WriteString(fmt.Sprintf(" longitude=$%d,", inc))
-			inc++
-			sqlCmds[0].AppendArgs(lon)
+			sqlCmds = append(sqlCmds, cmd)
 		}
 	}
 
-	l := sqlb.Len()
-	sqlCmds[0].AppendScript(fmt.Sprintf("%s\n\t\tWHERE id = $%d", sqlb.String()[0:l-1], inc))
-	sqlCmds[0].AppendArgs(huntID)
-
-	return &sqlCmds, e.GetError()
+	return &sqlCmds, nil
 }

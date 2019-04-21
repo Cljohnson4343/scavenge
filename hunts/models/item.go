@@ -11,7 +11,7 @@ type Item struct {
 }
 
 // PartialItem is a wrapper on Item that is used to overshadow
-// a Item's Validate()
+// an Item's Validate()
 //
 // swagger:model PartialItem
 type PartialItem struct {

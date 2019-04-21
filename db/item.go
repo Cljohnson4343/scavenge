@@ -1,17 +1,18 @@
 package db
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 
 	"github.com/asaskevich/govalidator"
 	"github.com/cljohnson4343/scavenge/pgsql"
+	"github.com/cljohnson4343/scavenge/request"
 	"github.com/cljohnson4343/scavenge/response"
 	"github.com/go-chi/chi"
 )
 
-const table string = "items"
+// ItemTbl is the name of the items db table
+const ItemTbl string = "items"
 
 // ItemDB is the data representation of a row from items
 //
@@ -62,28 +63,29 @@ func (i *ItemDB) Validate(r *http.Request) *response.Error {
 	return e.GetError()
 }
 
-// GetTableColumnMap maps an ItemDB's data to its corresponding db table, column, and value
+// GetTableColumnMap maps all non-zero field in the ItemDB to their corresponding db table, column,
+//  and value
 func (i *ItemDB) GetTableColumnMap() pgsql.TableColumnMap {
-	t := make(map[string]map[string]interface{})
-	t[table] = make(map[string]interface{})
+	t := make(pgsql.TableColumnMap)
+	t[ItemTbl] = make(pgsql.ColumnMap)
 
 	// map each non-zero valued field to an TableColumnMap value
 	zeroed := ItemDB{}
 
 	if i.HuntID != zeroed.HuntID {
-		t[table]["hunt_id"] = i.HuntID
+		t[ItemTbl]["hunt_id"] = i.HuntID
 	}
 
 	if i.ID != zeroed.ID {
-		t[table]["id"] = i.ID
+		t[ItemTbl]["id"] = i.ID
 	}
 
 	if i.Name != zeroed.Name {
-		t[table]["name"] = i.Name
+		t[ItemTbl]["name"] = i.Name
 	}
 
 	if i.Points != zeroed.Points {
-		t[table]["points"] = i.Points
+		t[ItemTbl]["points"] = i.Points
 	}
 
 	return t
@@ -99,18 +101,5 @@ type PartialItemDB struct {
 func (pItem *PartialItemDB) Validate(r *http.Request) *response.Error {
 	tblColMap := pItem.GetTableColumnMap()
 
-	_, err := govalidator.ValidateStruct(pItem.ItemDB)
-	if err == nil {
-		return nil
-	}
-
-	e := response.NewNilError()
-	for col := range tblColMap[table] {
-		errStr := govalidator.ErrorByField(err, col)
-		if errStr != "" {
-			e.Add(fmt.Sprintf("%s: %s", col, errStr), http.StatusBadRequest)
-		}
-	}
-
-	return e.GetError()
+	return request.ValidatePartial(tblColMap[ItemTbl], pItem.ItemDB)
 }

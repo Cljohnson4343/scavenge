@@ -175,15 +175,18 @@ func patchHuntHandler(env *c.Env) http.HandlerFunc {
 			return
 		}
 
-		partialHunt := make(map[string]interface{})
-		err := render.DecodeJSON(r.Body, partialHunt)
-		if err != nil {
-			e := response.NewError(err.Error(), http.StatusBadRequest)
+		partialHunt := PartialHunt{}
+
+		// set the huntID from the URL, the source of truth
+		partialHunt.ID = huntID
+
+		e = request.DecodeAndValidate(r, &partialHunt)
+		if e != nil {
 			e.Handle(w)
 			return
 		}
 
-		rowsAffected, e := UpdateHunt(env, huntID, &partialHunt)
+		rowsAffected, e := UpdateHunt(env, &partialHunt)
 		if e != nil {
 			e.Handle(w)
 			return
@@ -352,13 +355,18 @@ func patchItemHandler(env *c.Env) http.HandlerFunc {
 
 		item := models.PartialItem{}
 
+		// set the item with the HuntID and ItemID that came from the
+		// URL
+		item.ID = itemID
+		item.HuntID = huntID
+
 		e = request.DecodeAndValidate(r, &item)
 		if e != nil {
 			e.Handle(w)
 			return
 		}
 
-		e = UpdateItem(env, huntID, itemID, &item)
+		e = UpdateItem(env, &item)
 		if e != nil {
 			e.Handle(w)
 		}
