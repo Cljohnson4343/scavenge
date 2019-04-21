@@ -138,8 +138,8 @@ func DeleteHunt(env *c.Env, huntID int) *response.Error {
 // UpdateHunt updates the hunt with the given ID using the fields that are not nil in the
 // partial hunt. If the hunt was updated then true will be returned. id field can not be
 // updated.
-func UpdateHunt(env *c.Env, partialHunt *PartialHunt) (bool, *response.Error) {
-	sqlCmds, e := getUpdateHuntSQLCommand(partialHunt)
+func UpdateHunt(env *c.Env, hunt *Hunt) (bool, *response.Error) {
+	sqlCmds, e := getUpdateHuntSQLCommand(hunt)
 	if e != nil {
 		return false, e
 	}
@@ -167,8 +167,9 @@ func UpdateHunt(env *c.Env, partialHunt *PartialHunt) (bool, *response.Error) {
 }
 
 // getUpdateHuntSQLCommand returns the commands to update the db based on the provided hunt
-// the partial hunt. The given hunt should only provide data that needs to be updated
-func getUpdateHuntSQLCommand(hunt *PartialHunt) (*[]*pgsql.Command, *response.Error) {
+// the partial hunt. The given hunt should only provide data that needs to be updated AND
+// the hunt.ID field MUST be set
+func getUpdateHuntSQLCommand(hunt *Hunt) (*[]*pgsql.Command, *response.Error) {
 	// get all the mappings for all hunt's entities to their table, column name, and value
 	tblColMaps := hunt.GetTableColumnMaps()
 
@@ -179,7 +180,7 @@ func getUpdateHuntSQLCommand(hunt *PartialHunt) (*[]*pgsql.Command, *response.Er
 
 	for _, tblColMap := range tblColMaps {
 		for tbl, colMap := range tblColMap {
-			cmd, cmdErr := pgsql.GetUpdateSQLCommand(colMap, tbl)
+			cmd, cmdErr := pgsql.GetUpdateSQLCommand(colMap, tbl, hunt.ID)
 			if cmdErr != nil {
 				e.AddError(cmdErr)
 				break

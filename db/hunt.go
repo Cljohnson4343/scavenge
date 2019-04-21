@@ -93,11 +93,11 @@ func (h *HuntDB) GetTableColumnMap() pgsql.TableColumnMap {
 		tblColMap[HuntTbl]["max_teams"] = h.MaxTeams
 	}
 
-	if z.StartTime.Equal(h.StartTime) {
+	if !h.StartTime.IsZero() {
 		tblColMap[HuntTbl]["start_time"] = h.StartTime
 	}
 
-	if z.EndTime.Equal(h.EndTime) {
+	if !h.EndTime.IsZero() {
 		tblColMap[HuntTbl]["end_time"] = h.EndTime
 	}
 
@@ -134,16 +134,9 @@ func (h *HuntDB) Validate(r *http.Request) *response.Error {
 	return nil
 }
 
-// PartialHuntDB wraps a HuntDB but overshadow's validate to allow parital
-// validation
-type PartialHuntDB struct {
-	HuntDB
-}
+// PartialValidate only validates the non-zero value fields
+func (h *HuntDB) PartialValidate(r *http.Request) *response.Error {
+	tblColMap := h.GetTableColumnMap()
 
-// Validate overshadows HuntDB's validate() and only validates the non-zero
-// value fields
-func (pHunt *PartialHuntDB) Validate(r *http.Request) *response.Error {
-	tblColMap := pHunt.GetTableColumnMap()
-
-	return request.ValidatePartial(tblColMap[HuntTbl], pHunt.HuntDB)
+	return request.PartialValidate(tblColMap[HuntTbl], h)
 }

@@ -8,8 +8,3 @@ import "github.com/cljohnson4343/scavenge/db"
 type Team struct {
 	db.TeamDB `valid:"-"`
 }
-
-// A PartialTeam is a Team that can be paritally validated
-type PartialTeam struct {
-	db.PartialTeamDB `valid:"-"`
-}

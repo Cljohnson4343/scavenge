@@ -91,15 +91,9 @@ func (i *ItemDB) GetTableColumnMap() pgsql.TableColumnMap {
 	return t
 }
 
-// PartialItemDB is a type wrapper for ItemDB that is used to overshadow ItemDB's
-// Validate()
-type PartialItemDB struct {
-	ItemDB `valid:"-"`
-}
+// PartialValidate only returns errors for non-zero valued fields
+func (i *ItemDB) PartialValidate(r *http.Request) *response.Error {
+	tblColMap := i.GetTableColumnMap()
 
-// Validate PartialItemDB only returns errors for non-zero valued fields
-func (pItem *PartialItemDB) Validate(r *http.Request) *response.Error {
-	tblColMap := pItem.GetTableColumnMap()
-
-	return request.ValidatePartial(tblColMap[ItemTbl], pItem.ItemDB)
+	return request.PartialValidate(tblColMap[ItemTbl], i)
 }

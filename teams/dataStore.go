@@ -171,39 +171,27 @@ func DeleteTeam(env *c.Env, teamID int) *response.Error {
 
 // UpdateTeam executes a partial update of the team with the given id. NOTE:
 // team_id and hunt_id are not eligible to be changed
-func UpdateTeam(env *c.Env, teamID int, partialTeam *PartialTeam) *response.Error {
-	sqlCmd, e := GetUpdateTeamSQLCommand(partialTeam)
+func UpdateTeam(env *c.Env, team *Team) *response.Error {
+	tblColMap := team.GetTableColumnMap()
+	cmd, e := pgsql.GetUpdateSQLCommand(tblColMap[db.TeamTbl], db.TeamTbl, team.ID)
 	if e != nil {
 		return e
 	}
 
-	res, err := sqlCmd.Exec(env)
+	res, err := cmd.Exec(env)
 	if err != nil {
-		return response.NewError(fmt.Sprintf("error updating team %d", teamID), http.StatusInternalServerError)
+		return response.NewError(fmt.Sprintf("error updating team %d", team.ID), http.StatusInternalServerError)
 	}
 
 	n, err := res.RowsAffected()
 	if err != nil {
-		return response.NewError(fmt.Sprintf("error updating team %d", teamID), http.StatusInternalServerError)
+		return response.NewError(fmt.Sprintf("error updating team %d", team.ID), http.StatusInternalServerError)
 	}
 
 	if n < 1 {
 		return response.NewError(fmt.Sprintf("team %d was not updated. Check to make sure teamID and huntID are valid",
-			teamID), http.StatusInternalServerError)
+			team.ID), http.StatusInternalServerError)
 	}
 
 	return nil
-}
-
-// GetUpdateTeamSQLCommand returns a pgsql.Command struct for updating a team
-// NOTE: the hunt_id and the team_id are not editable
-func GetUpdateTeamSQLCommand(team pgsql.TableColumnMapper) (*pgsql.Command, *response.Error) {
-	tblColMap := team.GetTableColumnMap()
-
-	cmd, e := pgsql.GetUpdateSQLCommand(tblColMap[db.TeamTbl], db.TeamTbl)
-	if e != nil {
-		return nil, e
-	}
-
-	return cmd, nil
 }

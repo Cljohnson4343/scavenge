@@ -170,16 +170,18 @@ func patchTeamHandler(env *c.Env) http.HandlerFunc {
 			return
 		}
 
-		partialTeam := PartialTeam{}
-		partialTeam.ID = teamID
+		team := Team{}
 
-		e = request.DecodeAndValidate(r, &partialTeam)
+		e = request.DecodeAndPartialValidate(r, &team)
 		if e != nil {
 			e.Handle(w)
 			return
 		}
 
-		e = UpdateTeam(env, teamID, &partialTeam)
+		// add the URL teamID, which is the source of truth
+		team.ID = teamID
+
+		e = UpdateTeam(env, &team)
 		if e != nil {
 			e.Handle(w)
 		}

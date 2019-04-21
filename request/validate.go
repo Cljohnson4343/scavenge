@@ -2,7 +2,6 @@ package request
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"github.com/asaskevich/govalidator"
@@ -15,22 +14,48 @@ type Validater interface {
 	Validate(r *http.Request) *response.Error
 }
 
+// PartialValidater only validates non-zero value fields
+type PartialValidater interface {
+	PartialValidate(r *http.Request) *response.Error
+}
+
 // DecodeAndValidate is the entry point for deserialization and validation of request json.
 // It decodes the json-encoded body of the request and stores it into the value pointed to
 // by v. v is then validated.
 func DecodeAndValidate(r *http.Request, v Validater) *response.Error {
+	e := decode(r, v)
+	if e != nil {
+		return e
+	}
+
+	return v.Validate(r)
+}
+
+func decode(r *http.Request, v interface{}) *response.Error {
 	err := json.NewDecoder(r.Body).Decode(v)
 	if err != nil {
 		return response.NewError(err.Error(), http.StatusBadRequest)
 	}
 	defer r.Body.Close()
 
-	return v.Validate(r)
+	return nil
 }
 
-// ValidatePartial uses govalidator.ValidateStruct to validate the given v which must be type
-// struct.
-func ValidatePartial(colMap pgsql.ColumnMap, v interface{}) *response.Error {
+// DecodeAndPartialValidate is the entry point for deserialization and validation of request json.
+// It decodes the json-encoded body of the request and stores it into the value pointed to
+// by v. v then has only its non-zero value fields validated.
+func DecodeAndPartialValidate(r *http.Request, v PartialValidater) *response.Error {
+	e := decode(r, v)
+	if e != nil {
+		return e
+	}
+
+	return v.PartialValidate(r)
+}
+
+// PartialValidate uses govalidator.ValidateStruct to validate only the non-zero fields for
+// the given v which must be type struct
+func PartialValidate(colMap pgsql.ColumnMap, v interface{}) *response.Error {
 	_, err := govalidator.ValidateStruct(v)
 	if err == nil {
 		return nil
@@ -40,7 +65,7 @@ func ValidatePartial(colMap pgsql.ColumnMap, v interface{}) *response.Error {
 	for col := range colMap {
 		errStr := govalidator.ErrorByField(err, col)
 		if errStr != "" {
-			e.Add(fmt.Sprintf("%s: %s", col, errStr), http.StatusBadRequest)
+			e.Add(errStr, http.StatusBadRequest)
 		}
 	}
 

@@ -122,15 +122,9 @@ func (t *TeamDB) GetTableColumnMap() pgsql.TableColumnMap {
 	return tblColMap
 }
 
-// PartialTeamDB is a wrapper around a TeamDB that overshadow's the validate()
-// method to allow for a TeamDB with zero or more fields provided.
-type PartialTeamDB struct {
-	TeamDB `valid:"-"`
-}
+// PartialValidate validates only the non-zero values fields of a TeamDB
+func (t *TeamDB) PartialValidate(r *http.Request) *response.Error {
+	tblColMap := t.GetTableColumnMap()
 
-// Validate validates only the non-zero values for a PartialTeamDB
-func (pTeam *PartialTeamDB) Validate(r *http.Request) *response.Error {
-	tblColMap := pTeam.GetTableColumnMap()
-
-	return request.ValidatePartial(tblColMap[TeamTbl], pTeam.TeamDB)
+	return request.PartialValidate(tblColMap[TeamTbl], t)
 }

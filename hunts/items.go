@@ -139,63 +139,27 @@ func DeleteItem(env *c.Env, huntID, itemID int) *response.Error {
 
 // UpdateItem executes a partial update of the item with the given id. NOTE:
 // item_id and hunt_id are not eligible to be changed
-func UpdateItem(env *c.Env, partialItem *models.PartialItem) *response.Error {
-	colTblMap := partialItem.GetTableColumnMap()
-	cmd, e := pgsql.GetUpdateSQLCommand(colTblMap[db.ItemTbl], db.ItemTbl)
+func UpdateItem(env *c.Env, item *models.Item) *response.Error {
+	colTblMap := item.GetTableColumnMap()
+	cmd, e := pgsql.GetUpdateSQLCommand(colTblMap[db.ItemTbl], db.ItemTbl, item.ID)
 	if e != nil {
 		return e
 	}
 
-	_, err := cmd.Exec(env)
+	res, err := cmd.Exec(env)
 	if err != nil {
 		return response.NewError(err.Error(), http.StatusInternalServerError)
 	}
 
-	return nil
-}
-
-// getUpdateItemSQLCommand returns a pgsql.Command struct for updating an item
-// NOTE: the hunt_id and the item_id are not editable
-func getUpdateItemSQLCommand(huntID int, itemID int, partialItem *map[string]interface{}) (*pgsql.Command, *response.Error) {
-	var sqlB strings.Builder
-	sqlB.WriteString(`
-		UPDATE items
-		SET `)
-
-	sqlCmd := &pgsql.Command{}
-	e := response.NewNilError()
-	inc := 1
-	for k, v := range *partialItem {
-		switch k {
-		case "name":
-			newName, ok := v.(string)
-			if !ok {
-				e.Add("name field has to be of type string", http.StatusBadRequest)
-				break
-			}
-
-			sqlB.WriteString(fmt.Sprintf("name=$%d,", inc))
-			inc++
-			sqlCmd.AppendArgs(newName)
-
-		case "points":
-			newPts, ok := v.(float64)
-			if !ok {
-				e.Add("points field has to be of type float64", http.StatusBadRequest)
-				break
-			}
-
-			sqlB.WriteString(fmt.Sprintf("points=$%d,", inc))
-			inc++
-			sqlCmd.AppendArgs(int(newPts))
-		}
+	n, err := res.RowsAffected()
+	if err != nil {
+		return response.NewError(fmt.Sprintf("error updating item %d", item.ID), http.StatusInternalServerError)
 	}
 
-	// cut the trailing comma
-	sqlStrLen := sqlB.Len()
-	sqlCmd.AppendScript(fmt.Sprintf("%s\n\t\tWHERE id = $%d AND hunt_id = $%d;",
-		sqlB.String()[:sqlStrLen-1], inc, inc+1))
-	sqlCmd.AppendArgs(itemID, huntID)
+	if n < 1 {
+		return response.NewError(fmt.Sprintf("item %d was not updated. Check to make sure id and huntID are valid",
+			item.ID), http.StatusInternalServerError)
+	}
 
-	return sqlCmd, e.GetError()
+	return nil
 }
