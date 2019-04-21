@@ -27,7 +27,7 @@ type ItemDB struct {
 	// The id of the item
 	//
 	// required: true
-	ID int `json:"id" valid:"isNil~id: can not be specified,optional"`
+	ID int `json:"item_id" valid:"isNil~item_id: can not be specified,optional"`
 
 	// the name of the item
 	//
@@ -91,6 +91,17 @@ func (i *ItemDB) GetTableColumnMap() pgsql.TableColumnMap {
 	return t
 }
 
+const itemJSONColumnMap = map[string][string]{ 
+	"item_name": "name", 
+	"hunt_id": "hunt_id",
+	"item_id": "id",
+	"points": "points"
+}
+
+// GetJSONColumnMap returns a mapping from data's json to column name
+func (i *ItemDB) GetJSONColumnMap() map[string][string] {
+	return itemJSONColumnMap
+}
 // PartialValidate only returns errors for non-zero valued fields
 func (i *ItemDB) PartialValidate(r *http.Request) *response.Error {
 	tblColMap := i.GetTableColumnMap()

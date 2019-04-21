@@ -69,6 +69,18 @@ type TeamDB struct {
 	Name string `json:"name" valid:"stringlength(1|255)"`
 }
 
+const teamJSONColumnMap = map[string][string]{ 
+	"team_name": "name", 
+	"hunt_id": "hunt_id",
+	"team_id": "id"
+}
+
+// GetJSONColumnMap returns a mapping from data's json to column name
+func (t *TeamDB) GetJSONColumnMap() map[string][string] {
+	return teamJSONColumnMap
+}
+
+
 // Validate validates a TeamDB struct
 func (t *TeamDB) Validate(r *http.Request) *response.Error {
 	_, err := govalidator.ValidateStruct(t)
