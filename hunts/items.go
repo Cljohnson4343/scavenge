@@ -14,7 +14,7 @@ import (
 )
 
 // GetItems returns the items for the given hunt
-func GetItems(env *c.Env, huntID int) ([]*models.Item, *response.Error) {
+func GetItems(huntID int) ([]*models.Item, *response.Error) {
 	itemDBs, e := db.GetItemsWithHuntID(huntID)
 	if itemDBs == nil {
 		return nil, e

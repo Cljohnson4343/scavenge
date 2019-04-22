@@ -179,7 +179,7 @@ var huntsSelectScript = `
 	SELECT name, id, start_time, end_time, location_name, latitude, longitude, max_teams, created_at
 	FROM hunts;`
 
-// GetHunts returns all the hunts in the db. NOTE that it is possible to have returned hunts and
+// GetHunts returns all the huntDBs in the db. NOTE that it is possible to have returned hunts and
 // an error, check both
 func GetHunts() ([]*HuntDB, *response.Error) {
 	rows, err := stmtMap["huntsSelect"].Query()
@@ -206,4 +206,23 @@ func GetHunts() ([]*HuntDB, *response.Error) {
 	}
 
 	return hunts, e.GetError()
+}
+
+var huntSelectScript = `
+	SELECT name, id, start_time, end_time, location_name, latitude, longitude, max_teams, created_at
+	FROM hunts
+	WHERE id = $1;`
+
+// GetHunt returns the huntDB with the given id
+func GetHunt(huntID int) (*HuntDB, *response.Error) {
+	h := HuntDB{}
+
+	err := stmtMap["huntSelect"].QueryRow(huntID).Scan(&h.Name, &h.ID, &h.StartTime, &h.EndTime,
+		&h.LocationName, &h.Latitude, &h.Longitude, &h.MaxTeams, &h.CreatedAt)
+	if err != nil {
+		return nil, response.NewError(fmt.Sprintf("error getting the hunt with id %d: %s", huntID,
+			err.Error()), http.StatusInternalServerError)
+	}
+
+	return &h, nil
 }

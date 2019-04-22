@@ -66,14 +66,12 @@ func getHuntHandler(env *c.Env) http.HandlerFunc {
 			return
 		}
 
-		hunt := Hunt{}
-		e = GetHunt(env, &hunt, huntID)
+		hunt, e := GetHunt(huntID)
 		if e != nil {
 			e.Handle(w)
 			return
 		}
 
-		hunt.ID = huntID
 		render.JSON(w, r, &hunt)
 		return
 	})
@@ -223,7 +221,7 @@ func getItemsHandler(env *c.Env) http.HandlerFunc {
 			return
 		}
 
-		items, e := GetItems(env, huntID)
+		items, e := GetItems(huntID)
 		if e != nil {
 			e.Handle(w)
 			return

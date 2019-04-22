@@ -45,35 +45,25 @@ func AllHunts() ([]*Hunt, *response.Error) {
 }
 
 // GetHunt returns a pointer to the hunt with the given ID.
-func GetHunt(env *c.Env, hunt *Hunt, huntID int) *response.Error {
-	sqlStmnt := `
-		SELECT name, max_teams, start_time, end_time, latitude, longitude, location_name, created_at FROM hunts
-		WHERE hunts.id = $1;`
-
-	err := env.QueryRow(sqlStmnt, huntID).Scan(&hunt.Name, &hunt.MaxTeams, &hunt.StartTime,
-		&hunt.EndTime, &hunt.Latitude, &hunt.Longitude, &hunt.LocationName, &hunt.CreatedAt)
-	if err != nil {
-		return response.NewError(err.Error(), http.StatusBadRequest)
+func GetHunt(huntID int) (*Hunt, *response.Error) {
+	huntDB, e := db.GetHunt(huntID)
+	if e != nil {
+		return nil, e
 	}
 
-	e := response.NewNilError()
-	// @TODO make sure geteams doesnt return an error if no teams are found. we need to still
-	// get items
+	e = response.NewNilError()
+
 	teams, teamErr := teams.GetTeamsForHunt(huntID)
 	if teamErr != nil {
-		e.Add(teamErr.Error(), teamErr.Code())
-	} else {
-		hunt.Teams = teams
+		e.AddError(teamErr)
 	}
 
-	items, itemErr := GetItems(env, huntID)
+	items, itemErr := GetItems(huntID)
 	if itemErr != nil {
-		e.Add(itemErr.Error(), itemErr.Code())
-	} else {
-		hunt.Items = items
+		e.AddError(itemErr)
 	}
 
-	return e.GetError()
+	return &Hunt{*huntDB, teams, items}, e.GetError()
 }
 
 // InsertHunt inserts the given hunt into the database and returns the id of the inserted hunt
