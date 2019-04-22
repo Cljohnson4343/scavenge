@@ -121,14 +121,21 @@ func (i *ItemDB) PatchValidate(r *http.Request, itemID int) *response.Error {
 	if !ok {
 		i.ID = itemID
 		tblColMap[ItemTbl]["id"] = itemID
+		id = itemID
 	}
 
 	// if an id is provided that doesn't match then we alert the user
 	// of a bad request
-	if id != itemID {
+	if id != itemID && itemID != 0 {
 		e.Add("id: the correct item id must be provided", http.StatusBadRequest)
 		// delete the id col name so no new errors will accumulate for this column name
 		delete(tblColMap[ItemTbl], "id")
+	}
+
+	// changing an item's hunt is not supported
+	if _, ok = tblColMap[ItemTbl]["hunt_id"]; ok {
+		e.Add("hunt_id: an item's hunt can not be changed with a PATCH", http.StatusBadRequest)
+		delete(tblColMap[ItemTbl], "hunt_id")
 	}
 
 	patchErr := request.PatchValidate(tblColMap[ItemTbl], i)

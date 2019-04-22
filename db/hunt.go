@@ -160,6 +160,12 @@ func (h *HuntDB) PatchValidate(r *http.Request, huntID int) *response.Error {
 		delete(tblColMap[HuntTbl], "id")
 	}
 
+	// changing a hunt's created_at field is not supported
+	if _, ok = tblColMap[HuntTbl]["created_at"]; ok {
+		e.Add("created_at: changing a hunt's created_at field is not supported with PATCH", http.StatusBadRequest)
+		delete(tblColMap[HuntTbl], "created_at")
+	}
+
 	patchErr := request.PatchValidate(tblColMap[HuntTbl], h)
 	if patchErr != nil {
 		e.AddError(patchErr)
