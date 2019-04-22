@@ -34,7 +34,6 @@ func getHuntsHandler(env *c.Env) http.HandlerFunc {
 		hunts, e := AllHunts()
 		if e != nil {
 			e.Handle(w)
-			return
 		}
 
 		render.JSON(w, r, hunts)
@@ -69,7 +68,6 @@ func getHuntHandler(env *c.Env) http.HandlerFunc {
 		hunt, e := GetHunt(huntID)
 		if e != nil {
 			e.Handle(w)
-			return
 		}
 
 		render.JSON(w, r, &hunt)
@@ -104,6 +102,7 @@ func createHuntHandler(env *c.Env) http.HandlerFunc {
 		e = InsertHunt(&hunt)
 		if e != nil {
 			e.Handle(w)
+			return
 		}
 
 		render.JSON(w, r, &hunt)
@@ -224,7 +223,6 @@ func getItemsHandler(env *c.Env) http.HandlerFunc {
 		items, e := GetItems(huntID)
 		if e != nil {
 			e.Handle(w)
-			return
 		}
 
 		render.JSON(w, r, items)

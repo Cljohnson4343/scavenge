@@ -29,7 +29,6 @@ func getTeamsHandler(env *c.Env) http.HandlerFunc {
 		teams, e := GetTeams(env)
 		if e != nil {
 			e.Handle(w)
-			return
 		}
 
 		render.JSON(w, r, teams)
