@@ -91,6 +91,10 @@ func InsertHunt(env *c.Env, hunt *Hunt) (int, *response.Error) {
 		VALUES ($1, $2, $3, $4, $5, $6, $7)
 		RETURNING id, created_at;
 		`
+
+	//jsonColMap := hunt.GetJSONColumnMap()
+	//tblColMap := hunt.GetTableColumnMap()
+
 	// @TODO look into whether the row from queryrow needs to be closed
 	err := env.QueryRow(sqlStmnt, hunt.Name, hunt.MaxTeams, hunt.StartTime,
 		hunt.EndTime, hunt.LocationName, hunt.Latitude,
@@ -139,23 +143,20 @@ func DeleteHunt(env *c.Env, huntID int) *response.Error {
 // partial hunt. If the hunt was updated then true will be returned. id field can not be
 // updated.
 func UpdateHunt(env *c.Env, hunt *Hunt) (bool, *response.Error) {
-	sqlCmds, e := getUpdateHuntSQLCommand(hunt)
-	if e != nil {
-		return false, e
-	}
-
 	tx, err := env.Begin()
 	if err != nil {
 		return false, response.NewError(err.Error(), http.StatusInternalServerError)
 	}
 
-	// attempt to execute all the statements in this transaction
-	for _, v := range *sqlCmds {
-		_, err := v.Exec(tx)
+	e := hunt.Update(tx)
+	if e != nil {
+		err = tx.Rollback()
 		if err != nil {
-			tx.Rollback()
-			return false, response.NewError(err.Error(), http.StatusInternalServerError)
+			e.Add(err.Error(), http.StatusInternalServerError)
+			return false, e.GetError()
 		}
+
+		return false, e
 	}
 
 	err = tx.Commit()

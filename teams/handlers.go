@@ -172,14 +172,17 @@ func patchTeamHandler(env *c.Env) http.HandlerFunc {
 
 		team := Team{}
 
+		// add the URL teamID, which is the source of truth
+		// if the consumer provides a different id then
+		// it will be validated when the below assignment
+		// is overwritten during decoding
+		team.ID = teamID
+
 		e = request.DecodeAndPartialValidate(r, &team)
 		if e != nil {
 			e.Handle(w)
 			return
 		}
-
-		// add the URL teamID, which is the source of truth
-		team.ID = teamID
 
 		e = UpdateTeam(env, &team)
 		if e != nil {

@@ -1,10 +1,7 @@
 package db
 
 import (
-	"fmt"
 	"net/http"
-	"strconv"
-	"time"
 
 	"github.com/cljohnson4343/scavenge/pgsql"
 
@@ -30,7 +27,7 @@ type TeamDB struct {
 	// The id of the team
 	//
 	// required: true
-	ID int `json:"id" valid:"isNil~id: field can not be specified,optional"`
+	ID int `json:"id" valid:"int,optional"`
 
 	// the name of the team
 	//
@@ -39,42 +36,11 @@ type TeamDB struct {
 	Name string `json:"name" valid:"stringlength(1|255)"`
 }
 
-const teamJSONColumnMap = map[string][string]{ 
-	"team_name": "name", 
-	"hunt_id": "hunt_id",
-	"team_id": "id"
-}
-
-// GetJSONColumnMap returns a mapping from data's json to column name
-func (t *TeamDB) GetJSONColumnMap() map[string][string] {
-	return teamJSONColumnMap
-}
-
-
 // Validate validates a TeamDB struct
 func (t *TeamDB) Validate(r *http.Request) *response.Error {
 	_, err := govalidator.ValidateStruct(t)
 	if err != nil {
 		return response.NewError(err.Error(), http.StatusBadRequest)
-	}
-
-	return nil
-}
-
-// ValidateWithoutHuntID is a special case func for when the HuntID isn't
-// required.
-func (t *TeamDB) ValidateWithoutHuntID(r *http.Request) *response.Error {
-	_, err := govalidator.ValidateStruct(t)
-	errMap := govalidator.ErrorsByField(err)
-
-	delete(errMap, "hunt_id")
-
-	if len(errMap) > 0 {
-		e := response.NewNilError()
-		for k, v := range errMap {
-			e.Add(fmt.Sprintf("%s: %s", k, v), http.StatusBadRequest)
-		}
-		return e
 	}
 
 	return nil
@@ -109,4 +75,9 @@ func (t *TeamDB) PartialValidate(r *http.Request) *response.Error {
 	tblColMap := t.GetTableColumnMap()
 
 	return request.PartialValidate(tblColMap[TeamTbl], t)
+}
+
+// Update updates the non-zero value fields of the TeamDB struct
+func (t *TeamDB) Update(ex pgsql.Executioner) *response.Error {
+	return update(t, ex, t.ID)
 }

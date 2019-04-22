@@ -15,23 +15,6 @@ import (
 // HuntTbl is the name of the hunts db table
 const HuntTbl string = "hunts"
 
-const huntJSONColumnMap = map[string][string]{ 
-	"hunt_name": "name", 
-	"max_teams": "max_teams",
-	"hunt_id": "id",
-	"start_time": "start_time",
-	"end_time": "end_time",
-	"created_at": "created_at",
-	"location_name": "location_name", 
-	"longitude": "longitude",
-	"latitude": "latitude"
-}
-
-// GetJSONColumnMap returns a mapping from data's json to column name
-func (h *HuntDB) GetJSONColumnMap() map[string][string] {
-	return huntJSONColumnMap
-}
-
 // A HuntDB is the representation of a row from the hunts table
 //
 // swagger:model Hunt
@@ -41,7 +24,7 @@ type HuntDB struct {
 	//
 	// required: true
 	// maximum length: 255
-	Name string `json:"hunt_name" valid:"stringlength(1|255)"`
+	Name string `json:"name" valid:"stringlength(1|255)"`
 
 	// The maximum number of teams that can participate in the Hunt.
 	//
@@ -52,7 +35,7 @@ type HuntDB struct {
 	// The id of the Hunt
 	//
 	// required: true
-	ID int `json:"hunt_id" valid:"isNil~hunt_id: the hunt_id can not be specified,optional"`
+	ID int `json:"id" valid:"int,optional"`
 
 	// The start time for the Hunt
 	//
@@ -87,6 +70,11 @@ type HuntDB struct {
 	//
 	// required: true
 	Longitude float32 `json:"longitude" valid:"longitude"`
+}
+
+// Update updates the non-zero value fields in the HuntDB struct
+func (h *HuntDB) Update(ex pgsql.Executioner) *response.Error {
+	return update(h, ex, h.ID)
 }
 
 // GetTableColumnMap maps all non-zero value fields of a HuntDB to the

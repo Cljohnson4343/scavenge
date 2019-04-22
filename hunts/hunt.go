@@ -1,7 +1,6 @@
 package hunts
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/cljohnson4343/scavenge/pgsql"
@@ -38,13 +37,25 @@ func (h *Hunt) Validate(r *http.Request) *response.Error {
 	}
 
 	for _, t := range h.Teams {
-		teamErr := t.ValidateWithoutHuntID(r)
+		// make sure each team has the same hunt_id as the hunt being validated or
+		// doesn't specify a hunt_id, i.e zero valued
+		if h.ID != t.HuntID && t.HuntID != 0 {
+			e.AddError(response.NewError("error: teams can not specify a hunt_id that differs from their enclosing hunt", http.StatusBadRequest))
+			break
+		}
+		teamErr := t.Validate(r)
 		if teamErr != nil {
 			e.AddError(teamErr)
 		}
 	}
 
 	for _, i := range h.Items {
+		// make sure each item has the same hunt_id as the hunt being validated or
+		// doesn't specify a hunt_id, i.e zero valued
+		if h.ID != i.HuntID && i.HuntID != 0 {
+			e.AddError(response.NewError("error: items can not specify a hunt_id that differs from their enclosing hunt", http.StatusBadRequest))
+			break
+		}
 		itemErr := i.Validate(r)
 		if itemErr != nil {
 			e.AddError(itemErr)
@@ -54,16 +65,7 @@ func (h *Hunt) Validate(r *http.Request) *response.Error {
 	return e.GetError()
 }
 
-// GetTableColumnMap overshadows the embedded HuntDB GetTableColumnMap and always
-// panics. This is a safety measure to prevent calling an unsafe method. GetTableColumnMap
-// should not be called on types that have fields outside of an embedded *DB type.
-// For example a Hunt can have multiple teams in its Teams field  and so a single
-// table, column name, and value mapping can not represent all of the teams.
-func (h *Hunt) GetTableColumnMap() pgsql.TableColumnMap {
-	panic(errors.New("error: you should use GetTableColumnMaps for this type"))
-}
-
-// GetTableColumnMaps returns mappings for each non-zero value
+// GetTableColumnMaps returns mappings for each non-zero value field and
 // entity that h contains. These mappings associate an entity with its
 // table, column name, and value
 func (h *Hunt) GetTableColumnMaps() []pgsql.TableColumnMap {
@@ -94,6 +96,12 @@ func (h *Hunt) PartialValidate(r *http.Request) *response.Error {
 	}
 
 	for _, team := range h.Teams {
+		// make sure each team has the same hunt_id as the hunt being validated or
+		// doesn't specify a hunt_id, i.e zero valued
+		if h.ID != team.HuntID && team.HuntID != 0 {
+			e.AddError(response.NewError("error: teams can not specify a hunt_id that differs from their enclosing hunt", http.StatusBadRequest))
+			break
+		}
 		teamErr := team.TeamDB.PartialValidate(r)
 		if teamErr != nil {
 			e.AddError(teamErr)
@@ -101,6 +109,12 @@ func (h *Hunt) PartialValidate(r *http.Request) *response.Error {
 	}
 
 	for _, item := range h.Items {
+		// make sure each item has the same hunt_id as the hunt being validated or
+		// doesn't specify a hunt_id, i.e zero valued
+		if h.ID != item.HuntID && item.HuntID != 0 {
+			e.AddError(response.NewError("error: items can not specify a hunt_id that differs from their enclosing hunt", http.StatusBadRequest))
+			break
+		}
 		itemErr := item.ItemDB.Validate(r)
 		if itemErr != nil {
 			e.AddError(itemErr)
@@ -108,4 +122,28 @@ func (h *Hunt) PartialValidate(r *http.Request) *response.Error {
 	}
 
 	return e.GetError()
+}
+
+// Update updates all the non-zero value fields in all of its component structures
+func (h *Hunt) Update(ex pgsql.Executioner) *response.Error {
+	e := h.HuntDB.Update(ex)
+	if e != nil {
+		return e
+	}
+
+	for _, team := range h.Teams {
+		e = team.Update(ex)
+		if e != nil {
+			return e
+		}
+	}
+
+	for _, item := range h.Items {
+		e = item.Update(ex)
+		if e != nil {
+			return e
+		}
+	}
+
+	return nil
 }

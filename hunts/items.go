@@ -8,7 +8,6 @@ import (
 	"github.com/cljohnson4343/scavenge/response"
 
 	c "github.com/cljohnson4343/scavenge/config"
-	"github.com/cljohnson4343/scavenge/db"
 	"github.com/cljohnson4343/scavenge/hunts/models"
 	"github.com/cljohnson4343/scavenge/pgsql"
 )
@@ -140,26 +139,5 @@ func DeleteItem(env *c.Env, huntID, itemID int) *response.Error {
 // UpdateItem executes a partial update of the item with the given id. NOTE:
 // item_id and hunt_id are not eligible to be changed
 func UpdateItem(env *c.Env, item *models.Item) *response.Error {
-	colTblMap := item.GetTableColumnMap()
-	cmd, e := pgsql.GetUpdateSQLCommand(colTblMap[db.ItemTbl], db.ItemTbl, item.ID)
-	if e != nil {
-		return e
-	}
-
-	res, err := cmd.Exec(env)
-	if err != nil {
-		return response.NewError(err.Error(), http.StatusInternalServerError)
-	}
-
-	n, err := res.RowsAffected()
-	if err != nil {
-		return response.NewError(fmt.Sprintf("error updating item %d", item.ID), http.StatusInternalServerError)
-	}
-
-	if n < 1 {
-		return response.NewError(fmt.Sprintf("item %d was not updated. Check to make sure id and huntID are valid",
-			item.ID), http.StatusInternalServerError)
-	}
-
-	return nil
+	return item.Update(env)
 }
