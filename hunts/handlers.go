@@ -134,7 +134,7 @@ func deleteHuntHandler(env *c.Env) http.HandlerFunc {
 			return
 		}
 
-		e = DeleteHunt(env, huntID)
+		e = DeleteHunt(huntID)
 		if e != nil {
 			e.Handle(w)
 		}

@@ -108,17 +108,8 @@ func InsertHunt(env *c.Env, hunt *Hunt) (int, *response.Error) {
 }
 
 // DeleteHunt deletes the hunt with the given ID. All associated data will also be deleted.
-func DeleteHunt(env *c.Env, huntID int) *response.Error {
-	sqlStmnt := `
-		DELETE FROM hunts
-		WHERE hunts.id = $1`
-
-	_, err := env.Exec(sqlStmnt, huntID)
-	if err != nil {
-		return response.NewError(err.Error(), http.StatusInternalServerError)
-	}
-
-	return nil
+func DeleteHunt(huntID int) *response.Error {
+	return db.DeleteHunt(huntID)
 }
 
 // UpdateHunt updates the hunt with the given ID using the fields that are not nil in the

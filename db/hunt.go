@@ -226,3 +226,29 @@ func GetHunt(huntID int) (*HuntDB, *response.Error) {
 
 	return &h, nil
 }
+
+var huntDeleteScript = `
+	DELETE FROM hunts
+	WHERE id = $1;`
+
+// DeleteHunt deletes the huntdb with the given id
+func DeleteHunt(id int) *response.Error {
+	res, err := stmtMap["huntDelete"].Exec(id)
+	if err != nil {
+		return response.NewError(fmt.Sprintf("error deleting hunt with id %d: %s", id, err.Error()),
+			http.StatusInternalServerError)
+	}
+
+	numRows, err := res.RowsAffected()
+	if err != nil {
+		return response.NewError(fmt.Sprintf("error deleting hunt with id %d: %s", id, err.Error()),
+			http.StatusInternalServerError)
+	}
+
+	if numRows < 1 {
+		return response.NewError(fmt.Sprintf("error deleting hunt with id %d: %s", id, err.Error()),
+			http.StatusInternalServerError)
+	}
+
+	return nil
+}
