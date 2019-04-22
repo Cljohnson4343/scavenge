@@ -116,11 +116,11 @@ func (t *TeamDB) Update(ex pgsql.Executioner) *response.Error {
 var teamInsertScript = `
 	INSERT INTO teams(hunt_id, name)
 	VALUES ($1, $2)
-	RETURNING hunt_id, id;`
+	RETURNING id;`
 
 // Insert inserts the team into the db
 func (t *TeamDB) Insert() *response.Error {
-	err := stmtMap["teamInsert"].QueryRow(t.HuntID, t.Name).Scan(&t.HuntID, &t.ID)
+	err := stmtMap["teamInsert"].QueryRow(t.HuntID, t.Name).Scan(&t.ID)
 	if err != nil {
 		return response.NewError(fmt.Sprintf("error inserting team %s: %s", t.Name, err.Error()), http.StatusInternalServerError)
 	}

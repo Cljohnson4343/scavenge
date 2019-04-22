@@ -1,6 +1,7 @@
 package db
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -47,19 +48,89 @@ var itemSelectScript = `
 	FROM items
 	WHERE id = $1;`
 
+// GetItem returns the item with the given id
+func GetItem(id int) (*ItemDB, *response.Error) {
+	item := ItemDB{}
+
+	err := stmtMap["itemSelect"].QueryRow(id).Scan(&item.HuntID, &item.ID, &item.Name, &item.Points)
+	if err != nil {
+		return nil, response.NewError(fmt.Sprintf("error getting item with id %d: %s", id, err.Error()), http.StatusInternalServerError)
+	}
+
+	return &item, nil
+}
+
 var itemInsertScript = `
 	INSERT INTO items(hunt_id, name, points)
 	VALUES ($1, $2, $3)
-	RETURNING id, hunt_id;
+	RETURNING id;
 	`
+
+// Insert inserts the item into the items table
+func (i *ItemDB) Insert() *response.Error {
+	err := stmtMap["itemInsert"].QueryRow(i.HuntID, i.Name, i.Points).Scan(&i.ID)
+	if err != nil {
+		return response.NewError(fmt.Sprintf("error inserting item: %s", err.Error()), http.StatusInternalServerError)
+	}
+
+	return nil
+}
+
 var itemsSelectScript = `
 	SELECT hunt_id, id, name, points
 	FROM items
 	WHERE hunt_id = $1;`
 
+// GetItemsWithHuntID returns all the items for the given hunt id
+func GetItemsWithHuntID(huntID int) ([]*ItemDB, *response.Error) {
+	rows, err := stmtMap["itemsSelect"].Query(huntID)
+	if err != nil {
+		return nil, response.NewError(fmt.Sprintf("error getting items with hunt id %d: %s", huntID, err.Error()), http.StatusInternalServerError)
+	}
+
+	items := make([]*ItemDB, 0)
+	e := response.NewNilError()
+
+	for rows.Next() {
+		item := ItemDB{}
+		err := rows.Scan(&item.HuntID, &item.ID, &item.Name, &item.Points)
+		if err != nil {
+			e.Add(fmt.Sprintf("error getting item with hunt id %d: %s", huntID, err.Error()), http.StatusInternalServerError)
+			break
+		}
+		items = append(items, &item)
+	}
+
+	err = rows.Err()
+	if err != nil {
+		e.Add(fmt.Sprintf("error getting item with hunt id %d: %s", huntID, err.Error()), http.StatusInternalServerError)
+	}
+
+	return items, e.GetError()
+}
+
 var itemDeleteScript = `
 	DELETE FROM items
 	WHERE id = $1 AND hunt_id = $2;`
+
+// DeleteItem deletes the item with the given id AND huntID
+func DeleteItem(id int, huntID int) *response.Error {
+	res, err := stmtMap["itemDelete"].Exec(id, huntID)
+	if err != nil {
+		return response.NewError(fmt.Sprintf("error deleting item with id %d: %s", id, err.Error()), http.StatusInternalServerError)
+	}
+
+	numRows, err := res.RowsAffected()
+	if err != nil {
+		return response.NewError(fmt.Sprintf("error deleting item with id %d: %s", id, err.Error()), http.StatusInternalServerError)
+	}
+
+	if numRows < 1 {
+		return response.NewError(fmt.Sprintf("there is no item with id %d and hunt id %d", id, huntID), http.StatusBadRequest)
+	}
+
+	return nil
+}
 
 // Validate validates a ItemDB struct
 func (i *ItemDB) Validate(r *http.Request) *response.Error {

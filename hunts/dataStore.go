@@ -39,7 +39,7 @@ func AllHunts(env *c.Env) ([]*Hunt, *response.Error) {
 		if itemErr != nil {
 			e.Add(itemErr.Error(), itemErr.Code())
 		}
-		hunt.Items = *items
+		hunt.Items = items
 
 		hunts = append(hunts, hunt)
 	}
@@ -78,7 +78,7 @@ func GetHunt(env *c.Env, hunt *Hunt, huntID int) *response.Error {
 	if itemErr != nil {
 		e.Add(itemErr.Error(), itemErr.Code())
 	} else {
-		hunt.Items = *items
+		hunt.Items = items
 	}
 
 	return e.GetError()
@@ -115,7 +115,7 @@ func InsertHunt(env *c.Env, hunt *Hunt) (int, *response.Error) {
 	}
 
 	for _, v := range hunt.Items {
-		_, itemErr := InsertItem(env, v, hunt.ID)
+		itemErr := InsertItem(env, v, hunt.ID)
 		if itemErr != nil {
 			e.Add(itemErr.Error(), itemErr.Code())
 			break

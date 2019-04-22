@@ -43,12 +43,10 @@ var ()
 var stmtMap = map[string]*sql.Stmt{}
 
 var scriptMap = map[string]string{
-	/*
-		"itemSelect":            itemSelectScript,
-		"itemDelete":            itemDeleteScript,
-		"itemInsert":            itemInsertScript,
-		"itemsSelect":           itemsSelectScript,
-	*/
+	"itemSelect":            itemSelectScript,
+	"itemDelete":            itemDeleteScript,
+	"itemInsert":            itemInsertScript,
+	"itemsSelect":           itemsSelectScript,
 	"teamSelect":            teamSelectScript,
 	"teamDelete":            teamDeleteScript,
 	"teamInsert":            teamInsertScript,

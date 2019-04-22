@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/cljohnson4343/scavenge/db"
 	"github.com/cljohnson4343/scavenge/response"
 
 	c "github.com/cljohnson4343/scavenge/config"
@@ -13,52 +14,24 @@ import (
 )
 
 // GetItems returns the items for the given hunt
-func GetItems(env *c.Env, huntID int) (*[]*models.Item, *response.Error) {
-	sqlStmnt := `
-		SELECT name, points, id FROM items WHERE items.hunt_id = $1;`
-
-	rows, err := env.Query(sqlStmnt, huntID)
-	if err != nil {
-		return nil, response.NewError(err.Error(), http.StatusInternalServerError)
+func GetItems(env *c.Env, huntID int) ([]*models.Item, *response.Error) {
+	itemDBs, e := db.GetItemsWithHuntID(huntID)
+	if itemDBs == nil {
+		return nil, e
 	}
-	defer rows.Close()
 
-	e := response.NewNilError()
-	items := make([]*models.Item, 0)
-	for rows.Next() {
-		item := models.Item{}
-		err = rows.Scan(&item.Name, &item.Points, &item.ID)
-		if err != nil {
-			e.Add(err.Error(), http.StatusInternalServerError)
-			break
-		}
-
-		item.HuntID = huntID
+	items := make([]*models.Item, 0, len(itemDBs))
+	for _, itemDB := range itemDBs {
+		item := models.Item{*itemDB}
 		items = append(items, &item)
 	}
 
-	err = rows.Err()
-	if err != nil {
-		return &items, response.NewError(err.Error(), http.StatusInternalServerError)
-	}
-
-	return &items, e.GetError()
+	return items, e
 }
 
 // InsertItem inserts an Item into the db
-func InsertItem(env *c.Env, item *models.Item, huntID int) (int, *response.Error) {
-	sqlStmnt := `
-		INSERT INTO items(hunt_id, name, points)
-		VALUES ($1, $2, $3)
-		RETURNING id, hunt_id;`
-
-	id := 0
-	err := env.QueryRow(sqlStmnt, huntID, item.Name, item.Points).Scan(&item.ID, &item.HuntID)
-	if err != nil {
-		return id, response.NewError(err.Error(), http.StatusInternalServerError)
-	}
-
-	return id, nil
+func InsertItem(env *c.Env, item *models.Item, huntID int) *response.Error {
+	return item.Insert()
 }
 
 func getUpsertItemsSQLStatement(huntID int, newItems []interface{}) (*pgsql.Command, *response.Error) {
@@ -115,25 +88,7 @@ func getUpsertItemsSQLStatement(huntID int, newItems []interface{}) (*pgsql.Comm
 
 // DeleteItem deletes the item with the given itemID AND huntID
 func DeleteItem(env *c.Env, huntID, itemID int) *response.Error {
-	sqlStmnt := `
-		DELETE FROM items
-		WHERE id = $1 AND hunt_id = $2;`
-
-	res, err := env.Exec(sqlStmnt, itemID, huntID)
-	if err != nil {
-		return response.NewError(err.Error(), http.StatusInternalServerError)
-	}
-
-	numRows, err := res.RowsAffected()
-	if err != nil {
-		return response.NewError(err.Error(), http.StatusInternalServerError)
-	}
-
-	if numRows < 1 {
-		return response.NewError("hunt does not have an item with that id", http.StatusBadRequest)
-	}
-
-	return nil
+	return db.DeleteItem(itemID, huntID)
 }
 
 // UpdateItem executes a partial update of the item with the given id. NOTE:

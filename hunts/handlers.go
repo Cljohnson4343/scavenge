@@ -303,7 +303,7 @@ func createItemHandler(env *c.Env) http.HandlerFunc {
 			return
 		}
 
-		_, e = InsertItem(env, &item, huntID)
+		e = InsertItem(env, &item, huntID)
 		if e != nil {
 			e.Handle(w)
 			return
