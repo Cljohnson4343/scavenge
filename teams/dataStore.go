@@ -3,7 +3,6 @@ package teams
 import (
 	"fmt"
 	"net/http"
-	"strings"
 
 	c "github.com/cljohnson4343/scavenge/config"
 	"github.com/cljohnson4343/scavenge/db"
@@ -63,47 +62,6 @@ func GetTeam(env *c.Env, teamID int) (*Team, *response.Error) {
 // InsertTeam inserts a Team into the db
 func InsertTeam(env *c.Env, team *Team) *response.Error {
 	return team.Insert()
-}
-
-// GetUpsertTeamsSQLCommand returns the pgsql.Command that will update/insert the
-// teams described by the slice parameter
-func GetUpsertTeamsSQLCommand(huntID int, newTeams []interface{}) (*pgsql.Command, *response.Error) {
-	var sqlValuesSB strings.Builder
-	sqlValuesSB.WriteString("(")
-	inc := 1
-
-	e := response.NewNilError()
-	sqlCmd := new(pgsql.Command)
-	for k, value := range newTeams {
-		team, ok := value.(map[string]interface{})
-		if !ok {
-			e.Add(fmt.Sprintf("request json is invalid. Check the %d indexed team.", k), http.StatusBadRequest)
-			break
-		}
-
-		v, ok := team["name"]
-		if !ok {
-			e.Add("the name field is required", http.StatusBadRequest)
-			break
-		}
-
-		name, ok := v.(string)
-		if !ok {
-			e.Add("name field should be of type string", http.StatusBadRequest)
-			break
-		}
-
-		// make sure all validation is done before writing to sqlValueSB and adding to sqlCmd.args
-		sqlValuesSB.WriteString(fmt.Sprintf("$%d, $%d),(", inc, inc+1))
-		inc += 2
-		sqlCmd.AppendArgs(huntID, name)
-	}
-
-	// strip the unnecessary ,( at the end of the string
-	valuesStr := (sqlValuesSB.String())[:sqlValuesSB.Len()-2]
-	sqlCmd.AppendScript(fmt.Sprintf("\n\tINSERT INTO teams(hunt_id, name)\n\tVALUES\n\t\t%s\n\tON CONFLICT ON CONSTRAINT teams_in_same_hunt_name\n\tDO\n\t\tUPDATE\n\t\tSET name = EXCLUDED.name;", valuesStr))
-
-	return sqlCmd, e.GetError()
 }
 
 // DeleteTeam deletes the team with the given teamID
