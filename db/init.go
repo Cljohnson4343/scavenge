@@ -38,21 +38,28 @@ func init() {
 	}))
 }
 
-var (
-	itemSelectStmnt            *sql.Stmt
-	itemDeleteStmnt            *sql.Stmt
-	itemInsertStmnt            *sql.Stmt
-	itemsSelectStmnt           *sql.Stmt
-	teamSelectStmnt            *sql.Stmt
-	teamDeleteStmnt            *sql.Stmt
-	teamInsertStmnt            *sql.Stmt
-	teamsSelectStmnt           *sql.Stmt
-	teamsWithHuntIDSelectStmnt *sql.Stmt
-	huntSelectStmnt            *sql.Stmt
-	huntDeleteStmnt            *sql.Stmt
-	huntInsertStmnt            *sql.Stmt
-	huntsSelectStmnt           *sql.Stmt
-)
+var ()
+
+var stmtMap = map[string]*sql.Stmt{}
+
+var scriptMap = map[string]string{
+	/*
+		"itemSelect":            itemSelectScript,
+		"itemDelete":            itemDeleteScript,
+		"itemInsert":            itemInsertScript,
+		"itemsSelect":           itemsSelectScript,
+	*/
+	"teamSelect":            teamSelectScript,
+	"teamDelete":            teamDeleteScript,
+	"teamInsert":            teamInsertScript,
+	"teamsSelect":           teamsSelectScript,
+	"teamsWithHuntIDSelect": teamsWithHuntIDSelectScript,
+	/*	"huntSelect":            huntSelectScript,
+		"huntDelete":            huntDeleteScript,
+		"huntInsert":            huntInsertScript,
+		"huntsSelect":           huntsSelectScript,
+	*/
+}
 
 func initStatements(db *sql.DB) error {
 	var err error
@@ -78,52 +85,53 @@ func initStatements(db *sql.DB) error {
 			return err
 		}
 	*/
-	// teams statements
-	teamSelectStmnt, err = db.Prepare(teamSelectScript)
-	if err != nil {
-		return err
-	}
-
-	teamInsertStmnt, err = db.Prepare(teamInsertScript)
-	if err != nil {
-		return err
-	}
-
-	teamDeleteStmnt, err = db.Prepare(teamDeleteScript)
-	if err != nil {
-		return err
-	}
-
-	teamsSelectStmnt, err = db.Prepare(teamsSelectScript)
-	if err != nil {
-		return err
-	}
-
-	teamsWithHuntIDSelectStmnt, err = db.Prepare(teamsWithHuntIDSelectScript)
-	if err != nil {
-		return err
+	for k, script := range scriptMap {
+		stmtMap[k], err = db.Prepare(script)
+		if err != nil {
+			return err
+		}
 	}
 	/*
-		// hunts statements
-		huntSelectStmnt, err = db.Prepare(huntSelectScript)
+		teamInsertStmnt, err = db.Prepare(teamInsertScript)
 		if err != nil {
 			return err
 		}
 
-		huntInsertStmnt, err = db.Prepare(huntInsertScript)
+		teamDeleteStmnt, err = db.Prepare(teamDeleteScript)
 		if err != nil {
 			return err
 		}
 
-		huntDeleteStmnt, err = db.Prepare(huntDeleteScript)
+		teamsSelectStmnt, err = db.Prepare(teamsSelectScript)
 		if err != nil {
 			return err
 		}
 
-		huntsSelectStmnt, err = db.Prepare(huntsSelectScript)
+		teamsWithHuntIDSelectStmnt, err = db.Prepare(teamsWithHuntIDSelectScript)
 		if err != nil {
 			return err
 		}
+		/*
+			// hunts statements
+			huntSelectStmnt, err = db.Prepare(huntSelectScript)
+			if err != nil {
+				return err
+			}
+
+			huntInsertStmnt, err = db.Prepare(huntInsertScript)
+			if err != nil {
+				return err
+			}
+
+			huntDeleteStmnt, err = db.Prepare(huntDeleteScript)
+			if err != nil {
+				return err
+			}
+
+			huntsSelectStmnt, err = db.Prepare(huntsSelectScript)
+			if err != nil {
+				return err
+			}
 	*/
 	return nil
 }

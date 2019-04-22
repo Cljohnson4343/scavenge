@@ -44,12 +44,13 @@ func main() {
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
 		dbConfig.Host, dbConfig.Port, dbConfig.User, dbConfig.Password, dbConfig.DBName)
 
-	db, err := db.NewDB(psqlInfo)
+	database, err := db.NewDB(psqlInfo)
 	if err != nil {
 		log.Panicf("Error initializing the db: %s\n", err.Error())
 	}
+	defer db.Shutdown(database)
 
-	router := Routes(db)
+	router := Routes(database)
 
 	walkFunc := func(method string, route string, handler http.Handler, middlewares ...func(http.Handler) http.Handler) error {
 		log.Printf("%s %s\n", method, route) // walk and print out all routes

@@ -36,3 +36,12 @@ func NewDB(dataSourceName string) (*sql.DB, error) {
 
 	return db, nil
 }
+
+// Shutdown closes all db connections
+func Shutdown(db *sql.DB) {
+
+	for _, v := range stmtMap {
+		v.Close()
+	}
+
+}

@@ -120,7 +120,7 @@ var teamInsertScript = `
 
 // Insert inserts the team into the db
 func (t *TeamDB) Insert() *response.Error {
-	err := teamInsertStmnt.QueryRow(t.HuntID, t.Name).Scan(&t.HuntID, &t.ID)
+	err := stmtMap["teamInsert"].QueryRow(t.HuntID, t.Name).Scan(&t.HuntID, &t.ID)
 	if err != nil {
 		return response.NewError(fmt.Sprintf("error inserting team %s: %s", t.Name, err.Error()), http.StatusInternalServerError)
 	}
@@ -136,7 +136,7 @@ var teamSelectScript = `
 // GetTeam returns a pointer to the team with the given id
 func GetTeam(id int) (*TeamDB, *response.Error) {
 	team := TeamDB{}
-	err := teamSelectStmnt.QueryRow(id).Scan(&team.HuntID, &team.Name, &team.ID)
+	err := stmtMap["teamSelect"].QueryRow(id).Scan(&team.HuntID, &team.Name, &team.ID)
 	if err != nil {
 		return nil, response.NewError(fmt.Sprintf("error getting team with id %d: %s", id, err.Error()), http.StatusInternalServerError)
 	}
@@ -152,7 +152,7 @@ var teamsSelectScript = `
 // the slice still needs to be checked; it is possible to error retrieving
 // a single team but still return a collection of other teams
 func GetTeams() ([]*TeamDB, *response.Error) {
-	rows, err := teamsSelectStmnt.Query()
+	rows, err := stmtMap["teamsSelect"].Query()
 	if err != nil {
 		return nil, response.NewError(fmt.Sprintf("error getting teams: %s", err.Error()), http.StatusInternalServerError)
 	}
@@ -186,7 +186,7 @@ var teamDeleteScript = `
 // DeleteTeam deletes the team with the given id. Providing an id that doesn't have a corresponding
 // team will result in an error
 func DeleteTeam(id int) *response.Error {
-	res, err := teamDeleteStmnt.Exec(id)
+	res, err := stmtMap["teamDelete"].Exec(id)
 	if err != nil {
 		return response.NewError(fmt.Sprintf("error deleting team with id %d: %s", id, err.Error()), http.StatusInternalServerError)
 	}
@@ -215,7 +215,7 @@ var teamsWithHuntIDSelectScript = `
 func GetTeamsWithHuntID(id int) ([]*TeamDB, *response.Error) {
 	teams := make([]*TeamDB, 0)
 
-	rows, err := teamsWithHuntIDSelectStmnt.Query(id)
+	rows, err := stmtMap["teamsWithHuntIDSelect"].Query(id)
 	if err != nil {
 		return nil, response.NewError(fmt.Sprintf("error getting teams with hunt id %d: %s", id, err.Error()), http.StatusInternalServerError)
 	}
