@@ -34,7 +34,7 @@ func GetTeams(env *c.Env) ([]*Team, *response.Error) {
 // of the given hunt. NOTE if an error is returned then the team slice
 // still needs to be checked as the error could have occurred while trying
 // to get a single team
-func GetTeamsForHunt(env *c.Env, huntID int) ([]*Team, *response.Error) {
+func GetTeamsForHunt(huntID int) ([]*Team, *response.Error) {
 	teamDBs, e := db.GetTeamsWithHuntID(huntID)
 	if teamDBs == nil {
 		return nil, e

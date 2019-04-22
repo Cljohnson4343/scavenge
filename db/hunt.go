@@ -1,6 +1,7 @@
 package db
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 
@@ -172,4 +173,37 @@ func (h *HuntDB) PatchValidate(r *http.Request, huntID int) *response.Error {
 	}
 
 	return e.GetError()
+}
+
+var huntsSelectScript = `
+	SELECT name, id, start_time, end_time, location_name, latitude, longitude, max_teams, created_at
+	FROM hunts;`
+
+// GetHunts returns all the hunts in the db. NOTE that it is possible to have returned hunts and
+// an error, check both
+func GetHunts() ([]*HuntDB, *response.Error) {
+	rows, err := stmtMap["huntsSelect"].Query()
+	if err != nil {
+		return nil, response.NewError(fmt.Sprintf("error getting hunts: %s", err.Error()), http.StatusInternalServerError)
+	}
+
+	hunts := make([]*HuntDB, 0)
+	e := response.NewNilError()
+	for rows.Next() {
+		hunt := HuntDB{}
+		huntErr := rows.Scan(&hunt.Name, &hunt.ID, &hunt.StartTime, &hunt.EndTime, &hunt.LocationName,
+			&hunt.Latitude, &hunt.Longitude, &hunt.MaxTeams, &hunt.CreatedAt)
+		if huntErr != nil {
+			e.Add(fmt.Sprintf("error getting hunt: %s", huntErr.Error()), http.StatusInternalServerError)
+			break
+		}
+		hunts = append(hunts, &hunt)
+	}
+
+	err = rows.Err()
+	if err != nil {
+		e.Add(fmt.Sprintf("error getting hunt: %s", err.Error()), http.StatusInternalServerError)
+	}
+
+	return hunts, e.GetError()
 }

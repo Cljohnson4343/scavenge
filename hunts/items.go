@@ -29,6 +29,23 @@ func GetItems(env *c.Env, huntID int) ([]*models.Item, *response.Error) {
 	return items, e
 }
 
+// GetItemsForHunt returns all the items for the hunt with the given id
+func GetItemsForHunt(huntID int) ([]*models.Item, *response.Error) {
+	itemDBs, e := db.GetItemsWithHuntID(huntID)
+	if itemDBs == nil {
+		return nil, e
+	}
+
+	items := make([]*models.Item, 0, len(itemDBs))
+
+	for _, v := range itemDBs {
+		item := models.Item{*v}
+		items = append(items, &item)
+	}
+
+	return items, e
+}
+
 // InsertItem inserts an Item into the db
 func InsertItem(env *c.Env, item *models.Item, huntID int) *response.Error {
 	return item.Insert()

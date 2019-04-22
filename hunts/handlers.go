@@ -31,7 +31,7 @@ import (
 //  500:
 func getHuntsHandler(env *c.Env) http.HandlerFunc {
 	return (func(w http.ResponseWriter, r *http.Request) {
-		hunts, e := AllHunts(env)
+		hunts, e := AllHunts()
 		if e != nil {
 			e.Handle(w)
 			return

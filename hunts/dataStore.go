@@ -3,6 +3,8 @@ package hunts
 import (
 	"net/http"
 
+	"github.com/cljohnson4343/scavenge/db"
+
 	"github.com/cljohnson4343/scavenge/response"
 
 	c "github.com/cljohnson4343/scavenge/config"
@@ -11,42 +13,32 @@ import (
 )
 
 // AllHunts returns all Hunts from the database
-func AllHunts(env *c.Env) ([]*Hunt, *response.Error) {
-	rows, err := env.Query("SELECT id, name, max_teams, start_time, end_time, latitude, longitude, location_name, created_at FROM hunts;")
-	if err != nil {
-		return nil, response.NewError(err.Error(), http.StatusInternalServerError)
+func AllHunts() ([]*Hunt, *response.Error) {
+	huntDBs, e := db.GetHunts()
+	if huntDBs == nil {
+		return nil, e
 	}
-	defer rows.Close()
 
-	e := response.NewNilError()
-	hunts := make([]*Hunt, 0)
-	for rows.Next() {
-		hunt := new(Hunt)
-		err = rows.Scan(&hunt.ID, &hunt.Name, &hunt.MaxTeams, &hunt.StartTime, &hunt.EndTime,
-			&hunt.Latitude, &hunt.Longitude, &hunt.LocationName, &hunt.CreatedAt)
-		if err != nil {
-			e.Add(err.Error(), http.StatusInternalServerError)
-			break
-		}
+	if e == nil {
+		e = response.NewNilError()
+	}
 
-		teams, teamErr := teams.GetTeamsForHunt(env, hunt.ID)
+	hunts := make([]*Hunt, 0, len(huntDBs))
+
+	for _, h := range huntDBs {
+		ts, teamErr := teams.GetTeamsForHunt(h.ID)
 		if teamErr != nil {
-			e.Add(teamErr.Error(), teamErr.Code())
+			e.AddError(teamErr)
 		}
-		hunt.Teams = teams
 
-		items, itemErr := GetItems(env, hunt.ID)
+		items, itemErr := GetItemsForHunt(h.ID)
 		if itemErr != nil {
-			e.Add(itemErr.Error(), itemErr.Code())
+			e.AddError(itemErr)
 		}
-		hunt.Items = items
 
-		hunts = append(hunts, hunt)
-	}
+		hunt := Hunt{*h, ts, items}
 
-	err = rows.Err()
-	if err != nil {
-		e.Add(err.Error(), http.StatusInternalServerError)
+		hunts = append(hunts, &hunt)
 	}
 
 	return hunts, e.GetError()
@@ -67,7 +59,7 @@ func GetHunt(env *c.Env, hunt *Hunt, huntID int) *response.Error {
 	e := response.NewNilError()
 	// @TODO make sure geteams doesnt return an error if no teams are found. we need to still
 	// get items
-	teams, teamErr := teams.GetTeamsForHunt(env, huntID)
+	teams, teamErr := teams.GetTeamsForHunt(huntID)
 	if teamErr != nil {
 		e.Add(teamErr.Error(), teamErr.Code())
 	} else {
