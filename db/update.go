@@ -30,9 +30,6 @@ func update(v pgsql.TableColumnMapper, ex pgsql.Executioner, id int) *response.E
 		return e
 	}
 
-	fmt.Println(cmd.Script())
-	fmt.Println(cmd.Args())
-
 	res, err := ex.Exec(cmd.Script(), cmd.Args()...)
 	if err != nil {
 		return response.NewError(fmt.Sprintf("%s id %d error: %s", tblName, id, err.Error()), http.StatusInternalServerError)

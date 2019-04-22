@@ -11,98 +11,58 @@ import (
 	"github.com/cljohnson4343/scavenge/response"
 )
 
-// GetTeams populates the teams slice with all the teams
-func GetTeams(env *c.Env) (*[]Team, *response.Error) {
-	sqlStmnt := `
-		SELECT name, id, hunt_id FROM teams;`
-
-	rows, err := env.Query(sqlStmnt)
-	if err != nil {
-		return nil, response.NewError(err.Error(), http.StatusBadRequest)
-	}
-	defer rows.Close()
-
-	teams := new([]Team)
-
-	e := response.NewNilError()
-
-	team := Team{}
-	for rows.Next() {
-		err = rows.Scan(&team.Name, &team.ID, &team.HuntID)
-		if err != nil {
-			e.Add(err.Error(), http.StatusInternalServerError)
-		}
-
-		*teams = append(*teams, team)
+// GetTeams populates the teams slice with all the teams. If an error
+// is returned the team slice still needs to be checked as the error
+// might have resulted from getting a single team
+func GetTeams(env *c.Env) ([]*Team, *response.Error) {
+	teamDBs, e := db.GetTeams()
+	if teamDBs == nil {
+		return nil, e
 	}
 
-	err = rows.Err()
-	if err != nil {
-		e.Add(err.Error(), http.StatusInternalServerError)
-	}
+	teams := make([]*Team, 0, len(teamDBs))
 
-	return teams, e.GetError()
-}
-
-// GetTeamsForHunt populates the teams slice with all the teams
-// of the given hunt
-func GetTeamsForHunt(env *c.Env, huntID int) (*[]*Team, *response.Error) {
-	sqlStmnt := `
-		SELECT name, id, hunt_id FROM teams WHERE hunt_id = $1;`
-
-	rows, err := env.Query(sqlStmnt, huntID)
-	if err != nil {
-		return nil, response.NewError(err.Error(), http.StatusInternalServerError)
-	}
-	defer rows.Close()
-
-	teams := make([]*Team, 0)
-	e := response.NewNilError()
-	for rows.Next() {
-		team := Team{}
-		err = rows.Scan(&team.Name, &team.ID, &team.HuntID)
-		if err != nil {
-			e.Add(err.Error(), http.StatusInternalServerError)
-		}
-
+	for _, teamDB := range teamDBs {
+		team := Team{*teamDB}
 		teams = append(teams, &team)
 	}
 
-	err = rows.Err()
-	if err != nil {
-		e.Add(err.Error(), http.StatusInternalServerError)
+	return teams, e
+}
+
+// GetTeamsForHunt populates the teams slice with all the teams
+// of the given hunt. NOTE if an error is returned then the team slice
+// still needs to be checked as the error could have occurred while trying
+// to get a single team
+func GetTeamsForHunt(env *c.Env, huntID int) ([]*Team, *response.Error) {
+	teamDBs, e := db.GetTeamsWithHuntID(huntID)
+	if teamDBs == nil {
+		return nil, e
 	}
 
-	return &teams, e.GetError()
+	teams := make([]*Team, 0, len(teamDBs))
+	for _, teamDB := range teamDBs {
+		team := Team{*teamDB}
+		teams = append(teams, &team)
+	}
+
+	return teams, nil
 }
 
 // GetTeam returns the Team with the given ID
 func GetTeam(env *c.Env, teamID int) (*Team, *response.Error) {
-	sqlStmnt := `
-		SELECT name, hunt_id, id FROM teams WHERE teams.id = $1;`
-
-	team := new(Team)
-	err := env.QueryRow(sqlStmnt, teamID).Scan(&team.Name, &team.HuntID, &team.ID)
-	if err != nil {
-		return nil, response.NewError(err.Error(), http.StatusBadRequest)
+	teamDB, e := db.GetTeam(teamID)
+	if e != nil {
+		return nil, e
 	}
 
-	return team, nil
+	team := Team{*teamDB}
+	return &team, nil
 }
 
 // InsertTeam inserts a Team into the db
-func InsertTeam(env *c.Env, team *Team, huntID int) (int, *response.Error) {
-	sqlStmnt := `
-		INSERT INTO teams(hunt_id, name)
-		VALUES ($1, $2)
-		RETURNING id, hunt_id`
-
-	err := env.QueryRow(sqlStmnt, huntID, team.Name).Scan(&team.ID, &team.HuntID)
-	if err != nil {
-		return 0, response.NewError(err.Error(), http.StatusBadRequest)
-	}
-
-	return team.ID, nil
+func InsertTeam(env *c.Env, team *Team) *response.Error {
+	return team.Insert()
 }
 
 // GetUpsertTeamsSQLCommand returns the pgsql.Command that will update/insert the
@@ -148,25 +108,7 @@ func GetUpsertTeamsSQLCommand(huntID int, newTeams []interface{}) (*pgsql.Comman
 
 // DeleteTeam deletes the team with the given teamID
 func DeleteTeam(env *c.Env, teamID int) *response.Error {
-	sqlStmnt := `
-		DELETE FROM teams
-		WHERE id = $1;`
-
-	res, err := env.Exec(sqlStmnt, teamID)
-	if err != nil {
-		return response.NewError(fmt.Sprintf("error deleting team with id %d", teamID), http.StatusInternalServerError)
-	}
-
-	numRows, err := res.RowsAffected()
-	if err != nil {
-		return response.NewError(fmt.Sprintf("error deleting team with id %d", teamID), http.StatusInternalServerError)
-	}
-
-	if numRows < 1 {
-		return response.NewError(fmt.Sprintf("there is no team with id %d", teamID), http.StatusBadRequest)
-	}
-
-	return nil
+	return db.DeleteTeam(teamID)
 }
 
 // UpdateTeam executes a partial update of the team with the given id. NOTE:

@@ -139,9 +139,31 @@ func (h *HuntDB) Validate(r *http.Request) *response.Error {
 	return nil
 }
 
-// PartialValidate only validates the non-zero value fields
-func (h *HuntDB) PartialValidate(r *http.Request) *response.Error {
+// PatchValidate only validates the non-zero value fields
+func (h *HuntDB) PatchValidate(r *http.Request, huntID int) *response.Error {
 	tblColMap := h.GetTableColumnMap()
+	e := response.NewNilError()
 
-	return request.PartialValidate(tblColMap[HuntTbl], h)
+	// patching a hunt requires an id that matches the given huntID,
+	// if no id is provided then we can just add one
+	id, ok := tblColMap[HuntTbl]["id"]
+	if !ok {
+		h.ID = huntID
+		tblColMap[HuntTbl]["id"] = huntID
+	}
+
+	// if an id is provided that doesn't match then we alert the user
+	// of a bad request
+	if id != huntID {
+		e.Add("id: the correct hunt id must be provided", http.StatusBadRequest)
+		// delete the id col name so no new errors will accumulate for this column name
+		delete(tblColMap[HuntTbl], "id")
+	}
+
+	patchErr := request.PatchValidate(tblColMap[HuntTbl], h)
+	if patchErr != nil {
+		e.AddError(patchErr)
+	}
+
+	return e.GetError()
 }

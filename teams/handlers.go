@@ -129,13 +129,12 @@ func createTeamHandler(env *c.Env) http.HandlerFunc {
 			return
 		}
 
-		teamID, e := InsertTeam(env, &team, team.HuntID)
+		e = InsertTeam(env, &team)
 		if e != nil {
 			e.Handle(w)
 			return
 		}
 
-		team.ID = teamID
 		render.JSON(w, r, &team)
 		return
 	})
@@ -172,13 +171,7 @@ func patchTeamHandler(env *c.Env) http.HandlerFunc {
 
 		team := Team{}
 
-		// add the URL teamID, which is the source of truth
-		// if the consumer provides a different id then
-		// it will be validated when the below assignment
-		// is overwritten during decoding
-		team.ID = teamID
-
-		e = request.DecodeAndPartialValidate(r, &team)
+		e = request.DecodeAndPatchValidate(r, &team, teamID)
 		if e != nil {
 			e.Handle(w)
 			return

@@ -33,7 +33,7 @@ func AllHunts(env *c.Env) ([]*Hunt, *response.Error) {
 		if teamErr != nil {
 			e.Add(teamErr.Error(), teamErr.Code())
 		}
-		hunt.Teams = *teams
+		hunt.Teams = teams
 
 		items, itemErr := GetItems(env, hunt.ID)
 		if itemErr != nil {
@@ -71,7 +71,7 @@ func GetHunt(env *c.Env, hunt *Hunt, huntID int) *response.Error {
 	if teamErr != nil {
 		e.Add(teamErr.Error(), teamErr.Code())
 	} else {
-		hunt.Teams = *teams
+		hunt.Teams = teams
 	}
 
 	items, itemErr := GetItems(env, huntID)
@@ -104,10 +104,10 @@ func InsertHunt(env *c.Env, hunt *Hunt) (int, *response.Error) {
 	}
 
 	e := response.NewNilError()
-	// @TODO look into better error handling. Right now a failed team or item creation
-	// will skip and wipe the error
 	for _, v := range hunt.Teams {
-		_, teamErr := teams.InsertTeam(env, v, hunt.ID)
+		// add the newly recieved hunt_id from above
+		v.HuntID = hunt.ID
+		teamErr := teams.InsertTeam(env, v)
 		if teamErr != nil {
 			e.Add(teamErr.Error(), teamErr.Code())
 			break

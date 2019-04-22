@@ -42,6 +42,25 @@ type ItemDB struct {
 	Points int `json:"points,omitempty" valid:"positive,optional"`
 }
 
+var itemSelectScript = `
+	SELECT hunt_id, id, name, points
+	FROM items
+	WHERE id = $1;`
+
+var itemInsertScript = `
+	INSERT INTO items(hunt_id, name, points)
+	VALUES ($1, $2, $3)
+	RETURNING id, hunt_id;
+	`
+var itemsSelectScript = `
+	SELECT hunt_id, id, name, points
+	FROM items
+	WHERE hunt_id = $1;`
+
+var itemDeleteScript = `
+	DELETE FROM items
+	WHERE id = $1 AND hunt_id = $2;`
+
 // Validate validates a ItemDB struct
 func (i *ItemDB) Validate(r *http.Request) *response.Error {
 	// it is possible to get here without the huntID parameter being specified so don't catch
@@ -91,11 +110,33 @@ func (i *ItemDB) GetTableColumnMap() pgsql.TableColumnMap {
 	return t
 }
 
-// PartialValidate only returns errors for non-zero valued fields
-func (i *ItemDB) PartialValidate(r *http.Request) *response.Error {
+// PatchValidate only returns errors for non-zero valued fields
+func (i *ItemDB) PatchValidate(r *http.Request, itemID int) *response.Error {
 	tblColMap := i.GetTableColumnMap()
+	e := response.NewNilError()
 
-	return request.PartialValidate(tblColMap[ItemTbl], i)
+	// patching an item requires an id that matches the given itemID,
+	// if no id is provided then we can just add one
+	id, ok := tblColMap[ItemTbl]["id"]
+	if !ok {
+		i.ID = itemID
+		tblColMap[ItemTbl]["id"] = itemID
+	}
+
+	// if an id is provided that doesn't match then we alert the user
+	// of a bad request
+	if id != itemID {
+		e.Add("id: the correct item id must be provided", http.StatusBadRequest)
+		// delete the id col name so no new errors will accumulate for this column name
+		delete(tblColMap[ItemTbl], "id")
+	}
+
+	patchErr := request.PatchValidate(tblColMap[ItemTbl], i)
+	if patchErr != nil {
+		e.AddError(patchErr)
+	}
+
+	return e.GetError()
 }
 
 // Update updates the non-zero fields of the ItemDB struct

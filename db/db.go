@@ -29,5 +29,10 @@ func NewDB(dataSourceName string) (*sql.DB, error) {
 		return nil, err
 	}
 
+	err = initStatements(db)
+	if err != nil {
+		return nil, err
+	}
+
 	return db, nil
 }

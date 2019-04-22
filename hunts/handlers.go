@@ -177,10 +177,7 @@ func patchHuntHandler(env *c.Env) http.HandlerFunc {
 
 		hunt := Hunt{}
 
-		// set the huntID from the URL, the source of truth
-		hunt.ID = huntID
-
-		e = request.DecodeAndPartialValidate(r, &hunt)
+		e = request.DecodeAndPatchValidate(r, &hunt, huntID)
 		if e != nil {
 			e.Handle(w)
 			return
@@ -353,13 +350,17 @@ func patchItemHandler(env *c.Env) http.HandlerFunc {
 		}
 
 		item := models.Item{}
-		// set the item with the HuntID and ItemID that came from the
-		// URL, which is the source of truth
-		item.ID = itemID
-		item.HuntID = huntID
 
-		e = request.DecodeAndPartialValidate(r, &item)
+		e = request.DecodeAndPatchValidate(r, &item, itemID)
 		if e != nil {
+			e.Handle(w)
+			return
+		}
+
+		// make sure the patch request does not change the item's hunt from hunt
+		// specified by the URL
+		if item.HuntID != 0 && item.HuntID != huntID {
+			e = response.NewError("hunt_id: the item's hunt_id can not be modified", http.StatusBadRequest)
 			e.Handle(w)
 			return
 		}

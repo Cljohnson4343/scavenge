@@ -85,12 +85,12 @@ func (h *Hunt) GetTableColumnMaps() []pgsql.TableColumnMap {
 	return tblColMaps
 }
 
-// PartialValidate will validate only the non-zero fields of the Hunt
+// PatchValidate will validate only the non-zero fields of the Hunt
 // @TODO think about implementing govalidator's customtagtype validators
 // 		for embedded fields and slice fields of Hunt, Item, and Team types
-func (h *Hunt) PartialValidate(r *http.Request) *response.Error {
+func (h *Hunt) PatchValidate(r *http.Request, huntID int) *response.Error {
 	e := response.NewNilError()
-	huntDBErr := h.HuntDB.PartialValidate(r)
+	huntDBErr := h.HuntDB.PatchValidate(r, huntID)
 	if huntDBErr != nil {
 		e.AddError(huntDBErr)
 	}
@@ -102,7 +102,7 @@ func (h *Hunt) PartialValidate(r *http.Request) *response.Error {
 			e.AddError(response.NewError("error: teams can not specify a hunt_id that differs from their enclosing hunt", http.StatusBadRequest))
 			break
 		}
-		teamErr := team.TeamDB.PartialValidate(r)
+		teamErr := team.TeamDB.PatchValidate(r, team.ID)
 		if teamErr != nil {
 			e.AddError(teamErr)
 		}
