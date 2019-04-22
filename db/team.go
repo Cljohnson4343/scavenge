@@ -23,7 +23,7 @@ type TeamDB struct {
 	// The id of the Hunt
 	//
 	// required: true
-	HuntID int `json:"hunt_id" valid:"int"`
+	HuntID int `json:"hunt_id" valid:"int,optional"`
 
 	// The id of the team
 	//

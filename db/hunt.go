@@ -252,3 +252,22 @@ func DeleteHunt(id int) *response.Error {
 
 	return nil
 }
+
+var huntInsertScript = `
+	INSERT INTO hunts(name, max_teams, start_time, end_time, location_name, latitude, longitude)
+	VALUES ($1, $2, $3, $4, $5, $6, $7)
+	RETURNING id, created_at;
+	`
+
+// Insert inserts the given huntDB into the db and returns, by writing to the huntDB the id and
+// create_at timestamp
+func (h *HuntDB) Insert() *response.Error {
+	err := stmtMap["huntInsert"].QueryRow(h.Name, h.MaxTeams, h.StartTime, h.EndTime,
+		h.LocationName, h.Latitude, h.Longitude).Scan(&h.ID, &h.CreatedAt)
+	if err != nil {
+		return response.NewError(fmt.Sprintf("error inserting hunt with name %s: %s",
+			h.Name, err.Error()), http.StatusInternalServerError)
+	}
+
+	return nil
+}

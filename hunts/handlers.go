@@ -101,7 +101,7 @@ func createHuntHandler(env *c.Env) http.HandlerFunc {
 			return
 		}
 
-		_, e = InsertHunt(env, &hunt)
+		e = InsertHunt(&hunt)
 		if e != nil {
 			e.Handle(w)
 		}

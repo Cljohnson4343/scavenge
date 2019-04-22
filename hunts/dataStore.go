@@ -66,45 +66,35 @@ func GetHunt(huntID int) (*Hunt, *response.Error) {
 	return &Hunt{*huntDB, teams, items}, e.GetError()
 }
 
-// InsertHunt inserts the given hunt into the database and returns the id of the inserted hunt
-func InsertHunt(env *c.Env, hunt *Hunt) (int, *response.Error) {
-	sqlStmnt := `
-		INSERT INTO hunts(name, max_teams, start_time, end_time, location_name, latitude, longitude)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)
-		RETURNING id, created_at;
-		`
-
-	//jsonColMap := hunt.GetJSONColumnMap()
-	//tblColMap := hunt.GetTableColumnMap()
-
-	// @TODO look into whether the row from queryrow needs to be closed
-	err := env.QueryRow(sqlStmnt, hunt.Name, hunt.MaxTeams, hunt.StartTime,
-		hunt.EndTime, hunt.LocationName, hunt.Latitude,
-		hunt.Longitude).Scan(&hunt.ID, &hunt.CreatedAt)
-	if err != nil {
-		return hunt.ID, response.NewError(err.Error(), http.StatusInternalServerError)
+// InsertHunt inserts the given hunt into the database and updates the hunt
+// with the new id and created_at timestamp
+func InsertHunt(hunt *Hunt) *response.Error {
+	e := hunt.HuntDB.Insert()
+	if e != nil {
+		return e
 	}
 
-	e := response.NewNilError()
-	for _, v := range hunt.Teams {
-		// add the newly recieved hunt_id from above
-		v.HuntID = hunt.ID
-		teamErr := teams.InsertTeam(env, v)
+	e = response.NewNilError()
+
+	for _, team := range hunt.Teams {
+		team.HuntID = hunt.ID
+		teamErr := team.Insert()
 		if teamErr != nil {
-			e.Add(teamErr.Error(), teamErr.Code())
+			e.AddError(teamErr)
 			break
 		}
 	}
 
-	for _, v := range hunt.Items {
-		itemErr := InsertItem(env, v, hunt.ID)
+	for _, item := range hunt.Items {
+		item.HuntID = hunt.ID
+		itemErr := item.Insert()
 		if itemErr != nil {
-			e.Add(itemErr.Error(), itemErr.Code())
+			e.AddError(itemErr)
 			break
 		}
 	}
 
-	return hunt.ID, e.GetError()
+	return e.GetError()
 }
 
 // DeleteHunt deletes the hunt with the given ID. All associated data will also be deleted.

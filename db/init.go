@@ -54,11 +54,8 @@ var scriptMap = map[string]string{
 	"teamsWithHuntIDSelect": teamsWithHuntIDSelectScript,
 	"huntSelect":            huntSelectScript,
 	"huntDelete":            huntDeleteScript,
-	/*
-		"huntInsert":            huntInsertScript,
-	*/
-
-	"huntsSelect": huntsSelectScript,
+	"huntInsert":            huntInsertScript,
+	"huntsSelect":           huntsSelectScript,
 }
 
 func initStatements(db *sql.DB) error {
