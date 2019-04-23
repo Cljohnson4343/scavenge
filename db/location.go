@@ -88,3 +88,26 @@ func GetLocationsForTeam(teamID int) ([]*LocationDB, *response.Error) {
 
 	return locs, e.GetError()
 }
+
+var locationInsertScript = `
+	INSERT INTO locations(team_id, latitude, longitude, time_stamp)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id;`
+
+// Insert inserts the locationDB into the locations table and writes the
+// id into the locationDB struct
+func (l *LocationDB) Insert(teamID int) *response.Error {
+	// make sure that the location's teamID and teamID match
+	if l.TeamID != teamID {
+		return response.NewError(fmt.Sprintf("team_id: team_id must match the URL team id %d",
+			teamID), http.StatusBadRequest)
+	}
+
+	err := stmtMap["locationInsert"].QueryRow(l.TeamID, l.Latitude, l.Longitude, l.TimeStamp).Scan(&l.ID)
+	if err != nil {
+		return response.NewError(fmt.Sprintf("error inserting location: %s", err.Error()),
+			http.StatusInternalServerError)
+	}
+
+	return nil
+}

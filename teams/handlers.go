@@ -193,7 +193,7 @@ func patchTeamHandler(env *c.Env) http.HandlerFunc {
 	})
 }
 
-// swagger:route GET /teams/{teamID}/locations locations getLocationsForTeamHandler
+// swagger:route GET /teams/{teamID}/locations/ locations getLocationsForTeamHandler
 //
 // Lists all the locations for a team.
 //
@@ -227,6 +227,51 @@ func getLocationsForTeamHandler(env *c.Env) http.HandlerFunc {
 		}
 
 		render.JSON(w, r, locationDBs)
+		return
+	})
+}
+
+// swagger:route POST /teams/{teamID}/locations/ location create createLocationHandler
+//
+// Creates the given location.
+//
+// Consumes:
+// 	- application/json
+//
+// Produces:
+//	- application/json
+//
+// Schemes: http, https
+//
+// Responses:
+// 	200:
+//  400:
+//  500:
+func createLocationHandler(env *c.Env) http.HandlerFunc {
+	return (func(w http.ResponseWriter, r *http.Request) {
+		teamID, err := strconv.Atoi(chi.URLParam(r, "teamID"))
+		if err != nil {
+			e := response.NewError(fmt.Sprintf("error getting teamID from URL: %s",
+				err.Error()), http.StatusBadRequest)
+			e.Handle(w)
+			return
+		}
+
+		location := db.LocationDB{}
+
+		e := request.DecodeAndValidate(r, &location)
+		if e != nil {
+			e.Handle(w)
+			return
+		}
+
+		e = location.Insert(teamID)
+		if e != nil {
+			e.Handle(w)
+			return
+		}
+
+		render.JSON(w, r, &location)
 		return
 	})
 }

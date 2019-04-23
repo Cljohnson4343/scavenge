@@ -50,20 +50,21 @@ var ()
 var stmtMap = map[string]*sql.Stmt{}
 
 var scriptMap = map[string]string{
-	"itemSelect":             itemSelectScript,
-	"itemDelete":             itemDeleteScript,
-	"itemInsert":             itemInsertScript,
-	"itemsSelect":            itemsSelectScript,
-	"teamSelect":             teamSelectScript,
-	"teamDelete":             teamDeleteScript,
-	"teamInsert":             teamInsertScript,
-	"teamsSelect":            teamsSelectScript,
-	"teamsWithHuntIDSelect":  teamsWithHuntIDSelectScript,
-	"huntSelect":             huntSelectScript,
-	"huntDelete":             huntDeleteScript,
-	"huntInsert":             huntInsertScript,
-	"huntsSelect":            huntsSelectScript,
-	"locationsForTeamSelect": locationsForTeamScript,
+	"itemSelect":            itemSelectScript,
+	"itemDelete":            itemDeleteScript,
+	"itemInsert":            itemInsertScript,
+	"itemsSelect":           itemsSelectScript,
+	"teamSelect":            teamSelectScript,
+	"teamDelete":            teamDeleteScript,
+	"teamInsert":            teamInsertScript,
+	"teamsSelect":           teamsSelectScript,
+	"teamsWithHuntIDSelect": teamsWithHuntIDSelectScript,
+	"huntSelect":            huntSelectScript,
+	"huntDelete":            huntDeleteScript,
+	"huntInsert":            huntInsertScript,
+	"huntsSelect":           huntsSelectScript,
+	"locationsForTeam":      locationsForTeamScript,
+	"locationInsert":        locationInsertScript,
 }
 
 func initStatements(db *sql.DB) error {
