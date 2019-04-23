@@ -47,15 +47,25 @@ func (m *MediaMetaDB) Validate(r *http.Request) *response.Error {
 			http.StatusBadRequest)
 	}
 
+	_, err = govalidator.ValidateStruct(m.Location)
+	if err != nil {
+		return response.NewError(fmt.Sprintf("error validating media location info: %v", err),
+			http.StatusBadRequest)
+	}
+
 	return nil
 }
 
 var mediaMetasForTeamScript = `
-	SELECT m.id, m.team_id, m.item_id, m.url, l.latitude, l.longitude, l.time_stamp
-	FROM media as m 
-		INNER JOIN locations as l
+	WITH loc_and_media AS (
+		SELECT m.id, m.team_id, m.item_id, m.url, l.latitude, l.longitude, l.time_stamp
+		FROM media AS m 
+		INNER JOIN locations AS l
 		ON m.team_id = l.team_id
-	WHERE m.team_id = $1;`
+	)
+	SELECT * 
+	FROM loc_and_media
+	WHERE team_id = $1;`
 
 // GetMediaMetasForTeam returns all the meta information for all media files associated w/
 // this team. A result with both media meta objects and an error is possible
@@ -91,5 +101,37 @@ func GetMediaMetasForTeam(teamID int) ([]*MediaMetaDB, *response.Error) {
 	return metas, e.GetError()
 }
 
-var mediaMetaInsertScript = ``
+var mediaMetaInsertScript = `
+	WITH loc_ins AS (
+		INSERT INTO locations(team_id, latitude, longitude, time_stamp)
+		VALUES ($1, $2, $3, $4)
+		RETURNING id locations_id
+	)
+	INSERT INTO media(team_id, item_id, location_id, url)
+	VALUES ($5, NULLIF($6, 0), (SELECT locations_id FROM loc_ins), $7)
+	RETURNING location_id, id media_id;
+	`
+
+// Insert inserts the given data into the db. The id of the locations row
+// and the id of the media row are written back to the MediaMetaDB struct
+func (m *MediaMetaDB) Insert(teamID int) *response.Error {
+	// make sure the given teamID matches the teamID's for the structs
+	if teamID != m.TeamID || teamID != m.Location.TeamID {
+		return response.NewError("invalid insert request: the teamID's provided don't match",
+			http.StatusBadRequest)
+	}
+
+	err := stmtMap["mediaMetaInsert"].QueryRow(m.TeamID, m.Location.Latitude,
+		m.Location.Longitude, m.Location.TimeStamp, m.TeamID, m.ItemID,
+		m.URL).Scan(&m.Location.ID, &m.ID)
+	if err != nil {
+		return response.NewError(
+			fmt.Sprintf("error inserting media meta info with team %d: %v",
+				teamID, err), http.StatusInternalServerError)
+
+	}
+
+	return nil
+}
+
 var mediaMetaDeleteScript = ``

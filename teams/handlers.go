@@ -340,10 +340,9 @@ func getMediaForTeamHandler(env *c.Env) http.HandlerFunc {
 	})
 }
 
-/*
 // swagger:route POST /teams/{teamID}/media/ media create createMediaHandler
 //
-// Stores a  the given location.
+// Stores the given media info.
 //
 // Consumes:
 // 	- application/json
@@ -357,7 +356,7 @@ func getMediaForTeamHandler(env *c.Env) http.HandlerFunc {
 // 	200:
 //  400:
 //  500:
-func createLocationHandler(env *c.Env) http.HandlerFunc {
+func createMediaHandler(env *c.Env) http.HandlerFunc {
 	return (func(w http.ResponseWriter, r *http.Request) {
 		teamID, e := request.GetIntURLParam(r, "teamID")
 		if e != nil {
@@ -365,25 +364,26 @@ func createLocationHandler(env *c.Env) http.HandlerFunc {
 			return
 		}
 
-		location := db.LocationDB{}
+		media := db.MediaMetaDB{}
 
-		e = request.DecodeAndValidate(r, &location)
+		e = request.DecodeAndValidate(r, &media)
 		if e != nil {
 			e.Handle(w)
 			return
 		}
 
-		e = location.Insert(teamID)
+		e = media.Insert(teamID)
 		if e != nil {
 			e.Handle(w)
 			return
 		}
 
-		render.JSON(w, r, &location)
+		render.JSON(w, r, &media)
 		return
 	})
 }
 
+/*
 // swagger:route DELETE /teams/{teamID}/locations/{locationID} delete location deleteLocationHandler
 //
 // Deletes the given location.
