@@ -41,7 +41,7 @@ func GetTeamsForHunt(huntID int) ([]*Team, *response.Error) {
 
 	teams := make([]*Team, 0, len(teamDBs))
 	for _, teamDB := range teamDBs {
-		team := Team{*teamDB}
+		team := Team{TeamDB: *teamDB}
 		teams = append(teams, &team)
 	}
 

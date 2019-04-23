@@ -17,7 +17,7 @@ func GetItems(huntID int) ([]*models.Item, *response.Error) {
 
 	items := make([]*models.Item, 0, len(itemDBs))
 	for _, itemDB := range itemDBs {
-		item := models.Item{*itemDB}
+		item := models.Item{ItemDB: *itemDB}
 		items = append(items, &item)
 	}
 
@@ -34,7 +34,7 @@ func GetItemsForHunt(huntID int) ([]*models.Item, *response.Error) {
 	items := make([]*models.Item, 0, len(itemDBs))
 
 	for _, v := range itemDBs {
-		item := models.Item{*v}
+		item := models.Item{ItemDB: *v}
 		items = append(items, &item)
 	}
 

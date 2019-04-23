@@ -36,7 +36,7 @@ func AllHunts() ([]*Hunt, *response.Error) {
 			e.AddError(itemErr)
 		}
 
-		hunt := Hunt{*h, ts, items}
+		hunt := Hunt{HuntDB: *h, Teams: ts, Items: items}
 
 		hunts = append(hunts, &hunt)
 	}
@@ -63,7 +63,7 @@ func GetHunt(huntID int) (*Hunt, *response.Error) {
 		e.AddError(itemErr)
 	}
 
-	return &Hunt{*huntDB, teams, items}, e.GetError()
+	return &Hunt{HuntDB: *huntDB, Teams: teams, Items: items}, e.GetError()
 }
 
 // InsertHunt inserts the given hunt into the database and updates the hunt
