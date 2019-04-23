@@ -27,6 +27,7 @@ CREATE TABLE hunts (
     longitude       real NOT NULL,
     location_name   varchar(80),
     created_at      timestamp DEFAULT NOW(),
+    CONSTRAINT hunt_with_same_name UNIQUE(name),
     PRIMARY KEY(id)
 );
 
@@ -83,23 +84,24 @@ CREATE TABLE items (
 );
 
 /*
-    This table is used to store the team specific item info i.e
-    whether the team has any media associated with a specific item.
-    this table will be how a client can tell if a team has found 
-    a specific item. Each row represents a team's finding of an
-    item in a specific hunt. There will be an associated 'locations'
+    This table is used to store the team specific media info.
+    This table will be how a client can tell if a team has found 
+    a specific item. Each row represents a media file associated
+    with a specific team. If an item_id is provided, then that
+    team has "found" that item. There will be an associated 'locations'
     entry for each row.
 
     relations:
-        many to one--item results can have the same team
-        one to one--item results will have one location
-        one to one--item results will have one item
+        many to one--media rows can have the same team
+        one to one--media rows will have one location
+        one to one--media rows will at most one item
 */ 
-CREATE TABLE item_results (
+CREATE TABLE media (
     id              serial,
     team_id         int NOT NULL,
-    item_id         int NOT NULL,
+    item_id         int,
     location_id     int NOT NULL,
+    url             varchar(255) NOT NULL CHECK (length(url) > 0),
     PRIMARY KEY(id),
     FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE,
     FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE,
