@@ -45,5 +45,12 @@ func Routes(env *c.Env) *chi.Mux {
 	router.Post("/{teamID}/locations/", createLocationHandler(env))
 	router.Delete("/{teamID}/locations/{locationID}", deleteLocationHandler(env))
 
+	// media routes
+	router.Get("/{teamID}/media/", getMediaMetasForTeamHandler(env))
+	/*
+		router.Post("/{teamID}/media/", createMediaHandler(env))
+		router.Delete("/{teamID}/media/{mediaID}", deleteMediaHandler(env))
+	*/
+
 	return router
 }

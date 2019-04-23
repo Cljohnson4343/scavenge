@@ -21,7 +21,6 @@ CREATE TABLE hunts (
     name            varchar(255) NOT NULL,
     max_teams       smallint  NOT NULL CONSTRAINT positive_num_teams CHECK (max_teams > 1),
     start_time      timestamp NOT NULL,
-    /* @TODO see about constraining end_time to be after start_time */
     end_time        timestamp NOT NULL,
     latitude        real NOT NULL,
     longitude       real NOT NULL,
@@ -36,6 +35,8 @@ CREATE TABLE hunts (
 
     relations:
         many to one--teams can have the same hunt
+        one to many--teams can have many locations
+        one to many--teams can have many media rows
 */
 CREATE TABLE teams (
     id              serial,
@@ -53,6 +54,7 @@ CREATE TABLE teams (
 
     relations:
         many to one--locations can have the same team
+        one to one--locations can have a single media row
 */ 
 CREATE TABLE locations (
     id              serial,
@@ -101,7 +103,7 @@ CREATE TABLE media (
     team_id         int NOT NULL,
     item_id         int,
     location_id     int NOT NULL,
-    url             varchar(255) NOT NULL CHECK (length(url) > 0),
+    url             varchar(2083) NOT NULL CHECK (length(url) > 3),
     PRIMARY KEY(id),
     FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE,
     FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE,

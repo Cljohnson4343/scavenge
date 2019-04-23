@@ -395,8 +395,6 @@ func populateDBHandler(env *c.Env) http.HandlerFunc {
 			return
 		}
 
-		fmt.Println(len(hunts))
-
 		for _, hunt := range hunts {
 			b, err := json.Marshal(hunt)
 			if err != nil {

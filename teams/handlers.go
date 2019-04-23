@@ -1,15 +1,11 @@
 package teams
 
 import (
-	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/cljohnson4343/scavenge/db"
 
 	"github.com/cljohnson4343/scavenge/response"
-
-	"github.com/go-chi/chi"
 
 	c "github.com/cljohnson4343/scavenge/config"
 	"github.com/cljohnson4343/scavenge/request"
@@ -212,12 +208,9 @@ func patchTeamHandler(env *c.Env) http.HandlerFunc {
 func getLocationsForTeamHandler(env *c.Env) http.HandlerFunc {
 	return (func(w http.ResponseWriter, r *http.Request) {
 		e := response.NewNilError()
-		teamID, err := strconv.Atoi(chi.URLParam(r, "teamID"))
-		if err != nil {
-			e.Add(fmt.Sprintf("error getting teamID URL param: %s",
-				err.Error()), http.StatusBadRequest)
-
-			e.GetError().Handle(w)
+		teamID, e := request.GetIntURLParam(r, "teamID")
+		if e != nil {
+			e.Handle(w)
 			return
 		}
 
@@ -311,3 +304,121 @@ func deleteLocationHandler(env *c.Env) http.HandlerFunc {
 		return
 	})
 }
+
+// swagger:route GET /teams/{teamID}/media/ media getMediaForTeamHandler
+//
+// Lists all the meta info for the media files associated with a team.
+//
+// Consumes:
+// 	- application/json
+//
+// Produces:
+//	- application/json
+//
+// Schemes: http, https
+//
+// Responses:
+// 	200:
+// 	400:
+//  500:
+func getMediaMetasForTeamHandler(env *c.Env) http.HandlerFunc {
+	return (func(w http.ResponseWriter, r *http.Request) {
+		e := response.NewNilError()
+		teamID, e := request.GetIntURLParam(r, "teamID")
+		if e != nil {
+			e.Handle(w)
+			return
+		}
+
+		mediaMetaDBs, e := db.GetMediaMetasForTeam(teamID)
+		if e != nil {
+			e.Handle(w)
+		}
+
+		render.JSON(w, r, mediaMetaDBs)
+		return
+	})
+}
+
+/*
+// swagger:route POST /teams/{teamID}/locations/ location create createLocationHandler
+//
+// Creates the given location.
+//
+// Consumes:
+// 	- application/json
+//
+// Produces:
+//	- application/json
+//
+// Schemes: http, https
+//
+// Responses:
+// 	200:
+//  400:
+//  500:
+func createLocationHandler(env *c.Env) http.HandlerFunc {
+	return (func(w http.ResponseWriter, r *http.Request) {
+		teamID, e := request.GetIntURLParam(r, "teamID")
+		if e != nil {
+			e.Handle(w)
+			return
+		}
+
+		location := db.LocationDB{}
+
+		e = request.DecodeAndValidate(r, &location)
+		if e != nil {
+			e.Handle(w)
+			return
+		}
+
+		e = location.Insert(teamID)
+		if e != nil {
+			e.Handle(w)
+			return
+		}
+
+		render.JSON(w, r, &location)
+		return
+	})
+}
+
+// swagger:route DELETE /teams/{teamID}/locations/{locationID} delete location deleteLocationHandler
+//
+// Deletes the given location.
+//
+// Consumes:
+// 	- application/json
+//
+// Produces:
+//	- application/json
+//
+// Schemes: http, https
+//
+// Responses:
+// 	200:
+//  400:
+func deleteLocationHandler(env *c.Env) http.HandlerFunc {
+	return (func(w http.ResponseWriter, r *http.Request) {
+		teamID, e := request.GetIntURLParam(r, "teamID")
+		if e != nil {
+			e.Handle(w)
+			return
+		}
+
+		locationID, e := request.GetIntURLParam(r, "locationID")
+		if e != nil {
+			e.Handle(w)
+			return
+		}
+
+		e = db.DeleteLocation(locationID, teamID)
+		if e != nil {
+			e.Handle(w)
+		}
+
+		return
+	})
+}
+*/
