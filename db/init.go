@@ -36,6 +36,13 @@ func init() {
 		}
 		return false
 	}))
+	govalidator.CustomTypeTagMap.Set("timePast", govalidator.CustomTypeValidator(func(i interface{}, context interface{}) bool {
+		switch v := i.(type) {
+		case time.Time:
+			return v.Before(time.Now())
+		}
+		return false
+	}))
 }
 
 var ()
@@ -43,19 +50,20 @@ var ()
 var stmtMap = map[string]*sql.Stmt{}
 
 var scriptMap = map[string]string{
-	"itemSelect":            itemSelectScript,
-	"itemDelete":            itemDeleteScript,
-	"itemInsert":            itemInsertScript,
-	"itemsSelect":           itemsSelectScript,
-	"teamSelect":            teamSelectScript,
-	"teamDelete":            teamDeleteScript,
-	"teamInsert":            teamInsertScript,
-	"teamsSelect":           teamsSelectScript,
-	"teamsWithHuntIDSelect": teamsWithHuntIDSelectScript,
-	"huntSelect":            huntSelectScript,
-	"huntDelete":            huntDeleteScript,
-	"huntInsert":            huntInsertScript,
-	"huntsSelect":           huntsSelectScript,
+	"itemSelect":             itemSelectScript,
+	"itemDelete":             itemDeleteScript,
+	"itemInsert":             itemInsertScript,
+	"itemsSelect":            itemsSelectScript,
+	"teamSelect":             teamSelectScript,
+	"teamDelete":             teamDeleteScript,
+	"teamInsert":             teamInsertScript,
+	"teamsSelect":            teamsSelectScript,
+	"teamsWithHuntIDSelect":  teamsWithHuntIDSelectScript,
+	"huntSelect":             huntSelectScript,
+	"huntDelete":             huntDeleteScript,
+	"huntInsert":             huntInsertScript,
+	"huntsSelect":            huntsSelectScript,
+	"locationsForTeamSelect": locationsForTeamScript,
 }
 
 func initStatements(db *sql.DB) error {

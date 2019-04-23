@@ -40,5 +40,8 @@ func Routes(env *c.Env) *chi.Mux {
 	router.Post("/", createTeamHandler(env))
 	router.Patch("/{teamID}", patchTeamHandler(env))
 
+	// location routes
+	router.Get("/{teamID}/locations/", getLocationsForTeamHandler(env))
+
 	return router
 }

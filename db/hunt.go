@@ -186,6 +186,7 @@ func GetHunts() ([]*HuntDB, *response.Error) {
 	if err != nil {
 		return nil, response.NewError(fmt.Sprintf("error getting hunts: %s", err.Error()), http.StatusInternalServerError)
 	}
+	defer rows.Close()
 
 	hunts := make([]*HuntDB, 0)
 	e := response.NewNilError()

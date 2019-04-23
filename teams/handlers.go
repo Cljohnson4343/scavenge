@@ -1,7 +1,15 @@
 package teams
 
 import (
+	"fmt"
 	"net/http"
+	"strconv"
+
+	"github.com/cljohnson4343/scavenge/db"
+
+	"github.com/cljohnson4343/scavenge/response"
+
+	"github.com/go-chi/chi"
 
 	c "github.com/cljohnson4343/scavenge/config"
 	"github.com/cljohnson4343/scavenge/request"
@@ -181,6 +189,44 @@ func patchTeamHandler(env *c.Env) http.HandlerFunc {
 			e.Handle(w)
 		}
 
+		return
+	})
+}
+
+// swagger:route GET /teams/{teamID}/locations locations getLocationsForTeamHandler
+//
+// Lists all the locations for a team.
+//
+// Consumes:
+// 	- application/json
+//
+// Produces:
+//	- application/json
+//
+// Schemes: http, https
+//
+// Responses:
+// 	200:
+// 	400:
+//  500:
+func getLocationsForTeamHandler(env *c.Env) http.HandlerFunc {
+	return (func(w http.ResponseWriter, r *http.Request) {
+		e := response.NewNilError()
+		teamID, err := strconv.Atoi(chi.URLParam(r, "teamID"))
+		if err != nil {
+			e.Add(fmt.Sprintf("error getting teamID URL param: %s",
+				err.Error()), http.StatusBadRequest)
+
+			e.GetError().Handle(w)
+			return
+		}
+
+		locationDBs, e := db.GetLocationsForTeam(teamID)
+		if e != nil {
+			e.Handle(w)
+		}
+
+		render.JSON(w, r, locationDBs)
 		return
 	})
 }

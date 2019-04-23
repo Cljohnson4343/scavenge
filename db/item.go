@@ -87,6 +87,7 @@ func GetItemsWithHuntID(huntID int) ([]*ItemDB, *response.Error) {
 	if err != nil {
 		return nil, response.NewError(fmt.Sprintf("error getting items with hunt id %d: %s", huntID, err.Error()), http.StatusInternalServerError)
 	}
+	defer rows.Close()
 
 	items := make([]*ItemDB, 0)
 	e := response.NewNilError()
