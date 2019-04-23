@@ -58,10 +58,10 @@ func (m *MediaMetaDB) Validate(r *http.Request) *response.Error {
 
 var mediaMetasForTeamScript = `
 	WITH loc_and_media AS (
-		SELECT m.id, m.team_id, m.item_id, m.url, l.latitude, l.longitude, l.time_stamp
-		FROM media AS m 
-		INNER JOIN locations AS l
-		ON m.team_id = l.team_id
+		SELECT m.id, m.team_id, COALESCE(m.item_id, 0), m.url, m.location_id, l.latitude, l.longitude, l.time_stamp
+		FROM media m 
+		INNER JOIN locations l
+		ON m.location_id = l.id
 	)
 	SELECT * 
 	FROM loc_and_media
@@ -75,7 +75,7 @@ func GetMediaMetasForTeam(teamID int) ([]*MediaMetaDB, *response.Error) {
 		return nil, response.NewError(fmt.Sprintf("error getting all media meta info for team %d: %v",
 			teamID, err), http.StatusInternalServerError)
 	}
-	rows.Close()
+	defer rows.Close()
 
 	e := response.NewNilError()
 	metas := make([]*MediaMetaDB, 0)
@@ -83,7 +83,7 @@ func GetMediaMetasForTeam(teamID int) ([]*MediaMetaDB, *response.Error) {
 	for rows.Next() {
 		m := MediaMetaDB{}
 
-		err = rows.Scan(&m.ID, &m.TeamID, &m.ItemID, &m.URL, &m.Location.Latitude,
+		err = rows.Scan(&m.ID, &m.TeamID, &m.ItemID, &m.URL, &m.Location.ID, &m.Location.Latitude,
 			&m.Location.Longitude, &m.Location.TimeStamp)
 		if err != nil {
 			e.Add(fmt.Sprintf("error getting media meta info for team %d: %v", teamID,
@@ -134,4 +134,29 @@ func (m *MediaMetaDB) Insert(teamID int) *response.Error {
 	return nil
 }
 
-var mediaMetaDeleteScript = ``
+var mediaMetaDeleteScript = `
+	DELETE FROM media
+	WHERE id = $1 AND team_id = $2;`
+
+// DeleteMedia deletes the row from the media table but leaves the location data in
+// the location table. If you want to delete both then delete the associated Location row.
+func DeleteMedia(mediaID, teamID int) *response.Error {
+	res, err := stmtMap["mediaMetaDelete"].Exec(mediaID, teamID)
+	if err != nil {
+		return response.NewError(fmt.Sprintf("error deleting media with id %d: %v",
+			mediaID, err), http.StatusInternalServerError)
+	}
+
+	numRows, err := res.RowsAffected()
+	if err != nil {
+		return response.NewError(fmt.Sprintf("error deleting media with id %d: %v",
+			mediaID, err), http.StatusInternalServerError)
+	}
+
+	if numRows < 1 {
+		return response.NewError(fmt.Sprintf("error deleting media with id %d and team id %d",
+			mediaID, teamID), http.StatusBadRequest)
+	}
+
+	return nil
+}

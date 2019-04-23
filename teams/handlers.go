@@ -383,10 +383,9 @@ func createMediaHandler(env *c.Env) http.HandlerFunc {
 	})
 }
 
-/*
-// swagger:route DELETE /teams/{teamID}/locations/{locationID} delete location deleteLocationHandler
+// swagger:route DELETE /teams/{teamID}/media/{mediaID} delete media deleteMediaHandler
 //
-// Deletes the given location.
+// Deletes the given media.
 //
 // Consumes:
 // 	- application/json
@@ -399,7 +398,7 @@ func createMediaHandler(env *c.Env) http.HandlerFunc {
 // Responses:
 // 	200:
 //  400:
-func deleteLocationHandler(env *c.Env) http.HandlerFunc {
+func deleteMediaHandler(env *c.Env) http.HandlerFunc {
 	return (func(w http.ResponseWriter, r *http.Request) {
 		teamID, e := request.GetIntURLParam(r, "teamID")
 		if e != nil {
@@ -407,13 +406,13 @@ func deleteLocationHandler(env *c.Env) http.HandlerFunc {
 			return
 		}
 
-		locationID, e := request.GetIntURLParam(r, "locationID")
+		mediaID, e := request.GetIntURLParam(r, "mediaID")
 		if e != nil {
 			e.Handle(w)
 			return
 		}
 
-		e = db.DeleteLocation(locationID, teamID)
+		e = db.DeleteMedia(mediaID, teamID)
 		if e != nil {
 			e.Handle(w)
 		}
@@ -421,4 +420,3 @@ func deleteLocationHandler(env *c.Env) http.HandlerFunc {
 		return
 	})
 }
-*/
