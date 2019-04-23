@@ -1,1160 +1,920 @@
 [{
     "name": "Huntsville Hunt",
     "max_teams": 4,
-    "id": 1,
-    "start": "2019-04-21T10:00:00Z",
-    "end": "2019-04-21T13:00:00Z",
+    "start_time": "2021-10-21T10:00:00Z",
+    "end_time": "2021-10-21T13:00:00Z",
     "teams": [
         {
-            "name": "Home Team"
+            "name": "Lakers"
         },
         {
-            "name": "Second Team"
+            "name": "Panthers"
         }
     ],
     "items": [
         {
             "name": "Santa Clause",
-            "points": 10,
-            "is_done": false
+            "points": 10
         },
         {
             "name": "Rudolph",
-            "points": 10,
-            "is_done": true
+            "points": 10
         },
         {
             "name": "Reindeer on the Roof",
-            "points": 40,
-            "is_done": false
+            "points": 40
         },
         {
             "name": "Mrs. Clause",
-            "points": 30,
-            "is_done": true
+            "points": 30
         },
         {
             "name": "Snow Globe",
-            "points": 40,
-            "is_done": true
+            "points": 40
         }
     ],
-    "location": {
-        "name": "Huntsville, Al",
-        "coords": {
-            "latitude": 34.730705,
-            "longitude": -86.59481
-        }
-    }
+    "location_name": "Huntsville, Al",
+    "latitude": 34.730705,
+    "longitude": -86.59481
 },
 {
     "name": "Guntersvile Hunt",
     "max_teams": 6,
-    "id": 2,
-    "start": "2019-04-22T10:00:00Z",
-    "end": "2019-04-22T15:00:00Z",
+    "start_time": "2021-10-22T10:00:00Z",
+    "end_time": "2021-10-22T15:00:00Z",
     "teams": [
         {
-            "name": "Home Team"
+            "name": "76ers"
         }
     ],
     "items": [
         {
             "name": "Santa Clause",
-            "points": 10,
-            "is_done": false
+            "points": 10
         },
         {
             "name": "Rudolph",
-            "points": 10,
-            "is_done": true
+            "points": 10
         },
         {
             "name": "Reindeer on the Roof",
-            "points": 40,
-            "is_done": false
+            "points": 40
         },
         {
             "name": "Mrs. Clause",
-            "points": 30,
-            "is_done": true
+            "points": 30
         },
         {
             "name": "Snow Globe",
-            "points": 40,
-            "is_done": true
+            "points": 40
         }
     ],
-    "location": {
-        "name": "Guntersville, Al",
-        "coords": {
-            "latitude": 34.348917,
-            "longitude": -86.28447
-        }
-    }
+    "location_name": "Guntersville, Al",
+    "latitude": 34.348917,
+    "longitude": -86.28447
 },
 {
     "name": "Birmingham Hunt",
     "max_teams": 3,
-    "id": 3,
-    "start": "2019-04-21T12:00:00Z",
-    "end": "2019-04-21T18:00:00Z",
+    "start_time": "2021-10-21T12:00:00Z",
+    "end_time": "2021-10-21T18:00:00Z",
     "teams": [
         {
-            "name": "Home Team"
+            "name": "Bucks"
         },
         {
-            "name": "Second Team"
+            "name": "Colts"
         }
     ],
     "items": [
         {
             "name": "Santa Clause",
-            "points": 10,
-            "is_done": false
+            "points": 10
         },
         {
             "name": "Rudolph",
-            "points": 10,
-            "is_done": true
+            "points": 10
         },
         {
             "name": "Reindeer on the Roof",
-            "points": 40,
-            "is_done": false
+            "points": 40
         },
         {
             "name": "Mrs. Clause",
-            "points": 30,
-            "is_done": true
+            "points": 30
         },
         {
             "name": "Snow Globe",
-            "points": 40,
-            "is_done": true
+            "points": 40
         }
     ],
-    "location": {
-        "name": "Birmingham, Al",
-        "coords": {
-            "latitude": 33.514874,
-            "longitude": -86.822777
-        }
-    }
+    "location_name": "Birmingham, Al",
+    "latitude": 33.514874,
+    "longitude": -86.822777
 },{
     "name": "Mobile Hunt",
     "max_teams": 12,
-    "id": 5,
-    "start": "2019-04-24T14:00:00Z",
-    "end": "2019-04-24T19:00:00Z",
+    "start_time": "2021-10-24T14:00:00Z",
+    "end_time": "2021-10-24T19:00:00Z",
     "teams": [
         {
-            "name": "Home Team"
+            "name": "Cavs"
         }
     ],
     "items": [
         {
             "name": "Santa Clause",
-            "points": 10,
-            "is_done": false
+            "points": 10
         },
         {
             "name": "Rudolph",
-            "points": 10,
-            "is_done": true
+            "points": 10
         },
         {
             "name": "Reindeer on the Roof",
-            "points": 40,
-            "is_done": false
+            "points": 40
         },
         {
             "name": "Mrs. Clause",
-            "points": 30,
-            "is_done": true
+            "points": 30
         },
         {
             "name": "Snow Globe",
-            "points": 40,
-            "is_done": true
+            "points": 40
         }
     ],
-    "location": {
-        "name": "Mobile, Al",
-        "coords": {
-            "latitude": 30.696447,
-            "longitude": -88.003313
-        }
-    }
+    "location_name": "Mobile, Al",
+    "latitude": 30.696447,
+    "longitude": -88.003313
 },{
     "name": "Atlante Hunt",
     "max_teams": 4,
-    "id": 6,
-    "start": "2019-04-21T18:00:00Z",
-    "end": "2019-04-21T23:00:00Z",
+    "start_time": "2021-10-21T18:00:00Z",
+    "end_time": "2021-10-21T23:00:00Z",
     "teams": [
         {
-            "name": "Home Team"
+            "name": "Bulls"
         },
         {
-            "name": "Second Team"
+            "name": "Twins"
         }
     ],
     "items": [
         {
             "name": "Santa Clause",
-            "points": 10,
-            "is_done": false
+            "points": 10
         },
         {
             "name": "Rudolph",
-            "points": 10,
-            "is_done": true
+            "points": 10
         },
         {
             "name": "Reindeer on the Roof",
-            "points": 40,
-            "is_done": false
+            "points": 40
         },
         {
             "name": "Mrs. Clause",
-            "points": 30,
-            "is_done": true
+            "points": 30
         },
         {
             "name": "Snow Globe",
-            "points": 40,
-            "is_done": true
+            "points": 40
         }
     ],
-    "location": {
-        "name": "Atlanta, Ga",
-        "coords": {
-            "latitude": 33.780921,
-            "longitude": -84.377824
-        }
-    }
+    "location_name": "Atlanta, Ga",
+    "latitude": 33.780921,
+    "longitude": -84.377824
 },{
     "name": "Denver Hunt",
     "max_teams": 5,
-    "id": 7,
-    "start": "2019-04-25T14:00:00Z",
-    "end": "2019-04-25T21:00:00Z",
+    "start_time": "2021-10-25T14:00:00Z",
+    "end_time": "2021-10-25T21:00:00Z",
     "teams": [
         {
-            "name": "Home Team"
+            "name": "Kings"
         },
         {
-            "name": "Second Team"
+            "name": "Expos"
         }
     ],
     "items": [
         {
             "name": "Santa Clause",
-            "points": 10,
-            "is_done": false
+            "points": 10
         },
         {
             "name": "Rudolph",
-            "points": 10,
-            "is_done": true
+            "points": 10
         },
         {
             "name": "Reindeer on the Roof",
-            "points": 40,
-            "is_done": false
+            "points": 40
         },
         {
             "name": "Mrs. Clause",
-            "points": 30,
-            "is_done": true
+            "points": 30
         },
         {
             "name": "Snow Globe",
-            "points": 40,
-            "is_done": true
+            "points": 40
         }
     ],
-    "location": {
-        "name": "Denver, Co",
-        "coords": {
-            "latitude": 39.766526,
-            "longitude": -105.014008
-        }
-    }
+    "location_name": "Denver, Co",
+    "latitude": 39.766526,
+    "longitude": -105.014008
 },{
     "name": "San Fran Hunt",
     "max_teams": 8,
-    "id": 8,
-    "start": "2019-04-23T10:00:00Z",
-    "end": "2019-04-23T13:00:00Z",
+    "start_time": "2021-10-23T10:00:00Z",
+    "end_time": "2021-10-23T13:00:00Z",
     "teams": [
         {
-            "name": "Home Team"
+            "name": "Celtics"
         },
         {
-            "name": "Second Team"
+            "name": "Nationals"
         }
     ],
     "items": [
         {
             "name": "Santa Clause",
-            "points": 10,
-            "is_done": false
+            "points": 10
         },
         {
             "name": "Rudolph",
-            "points": 10,
-            "is_done": true
+            "points": 10
         },
         {
             "name": "Reindeer on the Roof",
-            "points": 40,
-            "is_done": false
+            "points": 40
         },
         {
             "name": "Mrs. Clause",
-            "points": 30,
-            "is_done": true
+            "points": 30
         },
         {
             "name": "Snow Globe",
-            "points": 40,
-            "is_done": true
+            "points": 40
         }
     ],
-    "location": {
-        "name": "San Fransisco, Ca",
-        "coords": {
-            "latitude": 37.898697,
-            "longitude": -122.4888656
-        }
-    }
+    "location_name": "San Fransisco, Ca",
+    "latitude": 37.898697,
+    "longitude": -122.4888656
 },{
     "name": "Seattle Hunt",
     "max_teams": 4,
-    "id": 9,
-    "start": "2019-04-21T10:00:00Z",
-    "end": "2019-04-21T13:00:00Z",
+    "start_time": "2021-10-21T10:00:00Z",
+    "end_time": "2021-10-21T13:00:00Z",
     "teams": [
         {
-            "name": "Home Team"
+            "name": "Knicks"
         },
         {
-            "name": "Second Team"
+            "name": "Diambacks"
         }
     ],
     "items": [
         {
             "name": "Santa Clause",
-            "points": 10,
-            "is_done": false
+            "points": 10
         },
         {
             "name": "Rudolph",
-            "points": 10,
-            "is_done": true
+            "points": 10
         },
         {
             "name": "Reindeer on the Roof",
-            "points": 40,
-            "is_done": false
+            "points": 40
         },
         {
             "name": "Mrs. Clause",
-            "points": 30,
-            "is_done": true
+            "points": 30
         },
         {
             "name": "Snow Globe",
-            "points": 40,
-            "is_done": true
+            "points": 40
         }
     ],
-    "location": {
-        "name": "Seattle, Wa",
-        "coords": {
-            "latitude": 47.611991,
-            "longitude": -122.312875
-        }
-    }
+    "location_name": "Seattle, Wa",
+    "latitude": 47.611991,
+    "longitude": -122.312875
 },{
     "name": "Chicago Hunt",
     "max_teams": 4,
-    "id": 10,
-    "start": "2019-04-28T10:00:00Z",
-    "end": "2019-04-28T13:00:00Z",
+    "start_time": "2021-10-28T10:00:00Z",
+    "end_time": "2021-10-28T13:00:00Z",
     "teams": [
         {
-            "name": "Home Team"
+            "name": "Nets"
         },
         {
-            "name": "Second Team"
+            "name": "Jazz"
         }
     ],
     "items": [
         {
             "name": "Santa Clause",
-            "points": 10,
-            "is_done": false
+            "points": 10
         },
         {
             "name": "Rudolph",
-            "points": 10,
-            "is_done": true
+            "points": 10
         },
         {
             "name": "Reindeer on the Roof",
-            "points": 40,
-            "is_done": false
+            "points": 40
         },
         {
             "name": "Mrs. Clause",
-            "points": 30,
-            "is_done": true
+            "points": 30
         },
         {
             "name": "Snow Globe",
-            "points": 40,
-            "is_done": true
+            "points": 40
         }
     ],
-    "location": {
-        "name": "Chicago, IL",
-        "coords": {
-            "latitude": 41.772068,
-            "longitude": -87.498989
-        }
-    }
+    "location_name": "Chicago, IL",
+    "latitude": 41.772068,
+    "longitude": -87.498989
 },{
     "name": "New York Hunt",
     "max_teams": 4,
-    "id": 11,
-    "start": "2019-04-20T10:00:00Z",
-    "end": "2019-04-20T18:00:00Z",
+    "start_time": "2021-10-20T10:00:00Z",
+    "end_time": "2021-10-20T18:00:00Z",
     "teams": [
         {
-            "name": "Home Team"
+            "name": "Hawks"
         },
         {
-            "name": "Second Team"
+            "name": "Pelicans"
         }
     ],
     "items": [
         {
             "name": "Santa Clause",
-            "points": 10,
-            "is_done": false
+            "points": 10
         },
         {
             "name": "Rudolph",
-            "points": 10,
-            "is_done": true
+            "points": 10
         },
         {
             "name": "Reindeer on the Roof",
-            "points": 40,
-            "is_done": false
+            "points": 40
         },
         {
             "name": "Mrs. Clause",
-            "points": 30,
-            "is_done": true
+            "points": 30
         },
         {
             "name": "Snow Globe",
-            "points": 40,
-            "is_done": true
+            "points": 40
         }
     ],
-    "location": {
-        "name": "New York, Ny",
-        "coords": {
-            "latitude": 40.731377,
-            "longitude": -74.007778
-        }
-    }
+    "location_name": "New York, Ny",
+    "latitude": 40.731377,
+    "longitude": -74.007778
 },{
     "name": "New Orleans Hunt",
     "max_teams": 4,
-    "id": 12,
-    "start": "2019-04-22T18:00:00Z",
-    "end": "2019-04-22T21:00:00Z",
+    "start_time": "2021-10-22T18:00:00Z",
+    "end_time": "2021-10-22T21:00:00Z",
     "teams": [
         {
-            "name": "Home Team"
+            "name": "Spurs"
         },
         {
-            "name": "Second Team"
+            "name": "Grizzlies"
         }
     ],
     "items": [
         {
             "name": "Santa Clause",
-            "points": 10,
-            "is_done": false
+            "points": 10
         },
         {
             "name": "Rudolph",
-            "points": 10,
-            "is_done": true
+            "points": 10
         },
         {
             "name": "Reindeer on the Roof",
-            "points": 40,
-            "is_done": false
+            "points": 40
         },
         {
             "name": "Mrs. Clause",
-            "points": 30,
-            "is_done": true
+            "points": 30
         },
         {
             "name": "Snow Globe",
-            "points": 40,
-            "is_done": true
+            "points": 40
         }
     ],
-    "location": {
-        "name": "New Orleans, Al",
-        "coords": {
-            "latitude": 29.956699,
-            "longitude": -90.079371
-        }
-    }
+    "location_name": "New Orleans, Al",
+    "latitude": 29.956699,
+    "longitude": -90.079371
 },{
     "name": "Jackson Hunt",
     "max_teams": 4,
-    "id": 13,
-    "start": "2019-05-21T10:00:00Z",
-    "end": "2019-05-21T13:00:00Z",
+    "start_time": "2021-05-21T10:00:00Z",
+    "end_time": "2021-05-21T13:00:00Z",
     "teams": [
         {
-            "name": "Home Team"
+            "name": "Dolphins"
         },
         {
-            "name": "Second Team"
+            "name": "Titans"
         }
     ],
     "items": [
         {
             "name": "Santa Clause",
-            "points": 10,
-            "is_done": false
+            "points": 10
         },
         {
             "name": "Rudolph",
-            "points": 10,
-            "is_done": true
+            "points": 10
         },
         {
             "name": "Reindeer on the Roof",
-            "points": 40,
-            "is_done": false
+            "points": 40
         },
         {
             "name": "Mrs. Clause",
-            "points": 30,
-            "is_done": true
+            "points": 30
         },
         {
             "name": "Snow Globe",
-            "points": 40,
-            "is_done": true
+            "points": 40
         }
     ],
-    "location": {
-        "name": "Jackson, Ms",
-        "coords": {
-            "latitude": 32.298141,
-            "longitude": -90.156275
-        }
-    }
+    "location_name": "Jackson, Ms",
+    "latitude": 32.298141,
+    "longitude": -90.156275
 },
 {
     "name": "Nashville Hunt",
     "max_teams": 4,
-    "id": 14,
-    "start": "2019-05-22T10:00:00Z",
-    "end": "2019-05-22T13:00:00Z",
+    "start_time": "2021-05-22T10:00:00Z",
+    "end_time": "2021-05-22T13:00:00Z",
     "teams": [
         {
-            "name": "Home Team"
+            "name": "Falcons"
         },
         {
-            "name": "Second Team"
+            "name": "Redskins"
         }
     ],
     "items": [
         {
             "name": "Santa Clause",
-            "points": 10,
-            "is_done": false
+            "points": 10
         },
         {
             "name": "Rudolph",
-            "points": 10,
-            "is_done": true
+            "points": 10
         },
         {
             "name": "Reindeer on the Roof",
-            "points": 40,
-            "is_done": false
+            "points": 40
         },
         {
             "name": "Mrs. Clause",
-            "points": 30,
-            "is_done": true
+            "points": 30
         },
         {
             "name": "Snow Globe",
-            "points": 40,
-            "is_done": true
+            "points": 40
         }
     ],
-    "location": {
-        "name": "Nashville, Tn",
-        "coords": {
-            "latitude": 36.156310,
-            "longitude": -86.783371
-        }
-    }
+    "location_name": "Nashville, Tn",
+    "latitude": 36.156310,
+    "longitude": -86.783371
 },
 {
     "name": "West H-Town Hunt",
     "max_teams": 4,
-    "id": 15,
-    "start": "2019-04-19T10:00:00Z",
-    "end": "2019-04-19T15:00:00Z",
+    "start_time": "2021-10-19T10:00:00Z",
+    "end_time": "2021-10-19T15:00:00Z",
     "teams": [
         {
-            "name": "Home Team"
+            "name": "Patriots"
         },
         {
-            "name": "Second Team"
+            "name": "Lions"
         }
     ],
     "items": [
         {
             "name": "Santa Clause",
-            "points": 10,
-            "is_done": false
+            "points": 10
         },
         {
             "name": "Rudolph",
-            "points": 10,
-            "is_done": true
+            "points": 10
         },
         {
             "name": "Reindeer on the Roof",
-            "points": 40,
-            "is_done": false
+            "points": 40
         },
         {
             "name": "Mrs. Clause",
-            "points": 30,
-            "is_done": true
+            "points": 30
         },
         {
             "name": "Snow Globe",
-            "points": 40,
-            "is_done": true
+            "points": 40
         }
     ],
-    "location": {
-        "name": "Huntsville, Al",
-        "coords": {
-            "latitude": 34.753694,
-            "longitude": -86.704628
-        }
-    }
+    "location_name": "Huntsville, Al",
+    "latitude": 34.753694,
+    "longitude": -86.704628
 },{
     "name": "East H-Town Hunt",
     "max_teams": 4,
-    "id": 16,
-    "start": "2019-04-21T10:30:00Z",
-    "end": "2019-04-21T15:00:00Z",
+    "start_time": "2021-10-21T10:30:00Z",
+    "end_time": "2021-10-21T15:00:00Z",
     "teams": [
         {
-            "name": "Home Team"
+            "name": "Bills"
         },
         {
-            "name": "Second Team"
+            "name": "Packers"
         }
     ],
     "items": [
         {
             "name": "Santa Clause",
-            "points": 10,
-            "is_done": false
+            "points": 10
         },
         {
             "name": "Rudolph",
-            "points": 10,
-            "is_done": true
+            "points": 10
         },
         {
             "name": "Reindeer on the Roof",
-            "points": 40,
-            "is_done": false
+            "points": 40
         },
         {
             "name": "Mrs. Clause",
-            "points": 30,
-            "is_done": true
+            "points": 30
         },
         {
             "name": "Snow Globe",
-            "points": 40,
-            "is_done": true
+            "points": 40
         }
     ],
-    "location": {
-        "name": "Hunmtsville, Al",
-        "coords": {
-            "latitude": 34.759903,
-            "longitude": -86.560403
-        }
-    }
+    "location_name": "Hunmtsville, Al",
+    "latitude": 34.759903,
+    "longitude": -86.560403
 },
 {
     "name": "Athens Hunt",
     "max_teams": 4,
-    "id": 17,
-    "start": "2019-04-21T12:30:00Z",
-    "end": "2019-04-21T19:30:00Z",
+    "start_time": "2021-10-21T12:30:00Z",
+    "end_time": "2021-10-21T19:30:00Z",
     "teams": [
         {
-            "name": "Home Team"
+            "name": "Jets"
         },
         {
-            "name": "Second Team"
+            "name": "Tar Heels"
         }
     ],
     "items": [
         {
             "name": "Santa Clause",
-            "points": 10,
-            "is_done": false
+            "points": 10
         },
         {
             "name": "Rudolph",
-            "points": 10,
-            "is_done": true
+            "points": 10
         },
         {
             "name": "Reindeer on the Roof",
-            "points": 40,
-            "is_done": false
+            "points": 40
         },
         {
             "name": "Mrs. Clause",
-            "points": 30,
-            "is_done": true
+            "points": 30
         },
         {
             "name": "Snow Globe",
-            "points": 40,
-            "is_done": true
+            "points": 40
         }
     ],
-    "location": {
-        "name": "Athens, Al",
-        "coords": {
-            "latitude": 34.793179,
-            "longitude": -86.984792
-        }
-    }
+    "location_name": "Athens, Al",
+    "latitude": 34.793179,
+    "longitude": -86.984792
 },
 {
     "name": "Madison Hunt",
     "max_teams": 4,
-    "id": 18,
-    "start": "2019-04-22T18:00:00Z",
-    "end": "2019-04-22T23:30:00Z",
+    "start_time": "2021-10-22T18:00:00Z",
+    "end_time": "2021-10-22T23:30:00Z",
     "teams": [
         {
-            "name": "Home Team"
+            "name": "Giants"
         },
         {
-            "name": "Second Team"
+            "name": "Blue Devils"
         }
     ],
     "items": [
         {
             "name": "Santa Clause",
-            "points": 10,
-            "is_done": false
+            "points": 10
         },
         {
             "name": "Rudolph",
-            "points": 10,
-            "is_done": true
+            "points": 10
         },
         {
             "name": "Reindeer on the Roof",
-            "points": 40,
-            "is_done": false
+            "points": 40
         },
         {
             "name": "Mrs. Clause",
-            "points": 30,
-            "is_done": true
+            "points": 30
         },
         {
             "name": "Snow Globe",
-            "points": 40,
-            "is_done": true
+            "points": 40
         }
     ],
-    "location": {
-        "name": "Madison, Al",
-        "coords": {
-            "latitude": 34.694934,
-            "longitude": -86.766981
-        }
-    }
+    "location_name": "Madison, Al",
+    "latitude": 34.694934,
+    "longitude": -86.766981
 },
 {
     "name": "Decatur Hunt",
     "max_teams": 4,
-    "id": 19,
-    "start": "2019-04-28T15:00:00Z",
-    "end": "2019-04-28T19:00:00Z",
+    "start_time": "2021-10-28T15:00:00Z",
+    "end_time": "2021-10-28T19:00:00Z",
     "teams": [
         {
-            "name": "Home Team"
+            "name": "Eagles"
         },
         {
-            "name": "Second Team"
+            "name": "Tigers"
         }
     ],
     "items": [
         {
             "name": "Santa Clause",
-            "points": 10,
-            "is_done": false
+            "points": 10
         },
         {
             "name": "Rudolph",
-            "points": 10,
-            "is_done": true
+            "points": 10
         },
         {
             "name": "Reindeer on the Roof",
-            "points": 40,
-            "is_done": false
+            "points": 40
         },
         {
             "name": "Mrs. Clause",
-            "points": 30,
-            "is_done": true
+            "points": 30
         },
         {
             "name": "Snow Globe",
-            "points": 40,
-            "is_done": true
+            "points": 40
         }
     ],
-    "location": {
-        "name": "Decatur, Al",
-        "coords": {
-            "latitude": 34.605686,
-            "longitude": -86.985334
-        }
-    }
+    "location_name": "Decatur, Al",
+    "latitude": 34.605686,
+    "longitude": -86.985334
 },
 {
     "name": "Monrovia Hunt",
     "max_teams": 4,
-    "id": 20,
-    "start": "2019-05-01T19:30:00Z",
-    "end": "2019-05-01T23:00:00Z",
+    "start_time": "2021-05-01T19:30:00Z",
+    "end_time": "2021-05-01T23:00:00Z",
     "teams": [
         {
-            "name": "Home Team"
+            "name": "Cowboys"
         },
         {
-            "name": "Second Team"
+            "name": "Crimson Tide"
         }
     ],
     "items": [
         {
             "name": "Santa Clause",
-            "points": 10,
-            "is_done": false
+            "points": 10
         },
         {
             "name": "Rudolph",
-            "points": 10,
-            "is_done": true
+            "points": 10
         },
         {
             "name": "Reindeer on the Roof",
-            "points": 40,
-            "is_done": false
+            "points": 40
         },
         {
             "name": "Mrs. Clause",
-            "points": 30,
-            "is_done": true
+            "points": 30
         },
         {
             "name": "Snow Globe",
-            "points": 40,
-            "is_done": true
+            "points": 40
         }
     ],
-    "location": {
-        "name": "Monrovia, Al",
-        "coords": {
-            "latitude": 34.901866,
-            "longitude": -86.565107
-        }
-    }
+    "location_name": "Monrovia, Al",
+    "latitude": 34.901866,
+    "longitude": -86.565107
 },
 {
     "name": "Hazel Green Hunt",
     "max_teams": 4,
-    "id": 21,
-    "start": "2019-07-21T10:00:00Z",
-    "end": "2019-07-21T13:00:00Z",
+    "start_time": "2021-07-21T10:00:00Z",
+    "end_time": "2021-07-21T13:00:00Z",
     "teams": [
         {
-            "name": "Home Team"
+            "name": "Cubs"
         },
         {
-            "name": "Second Team"
+            "name": "Chiefs"
         }
     ],
     "items": [
         {
             "name": "Santa Clause",
-            "points": 10,
-            "is_done": false
+            "points": 10
         },
         {
             "name": "Rudolph",
-            "points": 10,
-            "is_done": true
+            "points": 10
         },
         {
             "name": "Reindeer on the Roof",
-            "points": 40,
-            "is_done": false
+            "points": 40
         },
         {
             "name": "Mrs. Clause",
-            "points": 30,
-            "is_done": true
+            "points": 30
         },
         {
             "name": "Snow Globe",
-            "points": 40,
-            "is_done": true
+            "points": 40
         }
     ],
-    "location": {
-        "name": "Hazel Green, Al",
-        "coords": {
-            "latitude": 34.932833,
-            "longitude": -86.572660
-        }
-    }
+    "location_name": "Hazel Green, Al",
+    "latitude": 34.932833,
+    "longitude": -86.572660
 },
 {
     "name": "South H-Town Hunt",
     "max_teams": 4,
-    "id": 22,
-    "start": "2019-08-21T10:00:00Z",
-    "end": "2019-08-21T13:00:00Z",
+    "start_time": "2021-08-21T10:00:00Z",
+    "end_time": "2021-08-21T13:00:00Z",
     "teams": [
         {
-            "name": "Home Team"
+            "name": "Marlins"
         },
         {
-            "name": "Second Team"
+            "name": "49ers"
         }
     ],
     "items": [
         {
             "name": "Santa Clause",
-            "points": 10,
-            "is_done": false
+            "points": 10
         },
         {
             "name": "Rudolph",
-            "points": 10,
-            "is_done": true
+            "points": 10
         },
         {
             "name": "Reindeer on the Roof",
-            "points": 40,
-            "is_done": false
+            "points": 40
         },
         {
             "name": "Mrs. Clause",
-            "points": 30,
-            "is_done": true
+            "points": 30
         },
         {
             "name": "Snow Globe",
-            "points": 40,
-            "is_done": true
+            "points": 40
         }
     ],
-    "location": {
-        "name": "Huntsville, Al",
-        "coords": {
-            "latitude": 34.646933,
-            "longitude": -86.563047
-        }
-    }
+    "location_name": "Huntsville, Al",
+    "latitude": 34.646933,
+    "longitude": -86.563047
 },
 {
     "name": "Winchester Hunt",
     "max_teams": 4,
-    "id": 23,
-    "start": "2019-03-21T10:00:00Z",
-    "end": "2019-03-21T13:00:00Z",
+    "start_time": "2021-03-21T10:00:00Z",
+    "end_time": "2021-03-21T13:00:00Z",
     "teams": [
         {
-            "name": "Home Team"
+            "name": "Braves"
         },
         {
-            "name": "Second Team"
+            "name": "Rams"
         }
     ],
     "items": [
         {
             "name": "Santa Clause",
-            "points": 10,
-            "is_done": false
+            "points": 10
         },
         {
             "name": "Rudolph",
-            "points": 10,
-            "is_done": true
+            "points": 10
         },
         {
             "name": "Reindeer on the Roof",
-            "points": 40,
-            "is_done": false
+            "points": 40
         },
         {
             "name": "Mrs. Clause",
-            "points": 30,
-            "is_done": true
+            "points": 30
         },
         {
             "name": "Snow Globe",
-            "points": 40,
-            "is_done": true
+            "points": 40
         }
     ],
-    "location": {
-        "name": "Winchester, TN",
-        "coords": {
-            "latitude": 35.175314,
-            "longitude": -86.110551
-        }
-    }
+    "location_name": "Winchester, TN",
+    "latitude": 35.175314,
+    "longitude": -86.110551
 },
 {
     "name": "Knoxville Hunt",
     "max_teams": 4,
-    "id": 24,
-    "start": "2019-06-21T10:00:00Z",
-    "end": "2019-06-21T13:00:00Z",
+    "start_time": "2021-06-21T10:00:00Z",
+    "end_time": "2021-06-21T13:00:00Z",
     "teams": [
         {
-            "name": "Home Team"
+            "name": "Suns"
         },
         {
-            "name": "Second Team"
+            "name": "Raiders"
         }
     ],
     "items": [
         {
             "name": "Santa Clause",
-            "points": 10,
-            "is_done": false
+            "points": 10
         },
         {
             "name": "Rudolph",
-            "points": 10,
-            "is_done": true
+            "points": 10
         },
         {
             "name": "Reindeer on the Roof",
-            "points": 40,
-            "is_done": false
+            "points": 40
         },
         {
             "name": "Mrs. Clause",
-            "points": 30,
-            "is_done": true
+            "points": 30
         },
         {
             "name": "Snow Globe",
-            "points": 40,
-            "is_done": true
+            "points": 40
         }
     ],
-    "location": {
-        "name": "Knoxville, TN",
-        "coords": {
-            "latitude": 35.916683,
-            "longitude": -83.803363
-        }
-    }
+    "location_name": "Knoxville, TN",
+    "latitude": 35.916683,
+    "longitude": -83.803363
 },
 {
     "name": "Memphis Hunt",
     "max_teams": 4,
-    "id": 25,
-    "start": "2019-11-21T10:00:00Z",
-    "end": "2019-11-21T13:00:00Z",
+    "start_time": "2021-11-21T10:00:00Z",
+    "end_time": "2021-11-21T13:00:00Z",
     "teams": [
         {
-            "name": "Home Team"
+            "name": "Mavericks"
         },
         {
-            "name": "Second Team"
+            "name": "Bucs"
         }
     ],
     "items": [
         {
             "name": "Santa Clause",
-            "points": 10,
-            "is_done": false
+            "points": 10
         },
         {
             "name": "Rudolph",
-            "points": 10,
-            "is_done": true
+            "points": 10
         },
         {
             "name": "Reindeer on the Roof",
-            "points": 40,
-            "is_done": false
+            "points": 40
         },
         {
             "name": "Mrs. Clause",
-            "points": 30,
-            "is_done": true
+            "points": 30
         },
         {
             "name": "Snow Globe",
-            "points": 40,
-            "is_done": true
+            "points": 40
         }
     ],
-    "location": {
-        "name": "Memphis, TN",
-        "coords": {
-            "latitude": 35.108242,
-            "longitude": -89.956713
-        }
-    }
+    "location_name": "Memphis, TN",
+    "latitude": 35.108242,
+    "longitude": -89.956713
 }]

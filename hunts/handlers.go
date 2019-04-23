@@ -1,7 +1,11 @@
 package hunts
 
 import (
+	"bytes"
+	"encoding/json"
+	"fmt"
 	"net/http"
+	"os"
 
 	"github.com/cljohnson4343/scavenge/request"
 
@@ -368,4 +372,52 @@ func patchItemHandler(env *c.Env) http.HandlerFunc {
 
 		return
 	})
+}
+
+// populateDBHandler fills the db with the hunts in 'test_data.json'
+func populateDBHandler(env *c.Env) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		file, err := os.Open("./hunts/test_data.json")
+		if err != nil {
+			panic(err)
+		}
+		defer file.Close()
+
+		hunts := make([]Hunt, 0)
+
+		url := `http://localhost:4343/api/v0/hunts/`
+
+		err = json.NewDecoder(file).Decode(&hunts)
+		if err != nil {
+			e := response.NewError(fmt.Sprintf("error decoding json data: %s", err.Error()),
+				http.StatusInternalServerError)
+			e.Handle(w)
+			return
+		}
+
+		fmt.Println(len(hunts))
+
+		for _, hunt := range hunts {
+			b, err := json.Marshal(hunt)
+			if err != nil {
+				e := response.NewError(fmt.Sprintf("error decoding json data: %s", err.Error()),
+					http.StatusInternalServerError)
+				e.Handle(w)
+				return
+			}
+
+			buf := bytes.NewBuffer(b)
+
+			_, err = http.Post(url, "application/json", buf)
+			if err != nil {
+				e := response.NewError(fmt.Sprintf("error decoding json data: %s", err.Error()),
+					http.StatusInternalServerError)
+				e.Handle(w)
+				return
+			}
+
+		}
+
+		w.Write([]byte("Success!!!"))
+	}
 }
