@@ -8,7 +8,7 @@ import (
 	"github.com/cljohnson4343/scavenge/response"
 )
 
-// MediaMetaDB is a representation of a row in the media table
+// MediaMetaDB is info  associated with a media file
 type MediaMetaDB struct {
 
 	// The id of the media row
@@ -26,10 +26,10 @@ type MediaMetaDB struct {
 	// required: true
 	TeamID int `json:"team_id" valid:"int"`
 
-	// The id of the location associated with the media file described by this object
+	// The location associated with the media file described by this object
 	//
 	// required: true
-	LocationID int `json:"location_id" valid:"int"`
+	Location LocationDB `json:"location" valid:"-"`
 
 	// The url where the media file can be retrieved
 	//
@@ -51,9 +51,11 @@ func (m *MediaMetaDB) Validate(r *http.Request) *response.Error {
 }
 
 var mediaMetasForTeamScript = `
-	SELECT id, team_id, item_id, location_id, url
-	FROM media
-	WHERE team_id = $1;`
+	SELECT m.id, m.team_id, m.item_id, m.url, l.latitude, l.longitude, l.time_stamp
+	FROM media as m 
+		INNER JOIN locations as l
+		ON m.team_id = l.team_id
+	WHERE m.team_id = $1;`
 
 // GetMediaMetasForTeam returns all the meta information for all media files associated w/
 // this team. A result with both media meta objects and an error is possible
@@ -69,15 +71,16 @@ func GetMediaMetasForTeam(teamID int) ([]*MediaMetaDB, *response.Error) {
 	metas := make([]*MediaMetaDB, 0)
 
 	for rows.Next() {
-		meta := MediaMetaDB{}
+		m := MediaMetaDB{}
 
-		err = rows.Scan(&meta.ID, &meta.TeamID, &meta.ItemID, &meta.LocationID, &meta.URL)
+		err = rows.Scan(&m.ID, &m.TeamID, &m.ItemID, &m.URL, &m.Location.Latitude,
+			&m.Location.Longitude, &m.Location.TimeStamp)
 		if err != nil {
 			e.Add(fmt.Sprintf("error getting media meta info for team %d: %v", teamID,
 				err), http.StatusInternalServerError)
 			break
 		}
-		metas = append(metas, &meta)
+		metas = append(metas, &m)
 	}
 
 	if err = rows.Err(); err != nil {

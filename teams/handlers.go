@@ -307,7 +307,7 @@ func deleteLocationHandler(env *c.Env) http.HandlerFunc {
 
 // swagger:route GET /teams/{teamID}/media/ media getMediaForTeamHandler
 //
-// Lists all the meta info for the media files associated with a team.
+// Lists all the info for the media files associated with a team.
 //
 // Consumes:
 // 	- application/json
@@ -321,7 +321,7 @@ func deleteLocationHandler(env *c.Env) http.HandlerFunc {
 // 	200:
 // 	400:
 //  500:
-func getMediaMetasForTeamHandler(env *c.Env) http.HandlerFunc {
+func getMediaForTeamHandler(env *c.Env) http.HandlerFunc {
 	return (func(w http.ResponseWriter, r *http.Request) {
 		e := response.NewNilError()
 		teamID, e := request.GetIntURLParam(r, "teamID")
@@ -341,9 +341,9 @@ func getMediaMetasForTeamHandler(env *c.Env) http.HandlerFunc {
 }
 
 /*
-// swagger:route POST /teams/{teamID}/locations/ location create createLocationHandler
+// swagger:route POST /teams/{teamID}/media/ media create createMediaHandler
 //
-// Creates the given location.
+// Stores a  the given location.
 //
 // Consumes:
 // 	- application/json
