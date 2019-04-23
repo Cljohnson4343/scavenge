@@ -111,3 +111,29 @@ func (l *LocationDB) Insert(teamID int) *response.Error {
 
 	return nil
 }
+
+var locationDeleteScript = `
+	DELETE FROM locations
+	WHERE id = $1 AND team_id = $2;`
+
+// DeleteLocation deletes the locationDB with the given id AND teamID
+func DeleteLocation(id int, teamID int) *response.Error {
+	res, err := stmtMap["locationDelete"].Exec(id, teamID)
+	if err != nil {
+		return response.NewError(fmt.Sprintf("error deleting location with teamID %d and id %d: %s",
+			teamID, id, err.Error()), http.StatusBadRequest)
+	}
+
+	numRows, err := res.RowsAffected()
+	if err != nil {
+		return response.NewError(fmt.Sprintf("error deleting location with teamID %d and id %d: %s",
+			teamID, id, err.Error()), http.StatusBadRequest)
+	}
+
+	if numRows < 1 {
+		return response.NewError(fmt.Sprintf("error deleting location with teamID %d and id %d",
+			teamID, id), http.StatusBadRequest)
+	}
+
+	return nil
+}

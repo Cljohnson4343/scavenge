@@ -65,6 +65,7 @@ var scriptMap = map[string]string{
 	"huntsSelect":           huntsSelectScript,
 	"locationsForTeam":      locationsForTeamScript,
 	"locationInsert":        locationInsertScript,
+	"locationDelete":        locationDeleteScript,
 }
 
 func initStatements(db *sql.DB) error {

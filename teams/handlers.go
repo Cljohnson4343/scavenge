@@ -249,17 +249,15 @@ func getLocationsForTeamHandler(env *c.Env) http.HandlerFunc {
 //  500:
 func createLocationHandler(env *c.Env) http.HandlerFunc {
 	return (func(w http.ResponseWriter, r *http.Request) {
-		teamID, err := strconv.Atoi(chi.URLParam(r, "teamID"))
-		if err != nil {
-			e := response.NewError(fmt.Sprintf("error getting teamID from URL: %s",
-				err.Error()), http.StatusBadRequest)
+		teamID, e := request.GetIntURLParam(r, "teamID")
+		if e != nil {
 			e.Handle(w)
 			return
 		}
 
 		location := db.LocationDB{}
 
-		e := request.DecodeAndValidate(r, &location)
+		e = request.DecodeAndValidate(r, &location)
 		if e != nil {
 			e.Handle(w)
 			return
@@ -272,6 +270,44 @@ func createLocationHandler(env *c.Env) http.HandlerFunc {
 		}
 
 		render.JSON(w, r, &location)
+		return
+	})
+}
+
+// swagger:route DELETE /teams/{teamID}/locations/{locationID} delete location deleteLocationHandler
+//
+// Deletes the given location.
+//
+// Consumes:
+// 	- application/json
+//
+// Produces:
+//	- application/json
+//
+// Schemes: http, https
+//
+// Responses:
+// 	200:
+//  400:
+func deleteLocationHandler(env *c.Env) http.HandlerFunc {
+	return (func(w http.ResponseWriter, r *http.Request) {
+		teamID, e := request.GetIntURLParam(r, "teamID")
+		if e != nil {
+			e.Handle(w)
+			return
+		}
+
+		locationID, e := request.GetIntURLParam(r, "locationID")
+		if e != nil {
+			e.Handle(w)
+			return
+		}
+
+		e = db.DeleteLocation(locationID, teamID)
+		if e != nil {
+			e.Handle(w)
+		}
+
 		return
 	})
 }
