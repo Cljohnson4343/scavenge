@@ -34,7 +34,7 @@ import (
 //  500:
 func getTeamsHandler(env *c.Env) http.HandlerFunc {
 	return (func(w http.ResponseWriter, r *http.Request) {
-		teams, e := GetTeams(env)
+		teams, e := GetTeams()
 		if e != nil {
 			e.Handle(w)
 		}
@@ -68,7 +68,7 @@ func getTeamHandler(env *c.Env) http.HandlerFunc {
 			return
 		}
 
-		team, e := GetTeam(env, teamID)
+		team, e := GetTeam(teamID)
 		if e != nil {
 			e.Handle(w)
 			return
@@ -102,7 +102,7 @@ func deleteTeamHandler(env *c.Env) http.HandlerFunc {
 			return
 		}
 
-		e = DeleteTeam(env, teamID)
+		e = DeleteTeam(teamID)
 		if e != nil {
 			e.Handle(w)
 		}
@@ -136,7 +136,7 @@ func createTeamHandler(env *c.Env) http.HandlerFunc {
 			return
 		}
 
-		e = InsertTeam(env, &team)
+		e = InsertTeam(&team)
 		if e != nil {
 			e.Handle(w)
 			return

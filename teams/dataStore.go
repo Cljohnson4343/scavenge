@@ -13,7 +13,7 @@ import (
 // GetTeams populates the teams slice with all the teams. If an error
 // is returned the team slice still needs to be checked as the error
 // might have resulted from getting a single team
-func GetTeams(env *c.Env) ([]*Team, *response.Error) {
+func GetTeams() ([]*Team, *response.Error) {
 	teamDBs, e := db.GetTeams()
 	if teamDBs == nil {
 		return nil, e
@@ -49,7 +49,7 @@ func GetTeamsForHunt(huntID int) ([]*Team, *response.Error) {
 }
 
 // GetTeam returns the Team with the given ID
-func GetTeam(env *c.Env, teamID int) (*Team, *response.Error) {
+func GetTeam(teamID int) (*Team, *response.Error) {
 	teamDB, e := db.GetTeam(teamID)
 	if e != nil {
 		return nil, e
@@ -60,12 +60,12 @@ func GetTeam(env *c.Env, teamID int) (*Team, *response.Error) {
 }
 
 // InsertTeam inserts a Team into the db
-func InsertTeam(env *c.Env, team *Team) *response.Error {
+func InsertTeam(team *Team) *response.Error {
 	return team.Insert()
 }
 
 // DeleteTeam deletes the team with the given teamID
-func DeleteTeam(env *c.Env, teamID int) *response.Error {
+func DeleteTeam(teamID int) *response.Error {
 	return db.DeleteTeam(teamID)
 }
 
