@@ -1,5 +1,5 @@
 
-DROP TABLE IF EXISTS item_results CASCADE;
+DROP TABLE IF EXISTS media CASCADE;
 DROP TABLE IF EXISTS locations CASCADE;
 DROP TABLE IF EXISTS items CASCADE;
 DROP TABLE IF EXISTS teams CASCADE;
@@ -110,5 +110,5 @@ CREATE TABLE media (
 
 CREATE INDEX items_huntid_asc ON items(hunt_id ASC);
 CREATE INDEX teams_huntid_asc ON teams(hunt_id ASC);
-CREATE INDEX item_results_teams_asc ON item_results(team_id ASC);
-CREATE INDEX locations_teamid_asc ON locations(team_id ASC, time_stamp ASC);
+CREATE INDEX media_teams_and_loc_asc ON media(team_id ASC, location_id ASC);
+CREATE INDEX loc_teamid_asc ON locations(team_id ASC, time_stamp ASC);
