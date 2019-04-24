@@ -1,0 +1,235 @@
+[{
+	"team_id": 1,
+	"location": {
+        "latitude": 34.830705,
+        "team_id": 1,
+        "longitude": -86.69481,
+        "time_stamp": "2018-04-21T10:30:00Z"
+	},
+    "url": "https://www.amazon.com/cdn"
+},{
+	"team_id": 1,
+	"location": {
+        "latitude": 34.730705,
+        "team_id": 1,
+        "longitude": -87.59481,
+        "time_stamp": "2018-04-21T10:55:00Z"
+	},
+    "url": "https://www.amazon.com/cdn"
+},{
+	"team_id": 1,
+	"location": {
+        "latitude": 34.830705,
+        "team_id": 1,
+        "longitude": -88.59481,
+        "time_stamp": "2018-04-21T10:31:00Z"
+	},
+    "url": "https://www.amazon.com/cdn"
+},{
+	"team_id": 1,
+	"location": {
+        "latitude": 34.930705,
+        "team_id": 1,
+        "longitude": -89.59481,
+        "time_stamp": "2018-04-21T10:32:00Z"
+	},
+    "url": "https://www.amazon.com/cdn"
+},{
+	"team_id": 1,
+	"location": {
+        "latitude": 34.130705,
+        "team_id": 1,
+        "longitude": -90.59481,
+        "time_stamp": "2018-04-21T10:33:00Z"
+	},
+    "url": "https://www.amazon.com/cdn"
+},{
+	"team_id": 1,
+	"location": {
+        "latitude": 34.230705,
+        "team_id": 1,
+        "longitude": -91.59481,
+        "time_stamp": "2018-04-21T10:34:00Z"
+	},
+    "url": "https://www.amazon.com/cdn"
+},{
+	"team_id": 1,
+	"location": {
+        "latitude": 34.330705,
+        "team_id": 1,
+        "longitude": -92.59481,
+        "time_stamp": "2018-04-21T10:35:00Z"
+	},
+    "url": "https://www.amazon.com/cdn"
+},{
+	"team_id": 1,
+	"location": {
+        "latitude": 34.444705,
+        "team_id": 1,
+        "longitude": -93.59481,
+        "time_stamp": "2018-04-21T10:36:00Z"
+	},
+    "url": "https://www.amazon.com/cdn"
+},{
+	"team_id": 1,
+	"location": {
+        "latitude": 34.530705,
+        "team_id": 1,
+        "longitude": -94.59481,
+        "time_stamp": "2018-04-21T10:37:00Z"
+	},
+    "url": "https://www.amazon.com/cdn"
+},{
+	"team_id": 1,
+	"location": {
+        "latitude": 34.630705,
+        "team_id": 1,
+        "longitude": -95.59481,
+        "time_stamp": "2018-04-21T10:38:00Z"
+	},
+    "url": "https://www.amazon.com/cdn"
+},{
+	"team_id": 1,
+	"location": {
+        "latitude": 35.730705,
+        "team_id": 1,
+        "longitude": -96.59481,
+        "time_stamp": "2018-04-21T10:39:00Z"
+	},
+    "url": "https://www.amazon.com/cdn"
+},{
+	"team_id": 1,
+	"location": {
+        "latitude": 34.730705,
+        "team_id": 1,
+        "longitude": -97.59481,
+        "time_stamp": "2018-04-21T10:40:00Z"
+	},
+    "url": "https://www.amazon.com/cdn"
+},{
+	"team_id": 1,
+	"location": {
+        "latitude": 36.730705,
+        "team_id": 1,
+        "longitude": -98.59481,
+        "time_stamp": "2018-04-21T10:41:00Z"
+	},
+    "url": "https://www.amazon.com/cdn"
+},{
+	"team_id": 1,
+	"location": {
+        "latitude": 37.730705,
+        "team_id": 1,
+        "longitude": -99.59481,
+        "time_stamp": "2018-04-21T10:42:00Z"
+	},
+    "url": "https://www.amazon.com/cdn"
+},{
+	"team_id": 1,
+	"location": {
+        "latitude": 38.730705,
+        "team_id": 1,
+        "longitude": -100.59481,
+        "time_stamp": "2018-04-21T10:43:00Z"
+	},
+    "url": "https://www.amazon.com/cdn"
+},{
+	"team_id": 1,
+	"location": {
+        "latitude": 39.730705,
+        "team_id": 1,
+        "longitude": -101.59481,
+        "time_stamp": "2018-04-21T10:44:00Z"
+	},
+    "url": "https://www.amazon.com/cdn"
+},{
+	"team_id": 1,
+	"location": {
+        "latitude": 40.730705,
+        "team_id": 1,
+        "longitude": -102.59481,
+        "time_stamp": "2018-04-21T10:45:00Z"
+	},
+    "url": "https://www.amazon.com/cdn"
+},{
+	"team_id": 1,
+	"location": {
+        "latitude": 41.730705,
+        "team_id": 1,
+        "longitude": -103.59481,
+        "time_stamp": "2018-04-21T10:46:00Z"
+	},
+    "url": "https://www.amazon.com/cdn"
+},{
+	"team_id": 1,
+	"location": {
+        "latitude": 42.730705,
+        "team_id": 1,
+        "longitude": -104.59481,
+        "time_stamp": "2018-04-21T10:47:00Z"
+	},
+    "url": "https://www.amazon.com/cdn"
+},{
+	"team_id": 1,
+	"location": {
+        "latitude": 43.730705,
+        "team_id": 1,
+        "longitude": -105.59481,
+        "time_stamp": "2018-04-21T10:48:00Z"
+	},
+    "url": "https://www.amazon.com/cdn"
+},{
+	"team_id": 1,
+	"location": {
+        "latitude": 44.730705,
+        "team_id": 1,
+        "longitude": -106.59481,
+        "time_stamp": "2018-04-21T10:49:00Z"
+	},
+    "url": "https://www.amazon.com/cdn"
+},{
+	"team_id": 1,
+	"location": {
+        "latitude": 45.730705,
+        "team_id": 1,
+        "longitude": -107.59481,
+        "time_stamp": "2018-04-21T10:50:00Z"
+	},
+    "url": "https://www.amazon.com/cdn"
+},{
+	"team_id": 1,
+	"location": {
+        "latitude": 46.730705,
+        "team_id": 1,
+        "longitude": -108.59481,
+        "time_stamp": "2018-04-21T10:51:00Z"
+	},
+    "url": "https://www.amazon.com/cdn"
+},{
+	"team_id": 1,
+	"location": {
+        "latitude": 47.730705,
+        "team_id": 1,
+        "longitude": -109.59481,
+        "time_stamp": "2018-04-21T10:52:00Z"
+	},
+    "url": "https://www.amazon.com/cdn"
+},{
+	"team_id": 1,
+	"location": {
+        "latitude": 48.730705,
+        "team_id": 1,
+        "longitude": -110.59481,
+        "time_stamp": "2018-04-21T10:53:00Z"
+	},
+    "url": "https://www.amazon.com/cdn"
+},{
+    "team_id": 1,
+	"location": {
+        "latitude": 49.730705,
+        "team_id": 1,
+        "longitude": -111.59481,
+        "time_stamp": "2018-04-21T10:54:00Z"
+	},
+    "url": "https://www.amazon.com/cdn"
+}]

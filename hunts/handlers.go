@@ -406,13 +406,14 @@ func populateDBHandler(env *c.Env) http.HandlerFunc {
 
 			buf := bytes.NewBuffer(b)
 
-			_, err = http.Post(url, "application/json", buf)
+			res, err := http.Post(url, "application/json", buf)
 			if err != nil {
 				e := response.NewError(fmt.Sprintf("error decoding json data: %s", err.Error()),
 					http.StatusInternalServerError)
 				e.Handle(w)
 				return
 			}
+			res.Body.Close()
 
 		}
 

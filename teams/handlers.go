@@ -1,7 +1,11 @@
 package teams
 
 import (
+	"bytes"
+	"encoding/json"
+	"fmt"
 	"net/http"
+	"os"
 
 	"github.com/cljohnson4343/scavenge/db"
 
@@ -419,4 +423,50 @@ func deleteMediaHandler(env *c.Env) http.HandlerFunc {
 
 		return
 	})
+}
+
+// populateMediaDBHandler fills the db with the media in 'media_data.json'
+func populateMediaDBHandler(env *c.Env) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		file, err := os.Open("./teams/media_data.json")
+		if err != nil {
+			panic(err)
+		}
+		defer file.Close()
+
+		metas := make([]db.MediaMetaDB, 0)
+
+		url := `http://localhost:4343/api/v0/teams/1/media/`
+
+		err = json.NewDecoder(file).Decode(&metas)
+		if err != nil {
+			e := response.NewError(fmt.Sprintf("error decoding json data: %s", err.Error()),
+				http.StatusInternalServerError)
+			e.Handle(w)
+			return
+		}
+
+		for _, m := range metas {
+			b, err := json.Marshal(m)
+			if err != nil {
+				e := response.NewError(fmt.Sprintf("error decoding json data: %s", err.Error()),
+					http.StatusInternalServerError)
+				e.Handle(w)
+				return
+			}
+
+			buf := bytes.NewBuffer(b)
+
+			res, err := http.Post(url, "application/json", buf)
+			if err != nil {
+				e := response.NewError(fmt.Sprintf("error decoding json data: %s", err.Error()),
+					http.StatusInternalServerError)
+				e.Handle(w)
+				return
+			}
+			defer res.Body.Close()
+		}
+
+		w.Write([]byte("Success!!!"))
+	}
 }
