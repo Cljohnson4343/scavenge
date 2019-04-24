@@ -1,9 +1,31 @@
 
+DROP TABLE IF EXISTS users_teams;
 DROP TABLE IF EXISTS media CASCADE;
 DROP TABLE IF EXISTS locations CASCADE;
 DROP TABLE IF EXISTS items CASCADE;
 DROP TABLE IF EXISTS teams CASCADE;
 DROP TABLE IF EXISTS hunts CASCADE;
+DROP TABLE IF EXISTS users CASCADE;
+
+/*
+    This table represents a user. 
+
+    relations:
+        one to many--hunts have many teams
+        one to many--hunts have many items
+        one to many--hunts will have one creator(user)
+*/
+CREATE TABLE users (
+    id                  serial,
+    first_name          text NOT NULL,
+    last_name           text NOT NULL,
+    joined_at           timestamp DEFAULT NOW(),
+    last_login          timestamp DEFAULT NOW(),
+    image_url           varchar(2083), 
+    email               text NOT NULL,
+    PRIMARY KEY(id)
+);
+CREATE UNIQUE INDEX users_unique_lower_email_idx on users(lower(email));
 
 /*
     This table represents a scavenger hunt game. 'hunts' contains
@@ -15,6 +37,7 @@ DROP TABLE IF EXISTS hunts CASCADE;
     relations:
         one to many--hunts have many teams
         one to many--hunts have many items
+        one to many--hunts will have one creator(user)
 */
 CREATE TABLE hunts (
     id              serial,
@@ -26,8 +49,10 @@ CREATE TABLE hunts (
     longitude       real NOT NULL,
     location_name   varchar(80),
     created_at      timestamp DEFAULT NOW(),
+    creator_id      int NOT NULL,
     CONSTRAINT hunt_with_same_name UNIQUE(name),
     PRIMARY KEY(id)
+    FOREIGN KEY (creator_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 /*
@@ -37,6 +62,7 @@ CREATE TABLE hunts (
         many to one--teams can have the same hunt
         one to many--teams can have many locations
         one to many--teams can have many media rows
+        many to many--multiple teams can have relationships with multiple users
 */
 CREATE TABLE teams (
     id              serial,
@@ -45,6 +71,18 @@ CREATE TABLE teams (
     CONSTRAINT teams_in_same_hunt_name UNIQUE(hunt_id, name),
     PRIMARY KEY(id),
     FOREIGN KEY (hunt_id) REFERENCES hunts(id) ON DELETE CASCADE
+);
+
+/*
+    This is a joining table represents the many to many relationship between the 
+    users and teams tables.
+
+*/
+CREATE TABLE users_teams (
+    team_id         int NOT NULL,
+    user_id         int NOT NULL,
+    FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 /*
