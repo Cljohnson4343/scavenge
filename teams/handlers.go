@@ -470,3 +470,43 @@ func populateMediaDBHandler(env *c.Env) http.HandlerFunc {
 		w.Write([]byte("Success!!!"))
 	}
 }
+
+// swagger:route GET /teams/{teamID}/points/ points getTeamPointsHandler
+//
+// Gets the point total for team.
+//
+// Consumes:
+// 	- application/json
+//
+// Produces:
+//	- application/json
+//
+// Schemes: http, https
+//
+// Responses:
+// 	200:
+// 	400:
+// 	404:
+func getTeamPointsHandler(env *c.Env) http.HandlerFunc {
+	return (func(w http.ResponseWriter, r *http.Request) {
+		teamID, e := request.GetIntURLParam(r, "teamID")
+		if e != nil {
+			e.Handle(w)
+			return
+		}
+
+		point_total, e := db.GetTeamPoints(teamID)
+		if e != nil {
+			e.Handle(w)
+			return
+		}
+
+		type pts struct {
+			Points int `json:"points"`
+		}
+		pt := pts{point_total}
+
+		render.JSON(w, r, pt)
+		return
+	})
+}

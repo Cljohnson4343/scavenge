@@ -58,7 +58,7 @@ func (m *MediaMetaDB) Validate(r *http.Request) *response.Error {
 
 var mediaMetasForTeamScript = `
 	WITH loc_and_media AS (
-		SELECT m.id, m.team_id, COALESCE(m.item_id, 0), m.url, m.location_id, l.latitude, l.longitude, l.time_stamp
+		SELECT m.id, m.team_id, COALESCE(m.item_id, 0), m.url, m.location_id, l.latitude, l.longitude, l.time_stamp, l.team_id AS loc_team
 		FROM media m 
 		INNER JOIN locations l
 		ON m.location_id = l.id
@@ -84,7 +84,7 @@ func GetMediaMetasForTeam(teamID int) ([]*MediaMetaDB, *response.Error) {
 		m := MediaMetaDB{}
 
 		err = rows.Scan(&m.ID, &m.TeamID, &m.ItemID, &m.URL, &m.Location.ID, &m.Location.Latitude,
-			&m.Location.Longitude, &m.Location.TimeStamp)
+			&m.Location.Longitude, &m.Location.TimeStamp, &m.Location.TeamID)
 		if err != nil {
 			e.Add(fmt.Sprintf("error getting media meta info for team %d: %v", teamID,
 				err), http.StatusInternalServerError)
@@ -159,4 +159,28 @@ func DeleteMedia(mediaID, teamID int) *response.Error {
 	}
 
 	return nil
+}
+
+var teamPointsScript = `
+	WITH media_for_team AS (
+		SELECT media.item_id
+		FROM media
+		WHERE media.team_id = $1
+	)
+		SELECT SUM(i.points) AS total_points
+		FROM media_for_team m
+		INNER JOIN items i ON m.item_id = i.id; 
+	`
+
+// GetTeamPoints returns the integer number of points the team with the given
+// id has accumulated thus far
+func GetTeamPoints(teamID int) (int, *response.Error) {
+	var pts int
+	err := stmtMap["teamPoints"].QueryRow(teamID).Scan(&pts)
+	if err != nil {
+		return 0, response.NewError(fmt.Sprintf("error getting pts for team %d: %v",
+			teamID, err), http.StatusInternalServerError)
+	}
+
+	return pts, nil
 }

@@ -69,6 +69,7 @@ var scriptMap = map[string]string{
 	"mediaMetasForTeam":     mediaMetasForTeamScript,
 	"mediaMetaInsert":       mediaMetaInsertScript,
 	"mediaMetaDelete":       mediaMetaDeleteScript,
+	"teamPoints":            teamPointsScript,
 }
 
 func initStatements(db *sql.DB) error {
