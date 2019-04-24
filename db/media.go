@@ -57,15 +57,19 @@ func (m *MediaMetaDB) Validate(r *http.Request) *response.Error {
 }
 
 var mediaMetasForTeamScript = `
-	WITH loc_and_media AS (
-		SELECT m.id, m.team_id, COALESCE(m.item_id, 0), m.url, m.location_id, l.latitude, l.longitude, l.time_stamp, l.team_id AS loc_team
-		FROM media m 
-		INNER JOIN locations l
-		ON m.location_id = l.id
+	WITH loc_for_team AS (
+		SELECT l.latitude, l.longitude, l.time_stamp, l.team_id AS loc_team_id, l.id
+		FROM locations l
+		WHERE l.team_id = $1
+	), media_for_team AS (
+		SELECT m.id, m.team_id, COALESCE(m.item_id, 0), m.url, m.location_id
+		FROM media m
+		WHERE m.team_id = $1
 	)
 	SELECT * 
-	FROM loc_and_media
-	WHERE team_id = $1;`
+	FROM media_for_team m INNER JOIN loc_for_team l
+	ON m.location_id = l.id;
+	`
 
 // GetMediaMetasForTeam returns all the meta information for all media files associated w/
 // this team. A result with both media meta objects and an error is possible
@@ -84,7 +88,7 @@ func GetMediaMetasForTeam(teamID int) ([]*MediaMetaDB, *response.Error) {
 		m := MediaMetaDB{}
 
 		err = rows.Scan(&m.ID, &m.TeamID, &m.ItemID, &m.URL, &m.Location.ID, &m.Location.Latitude,
-			&m.Location.Longitude, &m.Location.TimeStamp, &m.Location.TeamID)
+			&m.Location.Longitude, &m.Location.TimeStamp, &m.Location.TeamID, &m.Location.ID)
 		if err != nil {
 			e.Add(fmt.Sprintf("error getting media meta info for team %d: %v", teamID,
 				err), http.StatusInternalServerError)
