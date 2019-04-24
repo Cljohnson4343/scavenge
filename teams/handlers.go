@@ -495,7 +495,7 @@ func getTeamPointsHandler(env *c.Env) http.HandlerFunc {
 			return
 		}
 
-		point_total, e := db.GetTeamPoints(teamID)
+		pointTotal, e := db.GetTeamPoints(teamID)
 		if e != nil {
 			e.Handle(w)
 			return
@@ -504,7 +504,7 @@ func getTeamPointsHandler(env *c.Env) http.HandlerFunc {
 		type pts struct {
 			Points int `json:"points"`
 		}
-		pt := pts{point_total}
+		pt := pts{pointTotal}
 
 		render.JSON(w, r, pt)
 		return
