@@ -3,10 +3,13 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
+
+	"github.com/cljohnson4343/scavenge/response"
 
 	c "github.com/cljohnson4343/scavenge/config"
 	"github.com/cljohnson4343/scavenge/db"
@@ -15,6 +18,13 @@ import (
 	"github.com/cljohnson4343/scavenge/users"
 	"github.com/go-chi/chi"
 )
+
+// Flags for scavenge
+var devModeFlag bool
+
+func init() {
+	flag.BoolVar(&devModeFlag, "dev-mode", false, "set the server to dev mode")
+}
 
 // Routes inits a router
 func Routes(db *sql.DB) *chi.Mux {
@@ -31,6 +41,11 @@ func Routes(db *sql.DB) *chi.Mux {
 }
 
 func main() {
+	flag.Parse()
+	if devModeFlag {
+		response.SetDevMode(true)
+	}
+
 	file, err := os.Open("./db/db_info.json")
 	if err != nil {
 		log.Panicf("Error configuring db: %s\n", err.Error())
