@@ -50,7 +50,7 @@ func (s *SessionDB) Validate(r *http.Request) *response.Error {
 var sessionInsertScript = `
 	INSERT INTO user_sessions(session_key, expires, user_id)
 	VALUES ($1, $2, $3)
-	RETURNING user_sessions(created_at);
+	RETURNING created_at;
 	`
 
 // Insert inserts the given session into the db. The created_at time stamp will be written

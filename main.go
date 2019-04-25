@@ -12,6 +12,7 @@ import (
 	"github.com/cljohnson4343/scavenge/db"
 	"github.com/cljohnson4343/scavenge/hunts"
 	"github.com/cljohnson4343/scavenge/teams"
+	"github.com/cljohnson4343/scavenge/users"
 	"github.com/go-chi/chi"
 )
 
@@ -23,6 +24,7 @@ func Routes(db *sql.DB) *chi.Mux {
 	router.Route("/api/v0", func(r chi.Router) {
 		r.Mount("/hunts", hunts.Routes(env))
 		r.Mount("/teams", teams.Routes(env))
+		r.Mount("/users", users.Routes(env))
 	})
 
 	return router
