@@ -2,7 +2,6 @@ package db
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/cljohnson4343/scavenge/pgsql"
@@ -32,16 +31,16 @@ func update(v pgsql.TableColumnMapper, ex pgsql.Executioner, id int) *response.E
 
 	res, err := ex.Exec(cmd.Script(), cmd.Args()...)
 	if err != nil {
-		return response.NewError(fmt.Sprintf("%s id %d error: %s", tblName, id, err.Error()), http.StatusInternalServerError)
+		return response.NewErrorf(http.StatusInternalServerError, "%s id %d error: %s", tblName, id, err.Error())
 	}
 
 	numRows, err := res.RowsAffected()
 	if err != nil {
-		return response.NewError(err.Error(), http.StatusInternalServerError)
+		return response.NewError(http.StatusInternalServerError, err.Error())
 	}
 
 	if numRows < 1 {
-		return response.NewError(fmt.Sprintf("nothing was updated. Make sure an entity with id %d exists.", id), http.StatusBadRequest)
+		return response.NewErrorf(http.StatusBadRequest, "nothing was updated. Make sure an entity with id %d exists.", id)
 	}
 
 	return nil

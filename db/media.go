@@ -1,7 +1,6 @@
 package db
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/asaskevich/govalidator"
@@ -43,14 +42,12 @@ type MediaMetaDB struct {
 func (m *MediaMetaDB) Validate(r *http.Request) *response.Error {
 	_, err := govalidator.ValidateStruct(m)
 	if err != nil {
-		return response.NewError(fmt.Sprintf("error validating media meta info: %v", err),
-			http.StatusBadRequest)
+		return response.NewErrorf(http.StatusBadRequest, "error validating media meta info: %v", err)
 	}
 
 	_, err = govalidator.ValidateStruct(m.Location)
 	if err != nil {
-		return response.NewError(fmt.Sprintf("error validating media location info: %v", err),
-			http.StatusBadRequest)
+		return response.NewErrorf(http.StatusBadRequest, "error validating media location info: %v", err)
 	}
 
 	return nil
@@ -76,8 +73,7 @@ var mediaMetasForTeamScript = `
 func GetMediaMetasForTeam(teamID int) ([]*MediaMetaDB, *response.Error) {
 	rows, err := stmtMap["mediaMetasForTeam"].Query(teamID)
 	if err != nil {
-		return nil, response.NewError(fmt.Sprintf("error getting all media meta info for team %d: %v",
-			teamID, err), http.StatusInternalServerError)
+		return nil, response.NewErrorf(http.StatusInternalServerError, "error getting all media meta info for team %d: %v", teamID, err)
 	}
 	defer rows.Close()
 
@@ -90,16 +86,14 @@ func GetMediaMetasForTeam(teamID int) ([]*MediaMetaDB, *response.Error) {
 		err = rows.Scan(&m.ID, &m.TeamID, &m.ItemID, &m.URL, &m.Location.ID, &m.Location.Latitude,
 			&m.Location.Longitude, &m.Location.TimeStamp, &m.Location.TeamID, &m.Location.ID)
 		if err != nil {
-			e.Add(fmt.Sprintf("error getting media meta info for team %d: %v", teamID,
-				err), http.StatusInternalServerError)
+			e.Addf(http.StatusInternalServerError, "error getting media meta info for team %d: %v", teamID, err)
 			break
 		}
 		metas = append(metas, &m)
 	}
 
 	if err = rows.Err(); err != nil {
-		e.Add(fmt.Sprintf("error getting media meta info for team %d: %v", teamID,
-			err), http.StatusInternalServerError)
+		e.Addf(http.StatusInternalServerError, "error getting media meta info for team %d: %v", teamID, err)
 	}
 
 	return metas, e.GetError()
@@ -121,18 +115,14 @@ var mediaMetaInsertScript = `
 func (m *MediaMetaDB) Insert(teamID int) *response.Error {
 	// make sure the given teamID matches the teamID's for the structs
 	if teamID != m.TeamID || teamID != m.Location.TeamID {
-		return response.NewError("invalid insert request: the teamID's provided don't match",
-			http.StatusBadRequest)
+		return response.NewError(http.StatusBadRequest, "invalid insert request: the teamID's provided don't match")
 	}
 
 	err := stmtMap["mediaMetaInsert"].QueryRow(m.TeamID, m.Location.Latitude,
 		m.Location.Longitude, m.Location.TimeStamp, m.TeamID, m.ItemID,
 		m.URL).Scan(&m.Location.ID, &m.ID)
 	if err != nil {
-		return response.NewError(
-			fmt.Sprintf("error inserting media meta info with team %d: %v",
-				teamID, err), http.StatusInternalServerError)
-
+		return response.NewErrorf(http.StatusInternalServerError, "error inserting media meta info with team %d: %v", teamID, err)
 	}
 
 	return nil
@@ -147,21 +137,17 @@ var mediaMetaDeleteScript = `
 func DeleteMedia(mediaID, teamID int) *response.Error {
 	res, err := stmtMap["mediaMetaDelete"].Exec(mediaID, teamID)
 	if err != nil {
-		return response.NewError(fmt.Sprintf("error deleting media with id %d: %v",
-			mediaID, err), http.StatusInternalServerError)
+		return response.NewErrorf(http.StatusInternalServerError, "error deleting media with id %d: %v", mediaID, err)
 	}
 
 	numRows, err := res.RowsAffected()
 	if err != nil {
-		return response.NewError(fmt.Sprintf("error deleting media with id %d: %v",
-			mediaID, err), http.StatusInternalServerError)
+		return response.NewErrorf(http.StatusInternalServerError, "error deleting media with id %d: %v", mediaID, err)
 	}
 
 	if numRows < 1 {
-		return response.NewError(fmt.Sprintf("error deleting media with id %d and team id %d",
-			mediaID, teamID), http.StatusBadRequest)
+		return response.NewErrorf(http.StatusBadRequest, "error deleting media with id %d and team id %d", mediaID, teamID)
 	}
-
 	return nil
 }
 
@@ -182,8 +168,7 @@ func GetTeamPoints(teamID int) (int, *response.Error) {
 	var pts int
 	err := stmtMap["teamPoints"].QueryRow(teamID).Scan(&pts)
 	if err != nil {
-		return 0, response.NewError(fmt.Sprintf("error getting pts for team %d: %v",
-			teamID, err), http.StatusInternalServerError)
+		return 0, response.NewErrorf(http.StatusInternalServerError, "error getting pts for team %d: %v", teamID, err)
 	}
 
 	return pts, nil

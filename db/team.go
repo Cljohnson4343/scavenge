@@ -1,7 +1,6 @@
 package db
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/cljohnson4343/scavenge/pgsql"
@@ -41,7 +40,7 @@ type TeamDB struct {
 func (t *TeamDB) Validate(r *http.Request) *response.Error {
 	_, err := govalidator.ValidateStruct(t)
 	if err != nil {
-		return response.NewError(err.Error(), http.StatusBadRequest)
+		return response.NewError(http.StatusBadRequest, err.Error())
 	}
 
 	return nil
@@ -88,14 +87,14 @@ func (t *TeamDB) PatchValidate(r *http.Request, teamID int) *response.Error {
 	// if an id is provided that doesn't match or if no teamID is available
 	// then we alert the user of a bad request
 	if id != teamID {
-		e.Add("id: the correct team id must be provided", http.StatusBadRequest)
+		e.Add(http.StatusBadRequest, "id: the correct team id must be provided")
 		// delete the id col name so no new errors will accumulate for this column name
 		delete(tblColMap[HuntTbl], "id")
 	}
 
 	// patching a team does not support changing the hunt for that team
 	if _, ok = tblColMap[TeamTbl]["hunt_id"]; ok {
-		e.Add("hunt_id: the hunt can not be changed when patching a team", http.StatusBadRequest)
+		e.Add(http.StatusBadRequest, "hunt_id: the hunt can not be changed when patching a team")
 		// delete the hunt_id col so no new errors will accumulate for this column name
 		delete(tblColMap[HuntTbl], "hunt_id")
 	}
@@ -122,7 +121,7 @@ var teamInsertScript = `
 func (t *TeamDB) Insert() *response.Error {
 	err := stmtMap["teamInsert"].QueryRow(t.HuntID, t.Name).Scan(&t.ID)
 	if err != nil {
-		return response.NewError(fmt.Sprintf("error inserting team %s: %s", t.Name, err.Error()), http.StatusInternalServerError)
+		return response.NewErrorf(http.StatusInternalServerError, "error inserting team %s: %s", t.Name, err.Error())
 	}
 
 	return nil
@@ -138,7 +137,7 @@ func GetTeam(id int) (*TeamDB, *response.Error) {
 	team := TeamDB{}
 	err := stmtMap["teamSelect"].QueryRow(id).Scan(&team.HuntID, &team.Name, &team.ID)
 	if err != nil {
-		return nil, response.NewError(fmt.Sprintf("error getting team with id %d: %s", id, err.Error()), http.StatusInternalServerError)
+		return nil, response.NewErrorf(http.StatusInternalServerError, "error getting team with id %d: %s", id, err.Error())
 	}
 
 	return &team, nil
@@ -154,7 +153,7 @@ var teamsSelectScript = `
 func GetTeams() ([]*TeamDB, *response.Error) {
 	rows, err := stmtMap["teamsSelect"].Query()
 	if err != nil {
-		return nil, response.NewError(fmt.Sprintf("error getting teams: %s", err.Error()), http.StatusInternalServerError)
+		return nil, response.NewErrorf(http.StatusInternalServerError, "error getting teams: %s", err.Error())
 	}
 	defer rows.Close()
 
@@ -165,7 +164,7 @@ func GetTeams() ([]*TeamDB, *response.Error) {
 		team := TeamDB{}
 		err = rows.Scan(&team.HuntID, &team.Name, &team.ID)
 		if err != nil {
-			e.Add(fmt.Sprintf("error getting team: %s", err.Error()), http.StatusInternalServerError)
+			e.Addf(http.StatusInternalServerError, "error getting team: %s", err.Error())
 			break
 		}
 		teams = append(teams, &team)
@@ -173,7 +172,7 @@ func GetTeams() ([]*TeamDB, *response.Error) {
 
 	err = rows.Err()
 	if err != nil {
-		e.Add(fmt.Sprintf("error getting team: %s", err.Error()), http.StatusInternalServerError)
+		e.Addf(http.StatusInternalServerError, "error getting team: %s", err.Error())
 	}
 
 	return teams, e.GetError()
@@ -188,16 +187,16 @@ var teamDeleteScript = `
 func DeleteTeam(id int) *response.Error {
 	res, err := stmtMap["teamDelete"].Exec(id)
 	if err != nil {
-		return response.NewError(fmt.Sprintf("error deleting team with id %d: %s", id, err.Error()), http.StatusInternalServerError)
+		return response.NewErrorf(http.StatusInternalServerError, "error deleting team with id %d: %s", id, err.Error())
 	}
 
 	numRows, err := res.RowsAffected()
 	if err != nil {
-		return response.NewError(fmt.Sprintf("error deleting team with id %d: %s", id, err.Error()), http.StatusInternalServerError)
+		return response.NewErrorf(http.StatusInternalServerError, "error deleting team with id %d: %s", id, err.Error())
 	}
 
 	if numRows < 1 {
-		return response.NewError(fmt.Sprintf("there is no team with id %d", id), http.StatusBadRequest)
+		return response.NewErrorf(http.StatusBadRequest, "there is no team with id %d", id)
 	}
 
 	return nil
@@ -217,7 +216,7 @@ func GetTeamsWithHuntID(id int) ([]*TeamDB, *response.Error) {
 
 	rows, err := stmtMap["teamsWithHuntIDSelect"].Query(id)
 	if err != nil {
-		return nil, response.NewError(fmt.Sprintf("error getting teams with hunt id %d: %s", id, err.Error()), http.StatusInternalServerError)
+		return nil, response.NewErrorf(http.StatusInternalServerError, "error getting teams with hunt id %d: %s", id, err.Error())
 	}
 	defer rows.Close()
 
@@ -227,7 +226,7 @@ func GetTeamsWithHuntID(id int) ([]*TeamDB, *response.Error) {
 		err = rows.Scan(&team.HuntID, &team.Name, &team.ID)
 		if err != nil {
 			// try to recover and get any other teams that were returned by the query
-			e.Add(fmt.Sprintf("error getting teams with hunt id %d: %s", id, err.Error()), http.StatusInternalServerError)
+			e.Addf(http.StatusInternalServerError, "error getting teams with hunt id %d: %s", id, err.Error())
 			break
 		}
 
@@ -236,7 +235,7 @@ func GetTeamsWithHuntID(id int) ([]*TeamDB, *response.Error) {
 
 	err = rows.Err()
 	if err != nil {
-		e.Add(fmt.Sprintf("error getting teams with hunt id %d: %s", id, err.Error()), http.StatusInternalServerError)
+		e.Addf(http.StatusInternalServerError, "error getting teams with hunt id %d: %s", id, err.Error())
 	}
 
 	return teams, e.GetError()

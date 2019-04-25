@@ -1,7 +1,6 @@
 package db
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -54,7 +53,7 @@ func GetItem(id int) (*ItemDB, *response.Error) {
 
 	err := stmtMap["itemSelect"].QueryRow(id).Scan(&item.HuntID, &item.ID, &item.Name, &item.Points)
 	if err != nil {
-		return nil, response.NewError(fmt.Sprintf("error getting item with id %d: %s", id, err.Error()), http.StatusInternalServerError)
+		return nil, response.NewErrorf(http.StatusInternalServerError, "error getting item with id %d: %s", id, err.Error())
 	}
 
 	return &item, nil
@@ -70,7 +69,7 @@ var itemInsertScript = `
 func (i *ItemDB) Insert() *response.Error {
 	err := stmtMap["itemInsert"].QueryRow(i.HuntID, i.Name, i.Points).Scan(&i.ID)
 	if err != nil {
-		return response.NewError(fmt.Sprintf("error inserting item: %s", err.Error()), http.StatusInternalServerError)
+		return response.NewErrorf(http.StatusInternalServerError, "error inserting item: %s", err.Error())
 	}
 
 	return nil
@@ -85,7 +84,7 @@ var itemsSelectScript = `
 func GetItemsWithHuntID(huntID int) ([]*ItemDB, *response.Error) {
 	rows, err := stmtMap["itemsSelect"].Query(huntID)
 	if err != nil {
-		return nil, response.NewError(fmt.Sprintf("error getting items with hunt id %d: %s", huntID, err.Error()), http.StatusInternalServerError)
+		return nil, response.NewErrorf(http.StatusInternalServerError, "error getting items with hunt id %d: %s", huntID, err.Error())
 	}
 	defer rows.Close()
 
@@ -96,7 +95,7 @@ func GetItemsWithHuntID(huntID int) ([]*ItemDB, *response.Error) {
 		item := ItemDB{}
 		err := rows.Scan(&item.HuntID, &item.ID, &item.Name, &item.Points)
 		if err != nil {
-			e.Add(fmt.Sprintf("error getting item with hunt id %d: %s", huntID, err.Error()), http.StatusInternalServerError)
+			e.Addf(http.StatusInternalServerError, "error getting item with hunt id %d: %s", huntID, err.Error())
 			break
 		}
 		items = append(items, &item)
@@ -104,7 +103,7 @@ func GetItemsWithHuntID(huntID int) ([]*ItemDB, *response.Error) {
 
 	err = rows.Err()
 	if err != nil {
-		e.Add(fmt.Sprintf("error getting item with hunt id %d: %s", huntID, err.Error()), http.StatusInternalServerError)
+		e.Addf(http.StatusInternalServerError, "error getting item with hunt id %d: %s", huntID, err.Error())
 	}
 
 	return items, e.GetError()
@@ -118,16 +117,16 @@ var itemDeleteScript = `
 func DeleteItem(id int, huntID int) *response.Error {
 	res, err := stmtMap["itemDelete"].Exec(id, huntID)
 	if err != nil {
-		return response.NewError(fmt.Sprintf("error deleting item with id %d: %s", id, err.Error()), http.StatusInternalServerError)
+		return response.NewErrorf(http.StatusInternalServerError, "error deleting item with id %d: %s", id, err.Error())
 	}
 
 	numRows, err := res.RowsAffected()
 	if err != nil {
-		return response.NewError(fmt.Sprintf("error deleting item with id %d: %s", id, err.Error()), http.StatusInternalServerError)
+		return response.NewErrorf(http.StatusInternalServerError, "error deleting item with id %d: %s", id, err.Error())
 	}
 
 	if numRows < 1 {
-		return response.NewError(fmt.Sprintf("there is no item with id %d and hunt id %d", id, huntID), http.StatusBadRequest)
+		return response.NewErrorf(http.StatusBadRequest, "there is no item with id %d and hunt id %d", id, huntID)
 	}
 
 	return nil
@@ -143,12 +142,12 @@ func (i *ItemDB) Validate(r *http.Request) *response.Error {
 
 	// make sure HuntID is either 0, client prob didn't specify it, or == to URL hunt_id
 	if huntID != i.HuntID && i.HuntID != 0 {
-		e.Add("hunt_id: field must either be the same as the URL huntID or not specified", http.StatusBadRequest)
+		e.Add(http.StatusBadRequest, "hunt_id: field must either be the same as the URL huntID or not specified")
 	}
 
 	_, structErr := govalidator.ValidateStruct(i)
 	if structErr != nil {
-		e.Add(structErr.Error(), http.StatusBadRequest)
+		e.Add(http.StatusBadRequest, structErr.Error())
 	}
 
 	return e.GetError()
@@ -199,14 +198,14 @@ func (i *ItemDB) PatchValidate(r *http.Request, itemID int) *response.Error {
 	// if an id is provided that doesn't match then we alert the user
 	// of a bad request
 	if id != itemID && itemID != 0 {
-		e.Add("id: the correct item id must be provided", http.StatusBadRequest)
+		e.Add(http.StatusBadRequest, "id: the correct item id must be provided")
 		// delete the id col name so no new errors will accumulate for this column name
 		delete(tblColMap[ItemTbl], "id")
 	}
 
 	// changing an item's hunt is not supported
 	if _, ok = tblColMap[ItemTbl]["hunt_id"]; ok {
-		e.Add("hunt_id: an item's hunt can not be changed with a PATCH", http.StatusBadRequest)
+		e.Add(http.StatusBadRequest, "hunt_id: an item's hunt can not be changed with a PATCH")
 		delete(tblColMap[ItemTbl], "hunt_id")
 	}
 

@@ -1,7 +1,6 @@
 package db
 
 import (
-	"fmt"
 	"net/http"
 	"time"
 
@@ -45,8 +44,8 @@ type LocationDB struct {
 func (l *LocationDB) Validate(r *http.Request) *response.Error {
 	_, err := govalidator.ValidateStruct(l)
 	if err != nil {
-		return response.NewError(fmt.Sprintf("error validating location: %s", err.Error()),
-			http.StatusBadRequest)
+		return response.NewErrorf(http.StatusBadRequest, "error validating location: %s", err.Error())
+
 	}
 
 	return nil
@@ -62,8 +61,8 @@ var locationsForTeamScript = `
 func GetLocationsForTeam(teamID int) ([]*LocationDB, *response.Error) {
 	rows, err := stmtMap["locationsForTeam"].Query(teamID)
 	if err != nil {
-		return nil, response.NewError(fmt.Sprintf("error getting locations for team %d: %s", teamID,
-			err.Error()), http.StatusInternalServerError)
+		return nil, response.NewErrorf(http.StatusInternalServerError, "error getting locations for team %d: %s", teamID, err.Error())
+
 	}
 	defer rows.Close()
 
@@ -73,8 +72,7 @@ func GetLocationsForTeam(teamID int) ([]*LocationDB, *response.Error) {
 		l := LocationDB{}
 		err := rows.Scan(&l.TeamID, &l.ID, &l.Latitude, &l.Longitude, &l.TimeStamp)
 		if err != nil {
-			e.Add(fmt.Sprintf("error getting locations for team %d: %s", teamID,
-				err.Error()), http.StatusInternalServerError)
+			e.Addf(http.StatusInternalServerError, "error getting locations for team %d: %s", teamID, err.Error())
 			break
 		}
 
@@ -82,8 +80,7 @@ func GetLocationsForTeam(teamID int) ([]*LocationDB, *response.Error) {
 	}
 
 	if err = rows.Err(); err != nil {
-		e.Add(fmt.Sprintf("error getting locations for team %d: %s", teamID,
-			err.Error()), http.StatusInternalServerError)
+		e.Addf(http.StatusInternalServerError, "error getting locations for team %d: %s", teamID, err.Error())
 	}
 
 	return locs, e.GetError()
@@ -99,14 +96,14 @@ var locationInsertScript = `
 func (l *LocationDB) Insert(teamID int) *response.Error {
 	// make sure that the location's teamID and teamID match
 	if l.TeamID != teamID {
-		return response.NewError(fmt.Sprintf("team_id: team_id must match the URL team id %d",
-			teamID), http.StatusBadRequest)
+		return response.NewErrorf(http.StatusBadRequest, "team_id: team_id must match the URL team id %d", teamID)
+
 	}
 
 	err := stmtMap["locationInsert"].QueryRow(l.TeamID, l.Latitude, l.Longitude, l.TimeStamp).Scan(&l.ID)
 	if err != nil {
-		return response.NewError(fmt.Sprintf("error inserting location: %s", err.Error()),
-			http.StatusInternalServerError)
+		return response.NewErrorf(http.StatusInternalServerError, "error inserting location: %s", err.Error())
+
 	}
 
 	return nil
@@ -120,19 +117,19 @@ var locationDeleteScript = `
 func DeleteLocation(id int, teamID int) *response.Error {
 	res, err := stmtMap["locationDelete"].Exec(id, teamID)
 	if err != nil {
-		return response.NewError(fmt.Sprintf("error deleting location with teamID %d and id %d: %s",
-			teamID, id, err.Error()), http.StatusBadRequest)
+		return response.NewErrorf(http.StatusBadRequest, "error deleting location with teamID %d and id %d: %s", teamID, id, err.Error())
+
 	}
 
 	numRows, err := res.RowsAffected()
 	if err != nil {
-		return response.NewError(fmt.Sprintf("error deleting location with teamID %d and id %d: %s",
-			teamID, id, err.Error()), http.StatusBadRequest)
+		return response.NewErrorf(http.StatusBadRequest, "error deleting location with teamID %d and id %d: %s", teamID, id, err.Error())
+
 	}
 
 	if numRows < 1 {
-		return response.NewError(fmt.Sprintf("error deleting location with teamID %d and id %d",
-			teamID, id), http.StatusBadRequest)
+		return response.NewErrorf(http.StatusBadRequest, "error deleting location with teamID %d and id %d", teamID, id)
+
 	}
 
 	return nil

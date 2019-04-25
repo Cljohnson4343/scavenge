@@ -28,7 +28,7 @@ func GetUpdateSQLCommand(colMap ColumnMap, tbl string, id int) (*Command, *respo
 	_, err := cmd.AppendScript(fmt.Sprintf("\n\t\tUPDATE %s\n\t\tSET %s\n\t\tWHERE id=$%d;",
 		tbl, nameExpStr, numColUpdated+1))
 	if err != nil {
-		return nil, response.NewError(err.Error(), http.StatusInternalServerError)
+		return nil, response.NewError(http.StatusInternalServerError, err.Error())
 	}
 
 	// add the final arg, the id of the WHERE constraint

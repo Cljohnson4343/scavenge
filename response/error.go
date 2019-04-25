@@ -3,6 +3,7 @@ package response
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
 )
@@ -21,7 +22,7 @@ type error struct {
 }
 
 // NewError returns a pointer to a Error that is initialized with the given arguments
-func NewError(msg string, httpCode int) *Error {
+func NewError(httpCode int, msg string) *Error {
 	es := make([]*error, 0)
 	newErr := error{code: httpCode}
 	_, err := newErr.sb.WriteString(msg)
@@ -36,6 +37,12 @@ func NewError(msg string, httpCode int) *Error {
 	return &e
 }
 
+// NewErrorf is a wrapper for NewError that takes the msg in the form of a formatter string w/ args
+func NewErrorf(httpCode int, format string, a ...interface{}) *Error {
+	return NewError(httpCode, fmt.Sprintf(format, a...))
+
+}
+
 // NewNilError returns an Error object that has not been populated with any errors.
 // This can be used by consumers in place of an error flag.
 // For example the following code:
@@ -48,7 +55,7 @@ func NewError(msg string, httpCode int) *Error {
 //		err = rows.Scan(&team.Name, &team.ID, &team.HuntID)
 //		if err != nil {
 //			encounteredErr = true
-//			e.Add(err.Error(), http.StatusInternalServerError)
+//			e.Add(http.StatusInternalServerError, err.Error())
 //		}
 //
 //		*teams = append(*teams, team)
@@ -66,7 +73,7 @@ func NewError(msg string, httpCode int) *Error {
 //	for rows.Next() {
 //		err = rows.Scan(&team.Name, &team.ID, &team.HuntID)
 //		if err != nil {
-//			e.Add(err.Error(), http.StatusInternalServerError)
+//			e.Add(http.StatusInternalServerError, err.Error())
 //		}
 //
 //		*teams = append(*teams, team)
@@ -91,7 +98,7 @@ func (err *Error) GetError() *Error {
 
 // Add adds an additional error to the Error. The added error
 // will generate its own json object.
-func (err *Error) Add(msg string, httpCode int) {
+func (err *Error) Add(httpCode int, msg string) {
 	newErr := error{code: httpCode}
 	newErr.sb.WriteString(msg)
 
@@ -100,6 +107,11 @@ func (err *Error) Add(msg string, httpCode int) {
 	}
 
 	err.errors = append(err.errors, &newErr)
+}
+
+// Addf wraps Add and allows the msg to be a format string w/ args
+func (err *Error) Addf(httpCode int, format string, a ...interface{}) {
+	err.Add(httpCode, fmt.Sprintf(format, a...))
 }
 
 // AddError allows all the errors given to be added to the reciever Error

@@ -1,7 +1,6 @@
 package teams
 
 import (
-	"fmt"
 	"net/http"
 
 	c "github.com/cljohnson4343/scavenge/config"
@@ -80,17 +79,16 @@ func UpdateTeam(env *c.Env, team *Team) *response.Error {
 
 	res, err := cmd.Exec(env)
 	if err != nil {
-		return response.NewError(fmt.Sprintf("error updating team %d", team.ID), http.StatusInternalServerError)
+		return response.NewErrorf(http.StatusInternalServerError, "error updating team %d", team.ID)
 	}
 
 	n, err := res.RowsAffected()
 	if err != nil {
-		return response.NewError(fmt.Sprintf("error updating team %d", team.ID), http.StatusInternalServerError)
+		return response.NewErrorf(http.StatusInternalServerError, "error updating team %d", team.ID)
 	}
 
 	if n < 1 {
-		return response.NewError(fmt.Sprintf("team %d was not updated. Check to make sure teamID and huntID are valid",
-			team.ID), http.StatusInternalServerError)
+		return response.NewErrorf(http.StatusInternalServerError, "team %d was not updated. Check to make sure teamID and huntID are valid", team.ID)
 	}
 
 	return nil

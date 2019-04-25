@@ -108,14 +108,14 @@ func DeleteHunt(huntID int) *response.Error {
 func UpdateHunt(env *c.Env, hunt *Hunt) (bool, *response.Error) {
 	tx, err := env.Begin()
 	if err != nil {
-		return false, response.NewError(err.Error(), http.StatusInternalServerError)
+		return false, response.NewError(http.StatusInternalServerError, err.Error())
 	}
 
 	e := hunt.Update(tx)
 	if e != nil {
 		err = tx.Rollback()
 		if err != nil {
-			e.Add(err.Error(), http.StatusInternalServerError)
+			e.Add(http.StatusInternalServerError, err.Error())
 			return false, e.GetError()
 		}
 
@@ -124,7 +124,7 @@ func UpdateHunt(env *c.Env, hunt *Hunt) (bool, *response.Error) {
 
 	err = tx.Commit()
 	if err != nil {
-		return false, response.NewError(err.Error(), http.StatusInternalServerError)
+		return false, response.NewError(http.StatusInternalServerError, err.Error())
 	}
 
 	return true, nil

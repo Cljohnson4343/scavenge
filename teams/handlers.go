@@ -3,7 +3,6 @@ package teams
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"os"
 
@@ -440,8 +439,7 @@ func populateMediaDBHandler(env *c.Env) http.HandlerFunc {
 
 		err = json.NewDecoder(file).Decode(&metas)
 		if err != nil {
-			e := response.NewError(fmt.Sprintf("error decoding json data: %s", err.Error()),
-				http.StatusInternalServerError)
+			e := response.NewErrorf(http.StatusInternalServerError, "error decoding json data: %s", err.Error())
 			e.Handle(w)
 			return
 		}
@@ -449,8 +447,7 @@ func populateMediaDBHandler(env *c.Env) http.HandlerFunc {
 		for _, m := range metas {
 			b, err := json.Marshal(m)
 			if err != nil {
-				e := response.NewError(fmt.Sprintf("error decoding json data: %s", err.Error()),
-					http.StatusInternalServerError)
+				e := response.NewErrorf(http.StatusInternalServerError, "error decoding json data: %s", err.Error())
 				e.Handle(w)
 				return
 			}
@@ -459,8 +456,7 @@ func populateMediaDBHandler(env *c.Env) http.HandlerFunc {
 
 			res, err := http.Post(url, "application/json", buf)
 			if err != nil {
-				e := response.NewError(fmt.Sprintf("error decoding json data: %s", err.Error()),
-					http.StatusInternalServerError)
+				e := response.NewErrorf(http.StatusInternalServerError, "error decoding json data: %s", err.Error())
 				e.Handle(w)
 				return
 			}

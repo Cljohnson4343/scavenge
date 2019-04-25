@@ -1,7 +1,6 @@
 package db
 
 import (
-	"fmt"
 	"net/http"
 	"time"
 
@@ -41,7 +40,7 @@ type SessionDB struct {
 func (s *SessionDB) Validate(r *http.Request) *response.Error {
 	_, err := govalidator.ValidateStruct(s)
 	if err != nil {
-		return response.NewError(fmt.Sprintf("error validating session: %v", err), http.StatusBadRequest)
+		return response.NewErrorf(http.StatusBadRequest, "error validating session: %v", err)
 	}
 
 	return nil
@@ -58,8 +57,7 @@ var sessionInsertScript = `
 func (s *SessionDB) Insert() *response.Error {
 	err := stmtMap["sessionInsert"].QueryRow(s.Key, s.Expires, s.UserID).Scan(&s.CreatedAt)
 	if err != nil {
-		return response.NewError(fmt.Sprintf("error inserting session %s: %v",
-			s.Key.String(), err), http.StatusInternalServerError)
+		return response.NewErrorf(http.StatusInternalServerError, "error inserting session %s: %v", s.Key.String(), err)
 	}
 
 	return nil

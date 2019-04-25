@@ -1,7 +1,6 @@
 package db
 
 import (
-	"fmt"
 	"net/http"
 	"time"
 
@@ -134,7 +133,7 @@ func (h *HuntDB) GetTableColumnMap() pgsql.TableColumnMap {
 func (h *HuntDB) Validate(r *http.Request) *response.Error {
 	_, err := govalidator.ValidateStruct(h)
 	if err != nil {
-		return response.NewError(err.Error(), http.StatusBadRequest)
+		return response.NewError(http.StatusBadRequest, err.Error())
 	}
 
 	return nil
@@ -156,14 +155,14 @@ func (h *HuntDB) PatchValidate(r *http.Request, huntID int) *response.Error {
 	// if an id is provided that doesn't match then we alert the user
 	// of a bad request
 	if id != huntID {
-		e.Add("id: the correct hunt id must be provided", http.StatusBadRequest)
+		e.Add(http.StatusBadRequest, "id: the correct hunt id must be provided")
 		// delete the id col name so no new errors will accumulate for this column name
 		delete(tblColMap[HuntTbl], "id")
 	}
 
 	// changing a hunt's created_at field is not supported
 	if _, ok = tblColMap[HuntTbl]["created_at"]; ok {
-		e.Add("created_at: changing a hunt's created_at field is not supported with PATCH", http.StatusBadRequest)
+		e.Add(http.StatusBadRequest, "created_at: changing a hunt's created_at field is not supported with PATCH")
 		delete(tblColMap[HuntTbl], "created_at")
 	}
 
@@ -184,7 +183,7 @@ var huntsSelectScript = `
 func GetHunts() ([]*HuntDB, *response.Error) {
 	rows, err := stmtMap["huntsSelect"].Query()
 	if err != nil {
-		return nil, response.NewError(fmt.Sprintf("error getting hunts: %s", err.Error()), http.StatusInternalServerError)
+		return nil, response.NewErrorf(http.StatusInternalServerError, "error getting hunts: %s", err.Error())
 	}
 	defer rows.Close()
 
@@ -195,7 +194,7 @@ func GetHunts() ([]*HuntDB, *response.Error) {
 		huntErr := rows.Scan(&hunt.Name, &hunt.ID, &hunt.StartTime, &hunt.EndTime, &hunt.LocationName,
 			&hunt.Latitude, &hunt.Longitude, &hunt.MaxTeams, &hunt.CreatedAt)
 		if huntErr != nil {
-			e.Add(fmt.Sprintf("error getting hunt: %s", huntErr.Error()), http.StatusInternalServerError)
+			e.Addf(http.StatusInternalServerError, "error getting hunt: %s", huntErr.Error())
 			break
 		}
 		hunts = append(hunts, &hunt)
@@ -203,7 +202,7 @@ func GetHunts() ([]*HuntDB, *response.Error) {
 
 	err = rows.Err()
 	if err != nil {
-		e.Add(fmt.Sprintf("error getting hunt: %s", err.Error()), http.StatusInternalServerError)
+		e.Addf(http.StatusInternalServerError, "error getting hunt: %s", err.Error())
 	}
 
 	return hunts, e.GetError()
@@ -221,8 +220,8 @@ func GetHunt(huntID int) (*HuntDB, *response.Error) {
 	err := stmtMap["huntSelect"].QueryRow(huntID).Scan(&h.Name, &h.ID, &h.StartTime, &h.EndTime,
 		&h.LocationName, &h.Latitude, &h.Longitude, &h.MaxTeams, &h.CreatedAt)
 	if err != nil {
-		return nil, response.NewError(fmt.Sprintf("error getting the hunt with id %d: %s", huntID,
-			err.Error()), http.StatusInternalServerError)
+		return nil, response.NewErrorf(http.StatusInternalServerError, "error getting the hunt with id %d: %s", huntID, err.Error())
+
 	}
 
 	return &h, nil
@@ -236,19 +235,19 @@ var huntDeleteScript = `
 func DeleteHunt(id int) *response.Error {
 	res, err := stmtMap["huntDelete"].Exec(id)
 	if err != nil {
-		return response.NewError(fmt.Sprintf("error deleting hunt with id %d: %s", id, err.Error()),
-			http.StatusInternalServerError)
+		return response.NewErrorf(http.StatusInternalServerError, "error deleting hunt with id %d: %s", id, err.Error())
+
 	}
 
 	numRows, err := res.RowsAffected()
 	if err != nil {
-		return response.NewError(fmt.Sprintf("error deleting hunt with id %d: %s", id, err.Error()),
-			http.StatusInternalServerError)
+		return response.NewErrorf(http.StatusInternalServerError, "error deleting hunt with id %d: %s", id, err.Error())
+
 	}
 
 	if numRows < 1 {
-		return response.NewError(fmt.Sprintf("error deleting hunt with id %d: %s", id, err.Error()),
-			http.StatusInternalServerError)
+		return response.NewErrorf(http.StatusInternalServerError, "error deleting hunt with id %d: %s", id, err.Error())
+
 	}
 
 	return nil
@@ -266,8 +265,8 @@ func (h *HuntDB) Insert() *response.Error {
 	err := stmtMap["huntInsert"].QueryRow(h.Name, h.MaxTeams, h.StartTime, h.EndTime,
 		h.LocationName, h.Latitude, h.Longitude).Scan(&h.ID, &h.CreatedAt)
 	if err != nil {
-		return response.NewError(fmt.Sprintf("error inserting hunt with name %s: %s",
-			h.Name, err.Error()), http.StatusInternalServerError)
+		return response.NewErrorf(http.StatusInternalServerError, "error inserting hunt with name %s: %s", h.Name, err.Error())
+
 	}
 
 	return nil

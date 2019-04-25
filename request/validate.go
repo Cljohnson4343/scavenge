@@ -34,7 +34,7 @@ func DecodeAndValidate(r *http.Request, v Validater) *response.Error {
 func decode(r *http.Request, v interface{}) *response.Error {
 	err := json.NewDecoder(r.Body).Decode(v)
 	if err != nil {
-		return response.NewError(err.Error(), http.StatusBadRequest)
+		return response.NewError(http.StatusBadRequest, err.Error())
 	}
 	defer r.Body.Close()
 
@@ -65,7 +65,7 @@ func PatchValidate(colMap pgsql.ColumnMap, v interface{}) *response.Error {
 	for col := range colMap {
 		errStr := govalidator.ErrorByField(err, col)
 		if errStr != "" {
-			e.Add(errStr, http.StatusBadRequest)
+			e.Add(http.StatusBadRequest, errStr)
 		}
 	}
 

@@ -2,7 +2,6 @@ package users
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"github.com/cljohnson4343/scavenge/response"
@@ -23,7 +22,7 @@ func getLoginHandler(env *c.Env) http.HandlerFunc {
 		l := LoginInfoTemp{}
 		err := json.NewDecoder(r.Body).Decode(&l)
 		if err != nil {
-			e := response.NewError(fmt.Sprintf("error logging in: %v", err), http.StatusBadRequest)
+			e := response.NewErrorf(http.StatusBadRequest, "error logging in: %v", err)
 			e.Handle(w)
 			return
 		}

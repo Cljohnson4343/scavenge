@@ -13,7 +13,7 @@ import (
 func GetIntURLParam(r *http.Request, str string) (int, *response.Error) {
 	v, err := strconv.Atoi(chi.URLParam(r, str))
 	if err != nil {
-		return 0, response.NewError(err.Error(), http.StatusBadRequest)
+		return 0, response.NewError(http.StatusBadRequest, err.Error())
 	}
 	return v, nil
 }

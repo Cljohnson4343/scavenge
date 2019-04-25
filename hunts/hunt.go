@@ -40,7 +40,7 @@ func (h *Hunt) Validate(r *http.Request) *response.Error {
 		// make sure each team has the same hunt_id as the hunt being validated or
 		// doesn't specify a hunt_id, i.e zero valued
 		if h.ID != t.HuntID && t.HuntID != 0 {
-			e.AddError(response.NewError("error: teams can not specify a hunt_id that differs from their enclosing hunt", http.StatusBadRequest))
+			e.Add(http.StatusBadRequest, "error: teams can not specify a hunt_id that differs from their enclosing hunt")
 			break
 		}
 		teamErr := t.Validate(r)
@@ -53,7 +53,7 @@ func (h *Hunt) Validate(r *http.Request) *response.Error {
 		// make sure each item has the same hunt_id as the hunt being validated or
 		// doesn't specify a hunt_id, i.e zero valued
 		if h.ID != i.HuntID && i.HuntID != 0 {
-			e.AddError(response.NewError("error: items can not specify a hunt_id that differs from their enclosing hunt", http.StatusBadRequest))
+			e.Add(http.StatusBadRequest, "error: items can not specify a hunt_id that differs from their enclosing hunt")
 			break
 		}
 		itemErr := i.Validate(r)
@@ -99,12 +99,12 @@ func (h *Hunt) PatchValidate(r *http.Request, huntID int) *response.Error {
 		// make sure each team has the same hunt_id as the hunt being validated or
 		// doesn't specify a hunt_id, i.e zero valued
 		if h.ID != team.HuntID && team.HuntID != 0 {
-			e.Add("error: teams can not specify a hunt_id that differs from their enclosing hunt", http.StatusBadRequest)
+			e.Add(http.StatusBadRequest, "error: teams can not specify a hunt_id that differs from their enclosing hunt")
 			break
 		}
 		// make sure each team has an id specified
 		if team.ID == 0 {
-			e.Add("id: teams need an id specified to PATCH", http.StatusBadRequest)
+			e.Add(http.StatusBadRequest, "id: teams need an id specified to PATCH")
 			break
 		}
 		teamErr := team.TeamDB.PatchValidate(r, team.ID)
@@ -117,12 +117,12 @@ func (h *Hunt) PatchValidate(r *http.Request, huntID int) *response.Error {
 		// make sure each item has the same hunt_id as the hunt being validated or
 		// doesn't specify a hunt_id, i.e zero valued
 		if h.ID != item.HuntID && item.HuntID != 0 {
-			e.Add("error: items can not specify a hunt_id that differs from their enclosing hunt", http.StatusBadRequest)
+			e.Add(http.StatusBadRequest, "error: items can not specify a hunt_id that differs from their enclosing hunt")
 			break
 		}
 		// make sure each item has an id specified
 		if item.ID == 0 {
-			e.Add("id: items need an id specified to PATCH", http.StatusBadRequest)
+			e.Add(http.StatusBadRequest, "id: items need an id specified to PATCH")
 			break
 		}
 		itemErr := item.ItemDB.PatchValidate(r, item.ID)

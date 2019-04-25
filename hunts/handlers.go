@@ -3,7 +3,6 @@ package hunts
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"os"
 
@@ -191,7 +190,7 @@ func patchHuntHandler(env *c.Env) http.HandlerFunc {
 		}
 
 		if !rowsAffected {
-			e := response.NewError("cannot patch a hunt that doesn't exist", http.StatusBadRequest)
+			e := response.NewError(http.StatusBadRequest, "cannot patch a hunt that doesn't exist")
 			e.Handle(w)
 			return
 		}
@@ -360,7 +359,7 @@ func patchItemHandler(env *c.Env) http.HandlerFunc {
 		// make sure the patch request does not change the item's hunt from hunt
 		// specified by the URL
 		if item.HuntID != 0 && item.HuntID != huntID {
-			e = response.NewError("hunt_id: the item's hunt_id can not be modified", http.StatusBadRequest)
+			e = response.NewError(http.StatusBadRequest, "hunt_id: the item's hunt_id can not be modified")
 			e.Handle(w)
 			return
 		}
@@ -389,8 +388,8 @@ func populateDBHandler(env *c.Env) http.HandlerFunc {
 
 		err = json.NewDecoder(file).Decode(&hunts)
 		if err != nil {
-			e := response.NewError(fmt.Sprintf("error decoding json data: %s", err.Error()),
-				http.StatusInternalServerError)
+			e := response.NewErrorf(http.StatusInternalServerError, "error decoding json data: %s", err.Error())
+
 			e.Handle(w)
 			return
 		}
@@ -398,8 +397,8 @@ func populateDBHandler(env *c.Env) http.HandlerFunc {
 		for _, hunt := range hunts {
 			b, err := json.Marshal(hunt)
 			if err != nil {
-				e := response.NewError(fmt.Sprintf("error decoding json data: %s", err.Error()),
-					http.StatusInternalServerError)
+				e := response.NewErrorf(http.StatusInternalServerError, "error decoding json data: %s", err.Error())
+
 				e.Handle(w)
 				return
 			}
@@ -408,8 +407,8 @@ func populateDBHandler(env *c.Env) http.HandlerFunc {
 
 			res, err := http.Post(url, "application/json", buf)
 			if err != nil {
-				e := response.NewError(fmt.Sprintf("error decoding json data: %s", err.Error()),
-					http.StatusInternalServerError)
+				e := response.NewErrorf(http.StatusInternalServerError, "error decoding json data: %s", err.Error())
+
 				e.Handle(w)
 				return
 			}
