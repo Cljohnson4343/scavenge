@@ -1,39 +1,33 @@
 package users
 
 import (
-	"encoding/json"
 	"net/http"
 
-	"github.com/cljohnson4343/scavenge/response"
+	"github.com/cljohnson4343/scavenge/request"
+
 	"github.com/cljohnson4343/scavenge/sessions"
 
 	c "github.com/cljohnson4343/scavenge/config"
 )
 
-// LoginInfoTemp temporary struct for early users development
-type LoginInfoTemp struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
-}
-
-//
 func getLoginHandler(env *c.Env) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		l := LoginInfoTemp{}
-		err := json.NewDecoder(r.Body).Decode(&l)
-		if err != nil {
-			e := response.NewErrorf(http.StatusBadRequest, "error logging in: %v", err)
+		u := User{}
+		e := request.DecodeAndValidate(r, &u)
+		if e != nil {
 			e.Handle(w)
 			return
 		}
 
-		//
-		// create user
-		//
+		e = u.Insert()
+		if e != nil {
+			e.Handle(w)
+			return
+		}
 
 		// create session and add a session cookie to user agent
-		session := sessions.New(43)
-		c := session.Cookie()
+		sess := sessions.New(u.ID)
+		c := sess.Cookie()
 		http.SetCookie(w, c)
 
 		return

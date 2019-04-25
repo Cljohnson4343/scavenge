@@ -29,6 +29,13 @@ func init() {
 
 		return false
 	}))
+	govalidator.CustomTypeTagMap.Set("isZeroTime", govalidator.CustomTypeValidator(func(i interface{}, context interface{}) bool {
+		switch v := i.(type) {
+		case time.Time:
+			return v.IsZero()
+		}
+		return false
+	}))
 	govalidator.CustomTypeTagMap.Set("timeNotPast", govalidator.CustomTypeValidator(func(i interface{}, context interface{}) bool {
 		switch v := i.(type) {
 		case time.Time:
@@ -71,6 +78,7 @@ var scriptMap = map[string]string{
 	"mediaMetaDelete":       mediaMetaDeleteScript,
 	"teamPoints":            teamPointsScript,
 	"sessionInsert":         sessionInsertScript,
+	"userInsert":            userInsertScript,
 }
 
 func initStatements(db *sql.DB) error {

@@ -19,13 +19,15 @@ CREATE TABLE users (
     id                  serial,
     first_name          text NOT NULL,
     last_name           text NOT NULL,
+    username            varchar(64) NOT NULL,
     joined_at           timestamp DEFAULT NOW(),
-    last_login          timestamp DEFAULT NOW(),
+    last_visit          timestamp DEFAULT NOW(),
     image_url           varchar(2083), 
     email               text NOT NULL,
     PRIMARY KEY(id)
 );
-CREATE UNIQUE INDEX users_unique_lower_email_idx on users(lower(email));
+CREATE UNIQUE INDEX users_unique_lower_email_idx ON users(lower(email));
+CREATE UNIQUE INDEX users_unique_username ON users(lower(username));
 
 /* 
     This table represents a user's sessions.
