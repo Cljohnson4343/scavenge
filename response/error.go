@@ -3,40 +3,41 @@ package response
 
 import (
 	"encoding/json"
-	"fmt"
-	"math"
 	"net/http"
 	"strings"
 )
 
-// Error wraps the strings.Builder type and implements the error interface. It also
-// contains a http return code. The strings.Builder is used to build the error msg used
-// in the "detail" field of the generated json. See the JSON() method docs for an example.
+// Error is a custom types that can accumulate errors.
 type Error struct {
-	strings.Builder
-	code int
-	flag bool
+	errors []*error
 }
 
-// Error returns the error msg that has been built by the Error's embedded
-// strings.Builder
-func (err *Error) Error() string {
-	return err.String()
+// error wraps the strings.Builder type and implements the Error interface. It also
+// contains a http return code. The strings.Builder is used to build the error msg used
+// in the "detail" field of the generated json. See the JSON() method docs for an example.
+type error struct {
+	sb   strings.Builder
+	code int
 }
 
 // NewError returns a pointer to a Error that is initialized with the given arguments
 func NewError(msg string, httpCode int) *Error {
-	newErr := Error{code: httpCode, flag: true}
-	_, err := newErr.WriteString(msg)
+	es := make([]*error, 0)
+	newErr := error{code: httpCode}
+	_, err := newErr.sb.WriteString(msg)
 	if err != nil {
 		panic(err)
 	}
 
-	return &newErr
+	es = append(es, &newErr)
+
+	e := Error{errors: es}
+
+	return &e
 }
 
-// NewNilError returns an Error object that has not been populated with a message or
-// http return status code yet. This can be used by consumers in place of an error flag.
+// NewNilError returns an Error object that has not been populated with any errors.
+// This can be used by consumers in place of an error flag.
 // For example the following code:
 //
 //	e := response.NewError("", response.LowestPriorityCode)
@@ -71,60 +72,50 @@ func NewError(msg string, httpCode int) *Error {
 //		*teams = append(*teams, team)
 //	}
 //
-//	return teams, e.GetError()
+//	return teams, e.GetErrors()
 func NewNilError() *Error {
-	return &Error{code: LowestPriorityCode, flag: false}
+	return &Error{errors: nil}
 }
 
-// GetError returns nil if there hasn't been an error added to
-// the Error yet. This is only useful if you need Error's nil
-// error feature. This is a special use case, for details see
-// NewNilError's docs.
+// GetError returns nil if there aren't any errors in
+// the Error yet. This is only useful if you need to instantiate
+// nil Error using NewNilError. This is a special use case, for
+// details see NewNilError's docs.
 func (err *Error) GetError() *Error {
-	if err.flag {
-		return err
+	if err.errors == nil {
+		return nil
 	}
 
-	return nil
+	return err
 }
 
-// Add adds an additional error to the Error. The msg
-// will be appended to the generated json's 'detail' field. The
-// Error's http status code might be updated depending on
-// priority. Each Error only has one status code with more
-// general codes being given higher priority.
+// Add adds an additional error to the Error. The added error
+// will generate its own json object.
 func (err *Error) Add(msg string, httpCode int) {
-	err.flag = true
-	if err.code > httpCode {
-		err.code = httpCode
+	newErr := error{code: httpCode}
+	newErr.sb.WriteString(msg)
+
+	if err.errors == nil {
+		err.errors = make([]*error, 0)
 	}
 
-	// handle the case where NewNilError was used and there isn't a msg
-	// in the buffer
-	var sep string
-	if err.Len() == 0 {
-		sep = ""
-	} else {
-		sep = "; "
-	}
-	err.WriteString(fmt.Sprintf("%s%s", sep, msg))
+	err.errors = append(err.errors, &newErr)
 }
 
-// AddError is a convenience func for Add()
+// AddError allows all the errors given to be added to the reciever Error
 func (err *Error) AddError(e *Error) {
-	err.Add(e.Error(), e.Code())
+	if e.errors == nil {
+		return
+	}
+
+	if err.errors == nil {
+		err.errors = make([]*error, 0, len(e.errors))
+	}
+
+	err.errors = append(err.errors, e.errors...)
 }
 
-// LowestPriorityCode returns an int that will always be overridden when Add()
-// is used.
-const LowestPriorityCode = math.MaxInt32
-
-// Code returns the http status code for this Error
-func (err *Error) Code() int {
-	return err.code
-}
-
-// res is an internal struct used to map a Error's data to json
+// res is an internal struct used to map an error's data to json
 type res struct {
 	Code   int    `json:"code"`
 	Status string `json:"status"`
@@ -140,23 +131,43 @@ var httpCodeMap = map[int]string{
 	500: "Internal Server Error",
 }
 
-// Handle writes a Error's return status code to the header and writes its generated
-// json to the body.
+// Handle writes an Error's highest priority return status code to the header and writes its generated
+// json to the body. The highest priority header is determined by the lowest valued status code.
 func (err *Error) Handle(w http.ResponseWriter) {
-	w.WriteHeader(err.Code())
+	if err.errors == nil {
+		panic("tried to handle a nil error")
+	}
+
+	highestPriorityCode := 4343
+	for _, e := range err.errors {
+		if e.code < highestPriorityCode {
+			highestPriorityCode = e.code
+		}
+	}
+
+	w.WriteHeader(highestPriorityCode)
 	w.Write(err.JSON())
 }
 
-// JSON returns a []byte of the Error, for example:
-//  {
-// 		"code": 400,
-//		"status": "Bad Request",
-//		"detail": "The request body does not contain a required 'hunt_id' field"
-// 	}
+// JSON returns a []byte of the errors for Error, for example:
+//  [{
+// 			"code": 400,
+//			"status": "Bad Request",
+//			"detail": "The request body does not contain a required 'hunt_id' field"
+// 		},{
+// 			"code": 404,
+//			"status": "Unauthorized",
+//			"detail": "The user is Unauthorized."
+//  	}
+//  ]
 func (err *Error) JSON() []byte {
-	r := res{Code: err.Code(), Status: httpCodeMap[err.Code()], Detail: err.String()}
+	rs := make([]*res, 0, len(err.errors))
+	for _, e := range err.errors {
+		r := res{Code: e.code, Status: httpCodeMap[e.code], Detail: e.sb.String()}
+		rs = append(rs, &r)
+	}
 
-	json, e := json.Marshal(&r)
+	json, e := json.Marshal(&rs)
 	if e != nil {
 		panic(e)
 	}
