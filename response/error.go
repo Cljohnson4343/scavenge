@@ -8,6 +8,15 @@ import (
 	"strings"
 )
 
+var devMode = false
+
+// SetDevMode sets the dev mode. If dev mode is true then response errors > 500, internal errors,
+// will provide details. By default app is not in dev mode and will strip detail msg
+// of internal errors
+func SetDevMode(isDevMode bool) {
+	devMode = isDevMode
+}
+
 // Error is a custom types that can accumulate errors.
 type Error struct {
 	errors []*error
@@ -175,7 +184,13 @@ func (err *Error) Handle(w http.ResponseWriter) {
 func (err *Error) JSON() []byte {
 	rs := make([]*res, 0, len(err.errors))
 	for _, e := range err.errors {
-		r := res{Code: e.code, Status: httpCodeMap[e.code], Detail: e.sb.String()}
+		var detailMsg string
+		if !devMode && e.code >= 500 {
+			detailMsg = ""
+		} else {
+			detailMsg = e.sb.String()
+		}
+		r := res{Code: e.code, Status: httpCodeMap[e.code], Detail: detailMsg}
 		rs = append(rs, &r)
 	}
 
