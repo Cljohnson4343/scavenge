@@ -7,8 +7,6 @@ DROP TABLE IF EXISTS teams CASCADE;
 DROP TABLE IF EXISTS hunts CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
 
-CREATE EXTENSION IF NOT EXISTS pgcrypto;
-
 /*
     This table represents a user. 
 
@@ -37,7 +35,7 @@ CREATE UNIQUE INDEX users_unique_lower_email_idx on users(lower(email));
 
 */
 CREATE TABLE user_sessions (
-    session_key         uuid DEFAULT gen_random_uuid(),
+    session_key         uuid,
     expires             timestamp NOT NULL,
     created_at          timestamp DEFAULT NOW(),
     user_id             int NOT NULL,
