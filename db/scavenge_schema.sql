@@ -1,11 +1,13 @@
-
-DROP TABLE IF EXISTS users_teams;
+DROP TABLE IF EXISTS user_sessions CASCADE;
+DROP TABLE IF EXISTS users_teams CASCADE;
 DROP TABLE IF EXISTS media CASCADE;
 DROP TABLE IF EXISTS locations CASCADE;
 DROP TABLE IF EXISTS items CASCADE;
 DROP TABLE IF EXISTS teams CASCADE;
 DROP TABLE IF EXISTS hunts CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
+
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 /*
     This table represents a user. 
@@ -26,6 +28,22 @@ CREATE TABLE users (
     PRIMARY KEY(id)
 );
 CREATE UNIQUE INDEX users_unique_lower_email_idx on users(lower(email));
+
+/* 
+    This table represents a user's sessions.
+
+    relations:
+        many to one--many sessions can have relsationships with the same user
+
+*/
+CREATE TABLE user_sessions (
+    session_key         uuid DEFAULT gen_random_uuid(),
+    expires             timestamp NOT NULL,
+    created_at          timestamp DEFAULT NOW(),
+    user_id             int NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    PRIMARY KEY (session_key)
+);
 
 /*
     This table represents a scavenger hunt game. 'hunts' contains
@@ -51,7 +69,7 @@ CREATE TABLE hunts (
     created_at      timestamp DEFAULT NOW(),
     creator_id      int NOT NULL,
     CONSTRAINT hunt_with_same_name UNIQUE(name),
-    PRIMARY KEY(id)
+    PRIMARY KEY(id),
     FOREIGN KEY (creator_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
