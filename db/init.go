@@ -79,6 +79,8 @@ var scriptMap = map[string]string{
 	"teamPoints":            teamPointsScript,
 	"sessionInsert":         sessionInsertScript,
 	"userInsert":            userInsertScript,
+	"userGet":               userGetScript,
+	"userDelete":            userDeleteScript,
 }
 
 func initStatements(db *sql.DB) error {
