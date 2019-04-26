@@ -163,6 +163,12 @@ func getUpdateUserHandler(env *c.Env) http.HandlerFunc {
 			return
 		}
 
+		e = u.Update(env, userID)
+		if e != nil {
+			e.Handle(w)
+			return
+		}
+
 	}
 }
 

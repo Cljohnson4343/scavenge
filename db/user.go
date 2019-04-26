@@ -133,11 +133,11 @@ func (u *UserDB) GetTableColumnMap() pgsql.TableColumnMap {
 		tblColMap[userTbl]["username"] = u.Username
 	}
 
-	if u.JoinedAt.IsZero() {
+	if !u.JoinedAt.IsZero() {
 		tblColMap[userTbl]["joined_at"] = u.JoinedAt
 	}
 
-	if u.LastVisit.IsZero() {
+	if !u.LastVisit.IsZero() {
 		tblColMap[userTbl]["last_visit"] = u.LastVisit
 	}
 
@@ -166,7 +166,7 @@ func (u *UserDB) Insert() *response.Error {
 }
 
 var userGetScript = `
-	SELECT id, first_name, last_name, username, joined_at, last_visit, image_url, email
+	SELECT id, first_name, last_name, username, joined_at, last_visit, COALESCE(image_url, ''), email
 	FROM users
 	WHERE id = $1;`
 
