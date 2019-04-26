@@ -3,6 +3,8 @@ package users
 import (
 	"net/http"
 
+	"github.com/cljohnson4343/scavenge/response"
+
 	"github.com/go-chi/render"
 
 	"github.com/cljohnson4343/scavenge/db"
@@ -38,10 +40,24 @@ func getLoginHandler(env *c.Env) http.HandlerFunc {
 			return
 		}
 
-		e = u.Insert()
-		if e != nil {
-			e.Handle(w)
-			return
+		// If login provided a userID verify user exists
+		if u.ID != 0 {
+			existing, e := db.GetUser(u.ID)
+			if e != nil {
+				e.Handle(w)
+			}
+			if existing == nil {
+				e := response.NewError(http.StatusBadRequest, "login user: unable to login user with the provided info")
+				e.Handle(w)
+				return
+			}
+		} else {
+			// create new user
+			e = u.Insert()
+			if e != nil {
+				e.Handle(w)
+				return
+			}
 		}
 
 		// create session and add a session cookie to user agent
@@ -147,5 +163,40 @@ func getUpdateUserHandler(env *c.Env) http.HandlerFunc {
 			return
 		}
 
+	}
+}
+
+// swagger:route POST /users/ creates user getCreateUserHandler
+//
+// Creates the given user.
+//
+// Consumes:
+// 	- application/json
+//
+// Produces:
+//	- application/json
+//
+// Schemes: http, https
+//
+// Responses:
+// 	200:
+//  400:
+func getCreateUserHandler(env *c.Env) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		u := User{}
+		e := request.DecodeAndValidate(r, &u)
+		if e != nil {
+			e.Handle(w)
+			return
+		}
+
+		// create new user
+		e = u.Insert()
+		if e != nil {
+			e.Handle(w)
+			return
+		}
+
+		render.JSON(w, r, &u)
 	}
 }

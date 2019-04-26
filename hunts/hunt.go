@@ -86,7 +86,7 @@ func (h *Hunt) GetTableColumnMaps() []pgsql.TableColumnMap {
 }
 
 // PatchValidate will validate only the non-zero fields of the Hunt
-// @TODO think about implementing govalidator's customtagtype validators
+// TODO think about implementing govalidator's customtagtype validators
 // 		for embedded fields and slice fields of Hunt, Item, and Team types
 func (h *Hunt) PatchValidate(r *http.Request, huntID int) *response.Error {
 	e := response.NewNilError()

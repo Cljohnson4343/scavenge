@@ -1,6 +1,7 @@
 package db
 
 import (
+	"database/sql"
 	"net/http"
 	"time"
 
@@ -175,6 +176,11 @@ func GetUser(userID int) (*UserDB, *response.Error) {
 	err := stmtMap["userGet"].QueryRow(userID).Scan(&u.ID, &u.FirstName, &u.LastName,
 		&u.Username, &u.JoinedAt, &u.LastVisit, &u.ImageURL, &u.Email)
 	if err != nil {
+		// check to see if user doesn't exist
+		if err == sql.ErrNoRows {
+			return nil, response.NewErrorf(http.StatusBadRequest, "Get user: there is no user with id %d", userID)
+		}
+
 		return nil, response.NewErrorf(http.StatusInternalServerError, "Get user: %v", err)
 	}
 

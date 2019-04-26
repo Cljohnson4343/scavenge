@@ -3,7 +3,7 @@ package db
 import (
 	"database/sql"
 
-	// @TODO look into whether this blank import is necessary. GoLint seems to
+	// TODO look into whether this blank import is necessary. GoLint seems to
 	// have a problem with it.
 	_ "github.com/lib/pq"
 )
