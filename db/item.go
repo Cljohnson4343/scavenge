@@ -2,13 +2,11 @@ package db
 
 import (
 	"net/http"
-	"strconv"
 
 	"github.com/asaskevich/govalidator"
 	"github.com/cljohnson4343/scavenge/pgsql"
 	"github.com/cljohnson4343/scavenge/request"
 	"github.com/cljohnson4343/scavenge/response"
-	"github.com/go-chi/chi"
 )
 
 // ItemTbl is the name of the items db table
@@ -134,16 +132,7 @@ func DeleteItem(id int, huntID int) *response.Error {
 
 // Validate validates a ItemDB struct
 func (i *ItemDB) Validate(r *http.Request) *response.Error {
-	// it is possible to get here without the huntID parameter being specified so don't catch
-	// the Atoi error
-	huntID, _ := strconv.Atoi(chi.URLParam(r, "huntID"))
-
 	e := response.NewNilError()
-
-	// make sure HuntID is either 0, client prob didn't specify it, or == to URL hunt_id
-	if huntID != i.HuntID && i.HuntID != 0 {
-		e.Add(http.StatusBadRequest, "hunt_id: field must either be the same as the URL huntID or not specified")
-	}
 
 	_, structErr := govalidator.ValidateStruct(i)
 	if structErr != nil {
@@ -181,7 +170,8 @@ func (i *ItemDB) GetTableColumnMap() pgsql.TableColumnMap {
 	return t
 }
 
-// PatchValidate only returns errors for non-zero valued fields
+// PatchValidate only returns errors for non-zero valued fields except for the item_id
+// field
 func (i *ItemDB) PatchValidate(r *http.Request, itemID int) *response.Error {
 	tblColMap := i.GetTableColumnMap()
 	e := response.NewNilError()

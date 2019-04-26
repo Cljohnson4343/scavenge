@@ -98,7 +98,7 @@ func NewNilError() *Error {
 // nil Error using NewNilError. This is a special use case, for
 // details see NewNilError's docs.
 func (err *Error) GetError() *Error {
-	if err.errors == nil {
+	if len(err.errors) == 0 {
 		return nil
 	}
 
@@ -200,4 +200,21 @@ func (err *Error) JSON() []byte {
 	}
 
 	return json
+}
+
+// ErrorsByKey returns a map that maps the error key to the error description
+func (err *Error) ErrorsByKey() map[string]string {
+	errMap := make(map[string]string)
+
+	for _, e := range err.errors {
+		s := e.sb.String()
+		strs := strings.Split(s, ":")
+		length := len(strs)
+		if length < 2 {
+			panic(e)
+		}
+		errMap[strs[0]] = strs[length-1]
+	}
+
+	return errMap
 }
