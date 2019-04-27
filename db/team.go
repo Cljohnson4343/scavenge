@@ -286,3 +286,29 @@ func GetUsersForTeam(teamID int) ([]*UserDB, *response.Error) {
 
 	return users, e.GetError()
 }
+
+var teamAddPlayerScript = `
+	INSERT INTO users_teams(team_id, user_id)
+	VALUES ($1, $2);`
+
+// TeamAddPlayer adds the user with the given id to the team with the given id
+func TeamAddPlayer(teamID, userID int) *response.Error {
+	res, err := stmtMap["teamAddPlayer"].Exec(teamID, userID)
+	if err != nil {
+		return response.NewErrorf(http.StatusInternalServerError,
+			"TeamAddPlayer: error adding player %d to team %d: %v", userID, teamID, err)
+	}
+
+	numRows, err := res.RowsAffected()
+	if err != nil {
+		return response.NewErrorf(http.StatusInternalServerError,
+			"TeamAddPlayer: error adding player %d to team %d: %v", userID, teamID, err)
+	}
+
+	if numRows < 1 {
+		return response.NewErrorf(http.StatusInternalServerError,
+			"TeamAddPlayer: error adding player %d to team %d", userID, teamID)
+	}
+
+	return nil
+}

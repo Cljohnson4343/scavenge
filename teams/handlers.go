@@ -9,6 +9,7 @@ import (
 	"github.com/cljohnson4343/scavenge/db"
 
 	"github.com/cljohnson4343/scavenge/response"
+	"github.com/cljohnson4343/scavenge/users"
 
 	c "github.com/cljohnson4343/scavenge/config"
 	"github.com/cljohnson4343/scavenge/request"
@@ -539,5 +540,44 @@ func getTeamPlayersHandler(env *c.Env) http.HandlerFunc {
 
 		render.JSON(w, r, players)
 		return
+	})
+}
+
+// swagger:route POST /teams/{teamID}/join/ join team getJoinTeamHandler
+//
+// Gets the handler to join a team.
+//
+// Consumes:
+// 	- application/json
+//
+// Produces:
+//	- application/json
+//
+// Schemes: http, https
+//
+// Responses:
+// 	200:
+// 	400:
+// 	404:
+func getJoinTeamHandler(env *c.Env) http.HandlerFunc {
+	return (func(w http.ResponseWriter, r *http.Request) {
+		teamID, e := request.GetIntURLParam(r, "teamID")
+		if e != nil {
+			e.Handle(w)
+			return
+		}
+
+		userID, e := users.GetUserID(r.Context())
+		if e != nil {
+			e.Handle(w)
+			return
+		}
+
+		e = db.TeamAddPlayer(teamID, userID)
+		if e != nil {
+			e.Handle(w)
+			return
+		}
+
 	})
 }

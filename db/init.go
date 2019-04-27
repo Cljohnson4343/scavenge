@@ -67,6 +67,7 @@ var scriptMap = map[string]string{
 	"teamsSelect":           teamsSelectScript,
 	"teamsWithHuntIDSelect": teamsWithHuntIDSelectScript,
 	"teamPoints":            teamPointsScript,
+	"teamAddPlayer":         teamAddPlayerScript,
 	"teamGetPlayers":        teamGetPlayersScript,
 	"huntSelect":            huntSelectScript,
 	"huntDelete":            huntDeleteScript,
