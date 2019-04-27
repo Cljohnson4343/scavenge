@@ -1,4 +1,4 @@
-DROP TABLE IF EXISTS user_sessions CASCADE;
+DROP TABLE IF EXISTS users_sessions CASCADE;
 DROP TABLE IF EXISTS users_teams CASCADE;
 DROP TABLE IF EXISTS media CASCADE;
 DROP TABLE IF EXISTS locations CASCADE;
@@ -36,7 +36,7 @@ CREATE UNIQUE INDEX users_unique_username_idx ON users(lower(username));
         many to one--many sessions can have relsationships with the same user
 
 */
-CREATE TABLE user_sessions (
+CREATE TABLE users_sessions (
     session_key         uuid,
     expires             timestamp NOT NULL,
     created_at          timestamp DEFAULT NOW(),
@@ -44,7 +44,7 @@ CREATE TABLE user_sessions (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     PRIMARY KEY (session_key)
 );
-CREATE INDEX sessions_by_user_idx ON user_sessions(user_id ASC);
+CREATE INDEX sessions_by_user_idx ON users_sessions(user_id ASC);
 
 /*
     This table represents a scavenger hunt game. 'hunts' contains
@@ -93,8 +93,11 @@ CREATE TABLE teams (
 );
 
 /*
-    This is a joining table represents the many to many relationship between the 
+    This is a joining table that represents the many to many relationship between the 
     users and teams tables.
+
+    relations:
+        many to many--many players can have relationships with many teams
 
 */
 CREATE TABLE users_teams (
@@ -103,6 +106,8 @@ CREATE TABLE users_teams (
     FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
+CREATE INDEX team_users_idx ON users_teams(team_id ASC);
+CREATE INDEX user_teams_idx ON users_teams(user_id ASC);
 
 /*
     This table contains the route info for a team during a

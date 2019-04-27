@@ -506,3 +506,38 @@ func getTeamPointsHandler(env *c.Env) http.HandlerFunc {
 		return
 	})
 }
+
+// swagger:route GET /teams/{teamID}/players team players getTeamPlayersHandler
+//
+// Gets the players on this team.
+//
+// Consumes:
+// 	- application/json
+//
+// Produces:
+//	- application/json
+//
+// Schemes: http, https
+//
+// Responses:
+// 	200:
+// 	400:
+// 	404:
+func getTeamPlayersHandler(env *c.Env) http.HandlerFunc {
+	return (func(w http.ResponseWriter, r *http.Request) {
+		teamID, e := request.GetIntURLParam(r, "teamID")
+		if e != nil {
+			e.Handle(w)
+			return
+		}
+
+		players, e := db.GetUsersForTeam(teamID)
+		if e != nil {
+			e.Handle(w)
+			return
+		}
+
+		render.JSON(w, r, players)
+		return
+	})
+}

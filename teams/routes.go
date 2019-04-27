@@ -37,6 +37,7 @@ func Routes(env *c.Env) *chi.Mux {
 	router.Get("/", getTeamsHandler(env))
 	router.Get("/{teamID}", getTeamHandler(env))
 	router.Get("/{teamID}/points/", getTeamPointsHandler(env))
+	router.Get("/{teamID}/players/", getTeamPlayersHandler(env))
 	router.Delete("/{teamID}", deleteTeamHandler(env))
 	router.Post("/", createTeamHandler(env))
 	router.Patch("/{teamID}", patchTeamHandler(env))

@@ -240,3 +240,49 @@ func GetTeamsWithHuntID(id int) ([]*TeamDB, *response.Error) {
 
 	return teams, e.GetError()
 }
+
+var teamGetPlayersScript = `
+	SELECT 
+		u.id, 
+		u.first_name, 
+		u.last_name, 
+		u.username, 
+		u.joined_at, 
+		u.last_visit, 
+		u.image_url, 
+		u.email
+	FROM users_teams u_t 
+	INNER JOIN users u 
+		ON u_t.team_id = $1 AND u_t.user_id = u.id;`
+
+// GetUsersForTeam returns all the players, users, for a given team
+func GetUsersForTeam(teamID int) ([]*UserDB, *response.Error) {
+	rows, err := stmtMap["teamGetPlayers"].Query(teamID)
+	if err != nil {
+		return nil, response.NewErrorf(http.StatusInternalServerError,
+			"GetUsersForTeam: error getting users for team %d: %v", teamID, err)
+	}
+	defer rows.Close()
+
+	e := response.NewNilError()
+	users := make([]*UserDB, 0)
+	for rows.Next() {
+		u := UserDB{}
+		err = rows.Scan(&u.ID, &u.FirstName, &u.LastName, &u.Username, &u.JoinedAt,
+			&u.ImageURL, &u.Email)
+		if err != nil {
+			e.Addf(http.StatusInternalServerError,
+				"GetUsersForTeam: error getting user for team %d: %v", teamID, err)
+			break
+		}
+
+		users = append(users, &u)
+	}
+
+	if err = rows.Err(); err != nil {
+		e.Addf(http.StatusInternalServerError,
+			"GetUsersForTeam: error getting user for team %d: %v", teamID, err)
+	}
+
+	return users, e.GetError()
+}
