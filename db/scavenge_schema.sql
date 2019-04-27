@@ -27,7 +27,7 @@ CREATE TABLE users (
     PRIMARY KEY(id)
 );
 CREATE UNIQUE INDEX users_unique_lower_email_idx ON users(lower(email));
-CREATE UNIQUE INDEX users_unique_username ON users(lower(username));
+CREATE UNIQUE INDEX users_unique_username_idx ON users(lower(username));
 
 /* 
     This table represents a user's sessions.
@@ -44,6 +44,7 @@ CREATE TABLE user_sessions (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     PRIMARY KEY (session_key)
 );
+CREATE INDEX sessions_by_user_idx ON user_sessions(user_id ASC);
 
 /*
     This table represents a scavenger hunt game. 'hunts' contains

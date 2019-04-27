@@ -62,3 +62,65 @@ func (s *SessionDB) Insert() *response.Error {
 
 	return nil
 }
+
+var sessionGetForUserScript = `
+	SELECT session_key, expires, created_at, user_id
+	FROM user_sessions u
+	WHERE  u.user_id = $1;`
+
+// GetSessionsForUser returns the sessions for the given user
+func GetSessionsForUser(userID int) ([]*SessionDB, *response.Error) {
+	rows, err := stmtMap["sessionGetForUser"].Query(userID)
+	if err != nil {
+		return nil, response.NewErrorf(http.StatusInternalServerError,
+			"GetSessionsForUser: error getting sessions for user %d: %v", userID, err)
+	}
+	defer rows.Close()
+
+	e := response.NewNilError()
+	sesses := make([]*SessionDB, 0)
+	for rows.Next() {
+		s := SessionDB{}
+		err = rows.Scan(&s.Key, &s.Expires, &s.CreatedAt, &s.UserID)
+		if err != nil {
+			e.Addf(http.StatusInternalServerError,
+				"GerSessionsForUser: error getting session for user %d: %v", userID, err)
+			break
+		}
+
+		sesses = append(sesses, &s)
+	}
+
+	if err = rows.Err(); err != nil {
+		e.Addf(http.StatusInternalServerError,
+			"GerSessionsForUser: error getting session for user %d: %v", userID, err)
+	}
+
+	return sesses, e.GetError()
+}
+
+var sessionDeleteScript = `
+	DELETE FROM user_sessions
+	WHERE session_key = $1;`
+
+// DeleteSession deletes the session with the given key.
+func DeleteSession(key uuid.UUID) *response.Error {
+	res, err := stmtMap["sessionDelete"].Exec(key)
+	if err != nil {
+		return response.NewErrorf(http.StatusInternalServerError,
+			"db.DeleteSession: error deleting session with key %s: %v", key.String(), err)
+	}
+
+	numRows, err := res.RowsAffected()
+	if err != nil {
+		return response.NewErrorf(http.StatusInternalServerError,
+			"db.DeleteSession: error deleting session with key %s: %v", key.String(), err)
+	}
+
+	if numRows < 1 {
+		return response.NewErrorf(http.StatusBadRequest,
+			"error deleting session with key %s: %v", key.String(), err)
+	}
+
+	return nil
+}

@@ -16,6 +16,37 @@ import (
 	c "github.com/cljohnson4343/scavenge/config"
 )
 
+// swagger:route POST /users/logout logout user getLogoutHandler
+//
+// Logs out the given user. Requires that the userID be part of
+// the ctx provided by the req.
+//
+// Consumes:
+// 	- application/json
+//
+// Produces:
+//	- application/json
+//
+// Schemes: http, https
+//
+// Responses:
+// 	200:
+//  400:
+func getLogoutHandler(env *c.Env) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		e := sessions.DeleteCurrent(r)
+		if e != nil {
+			e.Handle(w)
+			return
+		}
+
+		e = sessions.RemoveCookie(w, r)
+		if e != nil {
+			e.Handle(w)
+		}
+	}
+}
+
 // swagger:route POST /users/login login user getLoginHandler
 //
 // Logs in the given user.
@@ -46,11 +77,14 @@ func getLoginHandler(env *c.Env) http.HandlerFunc {
 			if e != nil {
 				e.Handle(w)
 			}
+
 			if existing == nil {
-				e := response.NewError(http.StatusBadRequest, "login user: unable to login user with the provided info")
+				e := response.NewErrorf(http.StatusBadRequest,
+					"getLoginHandler: unable to login user %d", u.ID)
 				e.Handle(w)
 				return
 			}
+
 		} else {
 			// create new user
 			e = u.Insert()
@@ -61,10 +95,13 @@ func getLoginHandler(env *c.Env) http.HandlerFunc {
 		}
 
 		// create session and add a session cookie to user agent
-		sess := sessions.New(u.ID)
-		c := sess.Cookie()
-		http.SetCookie(w, c)
+		sess, e := sessions.New(u.ID)
+		if e != nil {
+			e.Handle(w)
+			return
+		}
 
+		http.SetCookie(w, sess.Cookie())
 		return
 	}
 }
