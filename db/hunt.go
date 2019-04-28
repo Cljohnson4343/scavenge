@@ -55,6 +55,11 @@ type HuntDB struct {
 	// swagger:strfmt date
 	CreatedAt time.Time `json:"created_at" valid:"-"`
 
+	// The creator of the hunt
+	//
+	// required: true
+	CreatorID int `json:"creator_id" valid:"-"`
+
 	// The name of the location of the Hunt
 	//
 	// required: true
@@ -126,6 +131,10 @@ func (h *HuntDB) GetTableColumnMap() pgsql.TableColumnMap {
 		tblColMap[HuntTbl]["created_at"] = h.CreatedAt
 	}
 
+	if z.CreatorID != h.CreatorID {
+		tblColMap[HuntTbl]["creator_id"] = h.CreatorID
+	}
+
 	return tblColMap
 }
 
@@ -166,6 +175,12 @@ func (h *HuntDB) PatchValidate(r *http.Request, huntID int) *response.Error {
 		delete(tblColMap[HuntTbl], "created_at")
 	}
 
+	// changing a hunt's creator_id field is not supported
+	if _, ok = tblColMap[HuntTbl]["creator_id"]; ok {
+		e.Add(http.StatusBadRequest, "creator_id: changing a hunt's creator_id field is not supported with PATCH")
+		delete(tblColMap[HuntTbl], "creator_id")
+	}
+
 	patchErr := request.PatchValidate(tblColMap[HuntTbl], h)
 	if patchErr != nil {
 		e.AddError(patchErr)
@@ -175,7 +190,17 @@ func (h *HuntDB) PatchValidate(r *http.Request, huntID int) *response.Error {
 }
 
 var huntsSelectScript = `
-	SELECT name, id, start_time, end_time, location_name, latitude, longitude, max_teams, created_at
+	SELECT 
+		name, 
+		id, 
+		start_time, 
+		end_time, 
+		location_name, 
+		latitude, 
+		longitude, 
+		max_teams, 
+		created_at,
+		creator_id
 	FROM hunts;`
 
 // GetHunts returns all the huntDBs in the db. NOTE that it is possible to have returned hunts and
@@ -192,7 +217,7 @@ func GetHunts() ([]*HuntDB, *response.Error) {
 	for rows.Next() {
 		hunt := HuntDB{}
 		huntErr := rows.Scan(&hunt.Name, &hunt.ID, &hunt.StartTime, &hunt.EndTime, &hunt.LocationName,
-			&hunt.Latitude, &hunt.Longitude, &hunt.MaxTeams, &hunt.CreatedAt)
+			&hunt.Latitude, &hunt.Longitude, &hunt.MaxTeams, &hunt.CreatedAt, &hunt.CreatorID)
 		if huntErr != nil {
 			e.Addf(http.StatusInternalServerError, "error getting hunt: %s", huntErr.Error())
 			break
@@ -209,7 +234,17 @@ func GetHunts() ([]*HuntDB, *response.Error) {
 }
 
 var huntSelectScript = `
-	SELECT name, id, start_time, end_time, location_name, latitude, longitude, max_teams, created_at
+	SELECT 
+		name, 
+		id, 
+		start_time, 
+		end_time, 
+		location_name, 
+		latitude, 
+		longitude, 
+		max_teams, 
+		created_at,
+		creator_id
 	FROM hunts
 	WHERE id = $1;`
 
@@ -218,7 +253,7 @@ func GetHunt(huntID int) (*HuntDB, *response.Error) {
 	h := HuntDB{}
 
 	err := stmtMap["huntSelect"].QueryRow(huntID).Scan(&h.Name, &h.ID, &h.StartTime, &h.EndTime,
-		&h.LocationName, &h.Latitude, &h.Longitude, &h.MaxTeams, &h.CreatedAt)
+		&h.LocationName, &h.Latitude, &h.Longitude, &h.MaxTeams, &h.CreatedAt, &h.CreatorID)
 	if err != nil {
 		return nil, response.NewErrorf(http.StatusInternalServerError, "error getting the hunt with id %d: %s", huntID, err.Error())
 
@@ -254,8 +289,17 @@ func DeleteHunt(id int) *response.Error {
 }
 
 var huntInsertScript = `
-	INSERT INTO hunts(name, max_teams, start_time, end_time, location_name, latitude, longitude)
-	VALUES ($1, $2, $3, $4, $5, $6, $7)
+	INSERT INTO hunts(
+		name, 
+		max_teams, 
+		start_time, 
+		end_time, 
+		location_name, 
+		latitude, 
+		longitude,
+		creator_id
+	)
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 	RETURNING id, created_at;
 	`
 
@@ -263,7 +307,7 @@ var huntInsertScript = `
 // create_at timestamp
 func (h *HuntDB) Insert() *response.Error {
 	err := stmtMap["huntInsert"].QueryRow(h.Name, h.MaxTeams, h.StartTime, h.EndTime,
-		h.LocationName, h.Latitude, h.Longitude).Scan(&h.ID, &h.CreatedAt)
+		h.LocationName, h.Latitude, h.Longitude, h.CreatorID).Scan(&h.ID, &h.CreatedAt)
 	if err != nil {
 		return response.NewErrorf(http.StatusInternalServerError, "error inserting hunt with name %s: %s", h.Name, err.Error())
 
