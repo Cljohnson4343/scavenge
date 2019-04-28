@@ -1,6 +1,6 @@
 api-test: clean-db
 	@echo "Running api tests...\n"
-	@go test -v ./... -tags api_test
+	@go test -v -tags apiTest ./...
 
 clean-db:
 	@echo "\nCleaning the database...\n"

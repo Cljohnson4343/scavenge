@@ -1,4 +1,4 @@
-// +build api_test
+// +build apiTest
 
 package users_test
 
