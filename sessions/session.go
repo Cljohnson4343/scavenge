@@ -12,7 +12,9 @@ import (
 )
 
 var sessionDuration time.Duration
-var sessionCookieName = `scavenge_session`
+
+// SessionCookieName should not be used outside of sessions except in testing
+var SessionCookieName = `scavenge_session`
 
 func init() {
 	var err error
@@ -45,12 +47,11 @@ func New(userID int) (*Session, *response.Error) {
 func (s *Session) Cookie() *http.Cookie {
 	secs := 60 * 60 * 24 * 365
 	c := http.Cookie{
-		Name:     sessionCookieName,
+		Name:     SessionCookieName,
 		Value:    s.Key.String(),
 		Expires:  s.Expires,
 		Secure:   false,
 		HttpOnly: false,
-		Domain:   "http://localhost:4343",
 		MaxAge:   secs,
 		Path:     "/",
 	}
@@ -59,7 +60,7 @@ func (s *Session) Cookie() *http.Cookie {
 }
 
 func getCurrentCookie(r *http.Request) (*http.Cookie, *response.Error) {
-	cookie, err := r.Cookie(sessionCookieName)
+	cookie, err := r.Cookie(SessionCookieName)
 	if err != nil {
 		return nil, response.NewErrorf(http.StatusInternalServerError,
 			"sessions.getCurrentCookie: error getting cookie: %v", err)

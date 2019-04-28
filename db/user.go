@@ -9,6 +9,7 @@ import (
 	"github.com/cljohnson4343/scavenge/pgsql"
 	"github.com/cljohnson4343/scavenge/request"
 	"github.com/cljohnson4343/scavenge/response"
+	"github.com/lib/pq"
 )
 
 var userTbl = "users"
@@ -157,16 +158,29 @@ var userInsertScript = `
 // Insert inserts the given userDB. The ID, JoinedAt, and LastVisit fields are written back
 // to the given userDB
 func (u *UserDB) Insert() *response.Error {
-	err := stmtMap["userInsert"].QueryRow(u.FirstName, u.LastName, u.Username, u.ImageURL, u.Email).Scan(&u.ID, &u.JoinedAt, &u.LastVisit)
+	err := stmtMap["userInsert"].QueryRow(
+		u.FirstName,
+		u.LastName,
+		u.Username,
+		u.ImageURL,
+		u.Email).Scan(&u.ID, &u.JoinedAt, &u.LastVisit)
 	if err != nil {
-		return response.NewErrorf(http.StatusInternalServerError, "error inserting user %s: %v", u.Username, err)
+		return u.ParseError(err, "insert")
 	}
 
 	return nil
 }
 
 var userGetScript = `
-	SELECT id, first_name, last_name, username, joined_at, last_visit, COALESCE(image_url, ''), email
+	SELECT 
+		id, 
+		first_name, 
+		last_name, 
+		username, 
+		joined_at, 
+		last_visit, 
+		COALESCE(image_url, ''), 
+		email
 	FROM users
 	WHERE id = $1;`
 
@@ -214,4 +228,35 @@ func DeleteUser(userID int) *response.Error {
 // Update updates the db with the given UserDB
 func (u *UserDB) Update(ex pgsql.Executioner, userID int) *response.Error {
 	return update(u, ex, userID)
+}
+
+// ParseError maps a pq error to a response.Error with the information that the client
+// needs to know.
+func (u *UserDB) ParseError(err error, op string) *response.Error {
+	pqErr, ok := err.(*pq.Error)
+	if ok {
+		if pqErr.Constraint != "" {
+			switch pqErr.Constraint {
+			case "users_unique_lower_email_idx":
+				return response.NewErrorf(
+					http.StatusBadRequest,
+					"email: %s is not a valid email",
+					u.Email,
+				)
+			case "users_unique_username_idx":
+				return response.NewErrorf(
+					http.StatusBadRequest,
+					"username: %s is not a valid username",
+					u.Username,
+				)
+			}
+		}
+	}
+
+	return response.NewErrorf(
+		http.StatusInternalServerError,
+		"error performing operation %s: %s",
+		op,
+		err.Error(),
+	)
 }

@@ -11,10 +11,10 @@ import (
 	"github.com/go-chi/render"
 )
 
-// swagger:route POST /users/logout logout user getLogoutHandler
-//
-// Logs out the given user. Requires that the userID be part of
+// GetLogoutHandler logs out the given user. Requires that the userID be part of
 // the ctx provided by the req.
+//
+// swagger:route POST /users/logout logout user GetLogoutHandler
 //
 // Consumes:
 // 	- application/json
@@ -27,7 +27,7 @@ import (
 // Responses:
 // 	200:
 //  400:
-func getLogoutHandler(env *c.Env) http.HandlerFunc {
+func GetLogoutHandler(env *c.Env) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		e := sessions.DeleteCurrent(r)
 		if e != nil {
@@ -42,22 +42,23 @@ func getLogoutHandler(env *c.Env) http.HandlerFunc {
 	}
 }
 
-// swagger:route POST /users/login login user getLoginHandler
+// GetLoginHandler logs in the given user. If no user id is provided in req body
+// and no user exists with the given user info, then a new user will be created.
 //
-// Logs in the given user.
+// swagger:route POST /users/login login user GetLoginHandler
 //
 // Consumes:
 // 	- application/json
 //
 // Produces:
-//	- application/json
+//	- No response content
 //
 // Schemes: http, https
 //
 // Responses:
 // 	200:
 //  400:
-func getLoginHandler(env *c.Env) http.HandlerFunc {
+func GetLoginHandler(env *c.Env) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		u := User{}
 		e := request.DecodeAndValidate(r, &u)
