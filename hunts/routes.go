@@ -26,6 +26,7 @@ package hunts
 
 import (
 	c "github.com/cljohnson4343/scavenge/config"
+	"github.com/cljohnson4343/scavenge/users"
 	"github.com/go-chi/chi"
 )
 
@@ -33,6 +34,7 @@ import (
 func Routes(env *c.Env) *chi.Mux {
 	router := chi.NewRouter()
 
+	router.Use(users.RequireUser)
 	// /hunts routes
 	router.Get("/", getHuntsHandler(env))
 	router.Get("/{huntID}", getHuntHandler(env))

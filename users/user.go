@@ -4,9 +4,9 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/cljohnson4343/scavenge/response"
-
 	"github.com/cljohnson4343/scavenge/db"
+	"github.com/cljohnson4343/scavenge/response"
+	"github.com/cljohnson4343/scavenge/sessions"
 )
 
 type userIDKeyType string
@@ -32,4 +32,20 @@ func GetUserID(ctx context.Context) (int, *response.Error) {
 // User represents a user
 type User struct {
 	db.UserDB
+}
+
+// RequireUser is middleware that checks to make sure the user agent has a valid user
+// session. The userID for a valid user session is then added to the context that
+// is past down to the given handler
+func RequireUser(fn http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		s, e := sessions.GetCurrent(r)
+		if e != nil {
+			e.Handle(w)
+			return
+		}
+
+		ctx := context.WithValue(r.Context(), userIDKey, s.UserID)
+		fn.ServeHTTP(w, r.WithContext(ctx))
+	})
 }

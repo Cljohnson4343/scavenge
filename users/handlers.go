@@ -3,17 +3,12 @@ package users
 import (
 	"net/http"
 
-	"github.com/cljohnson4343/scavenge/response"
-
-	"github.com/go-chi/render"
-
-	"github.com/cljohnson4343/scavenge/db"
-
-	"github.com/cljohnson4343/scavenge/request"
-
-	"github.com/cljohnson4343/scavenge/sessions"
-
 	c "github.com/cljohnson4343/scavenge/config"
+	"github.com/cljohnson4343/scavenge/db"
+	"github.com/cljohnson4343/scavenge/request"
+	"github.com/cljohnson4343/scavenge/response"
+	"github.com/cljohnson4343/scavenge/sessions"
+	"github.com/go-chi/render"
 )
 
 // swagger:route POST /users/logout logout user getLogoutHandler
@@ -101,7 +96,9 @@ func getLoginHandler(env *c.Env) http.HandlerFunc {
 			return
 		}
 
-		http.SetCookie(w, sess.Cookie())
+		cookie := sess.Cookie()
+
+		http.SetCookie(w, cookie)
 		return
 	}
 }

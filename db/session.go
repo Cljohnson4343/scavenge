@@ -47,7 +47,7 @@ func (s *SessionDB) Validate(r *http.Request) *response.Error {
 }
 
 var sessionInsertScript = `
-	INSERT INTO user_sessions(session_key, expires, user_id)
+	INSERT INTO users_sessions(session_key, expires, user_id)
 	VALUES ($1, $2, $3)
 	RETURNING created_at;
 	`
@@ -65,7 +65,7 @@ func (s *SessionDB) Insert() *response.Error {
 
 var sessionGetForUserScript = `
 	SELECT session_key, expires, created_at, user_id
-	FROM user_sessions u
+	FROM users_sessions u
 	WHERE  u.user_id = $1;`
 
 // GetSessionsForUser returns the sessions for the given user
@@ -100,7 +100,7 @@ func GetSessionsForUser(userID int) ([]*SessionDB, *response.Error) {
 }
 
 var sessionDeleteScript = `
-	DELETE FROM user_sessions
+	DELETE FROM users_sessions
 	WHERE session_key = $1;`
 
 // DeleteSession deletes the session with the given key.
@@ -123,4 +123,21 @@ func DeleteSession(key uuid.UUID) *response.Error {
 	}
 
 	return nil
+}
+
+var sessionGetScript = `
+	SELECT expires, created_at, user_id
+	FROM users_sessions
+	WHERE session_key = $1;`
+
+// GetSession returns the session with the given key
+func GetSession(key uuid.UUID) (*SessionDB, *response.Error) {
+	s := SessionDB{}
+	err := stmtMap["sessionGet"].QueryRow(key).Scan(&s.Expires, &s.CreatedAt, &s.UserID)
+	if err != nil {
+		return nil, response.NewErrorf(http.StatusInternalServerError,
+			"GetSession: error getting session %s: %v", key.String(), err)
+	}
+
+	return &s, nil
 }

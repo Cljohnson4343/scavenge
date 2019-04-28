@@ -43,13 +43,15 @@ func New(userID int) (*Session, *response.Error) {
 
 // Cookie creates a cookie for the given session and returns it
 func (s *Session) Cookie() *http.Cookie {
+	secs := 60 * 60 * 24 * 365
 	c := http.Cookie{
 		Name:     sessionCookieName,
 		Value:    s.Key.String(),
 		Expires:  s.Expires,
 		Secure:   false,
-		HttpOnly: true,
-		MaxAge:   int(time.Until(s.Expires).Seconds()),
+		HttpOnly: false,
+		Domain:   "http://localhost:4343",
+		MaxAge:   secs,
 		Path:     "/",
 	}
 
@@ -57,11 +59,6 @@ func (s *Session) Cookie() *http.Cookie {
 }
 
 func getCurrentCookie(r *http.Request) (*http.Cookie, *response.Error) {
-	cookies := r.Cookies()
-	for _, c := range cookies {
-		fmt.Println(c)
-	}
-
 	cookie, err := r.Cookie(sessionCookieName)
 	if err != nil {
 		return nil, response.NewErrorf(http.StatusInternalServerError,
@@ -95,6 +92,33 @@ func DeleteCurrent(r *http.Request) *response.Error {
 	}
 
 	return nil
+}
+
+// GetCurrent returns the user agents current session.
+func GetCurrent(r *http.Request) (*Session, *response.Error) {
+	cookie, e := getCurrentCookie(r)
+	if e != nil {
+		return nil, e
+	}
+
+	// TODO think about how to handle this case. i.e. redirect extend cookie etc.
+	if cookie.Expires.Before(time.Now()) {
+		return nil, response.NewError(http.StatusBadRequest,
+			"sessions.GetCurrent: the current session is expired")
+	}
+
+	key, err := uuid.Parse(cookie.Value)
+	if err != nil {
+		return nil, response.NewErrorf(http.StatusInternalServerError,
+			"sessions.GetCurrent: error parsing the cookie value: %v", err)
+	}
+
+	s, e := db.GetSession(key)
+	if e != nil {
+		return nil, e
+	}
+
+	return &Session{*s}, nil
 }
 
 // RemoveCookie removes the current session cookie from the user agent

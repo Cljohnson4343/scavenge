@@ -81,6 +81,7 @@ var scriptMap = map[string]string{
 	"mediaMetaDelete":       mediaMetaDeleteScript,
 	"sessionInsert":         sessionInsertScript,
 	"sessionGetForUser":     sessionGetForUserScript,
+	"sessionGet":            sessionGetScript,
 	"sessionDelete":         sessionDeleteScript,
 	"userInsert":            userInsertScript,
 	"userGet":               userGetScript,
