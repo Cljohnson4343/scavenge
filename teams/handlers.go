@@ -581,3 +581,48 @@ func getJoinTeamHandler(env *c.Env) http.HandlerFunc {
 
 	})
 }
+
+// swagger:route POST /teams/{teamID}/remove/ remove players getRemovePlayersHandler
+//
+// Gets the handler to remove players from a team.
+//
+// Consumes:
+// 	- application/json
+//
+// Produces:
+//	- application/json
+//
+// Schemes: http, https
+//
+// Responses:
+// 	200:
+// 	400:
+// 	404:
+func getRemovePlayersHandler(env *c.Env) http.HandlerFunc {
+	return (func(w http.ResponseWriter, r *http.Request) {
+		teamID, e := request.GetIntURLParam(r, "teamID")
+		if e != nil {
+			e.Handle(w)
+			return
+		}
+
+		playerList := struct {
+			Players []int `json:"user_ids"`
+		}{}
+
+		err := json.NewDecoder(r.Body).Decode(&playerList)
+		if err != nil {
+			e := response.NewError(http.StatusBadRequest,
+				"user_ids: a list of user_id are needed to remove players")
+			e.Handle(w)
+			return
+		}
+
+		e = db.TeamRemovePlayers(teamID, playerList.Players)
+		if e != nil {
+			e.Handle(w)
+			return
+		}
+
+	})
+}

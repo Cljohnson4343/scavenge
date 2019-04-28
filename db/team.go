@@ -312,3 +312,32 @@ func TeamAddPlayer(teamID, userID int) *response.Error {
 
 	return nil
 }
+
+var teamRemovePlayersScript = `
+	DELETE FROM users_teams
+	WHERE team_id = $1 AND user_id = $2;`
+
+// TeamRemovePlayers removes the users from the given team
+func TeamRemovePlayers(teamID int, players []int) *response.Error {
+	e := response.NewNilError()
+	for _, id := range players {
+		res, err := stmtMap["teamRemovePlayers"].Exec(teamID, id)
+		if err != nil {
+			e.Addf(http.StatusInternalServerError,
+				"TeamAddPlayer: error removing player %d from team %d: %v", id, teamID, err)
+		}
+
+		numRows, err := res.RowsAffected()
+		if err != nil {
+			e.Addf(http.StatusInternalServerError,
+				"TeamAddPlayer: error removing player %d from team %d: %v", id, teamID, err)
+		}
+
+		if numRows < 1 {
+			e.Addf(http.StatusInternalServerError,
+				"TeamAddPlayer: error removing player %d from team %d", id, teamID)
+		}
+	}
+
+	return e.GetError()
+}
