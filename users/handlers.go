@@ -29,13 +29,14 @@ import (
 //  400:
 func GetLogoutHandler(env *c.Env) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		e := sessions.DeleteCurrent(r)
-		if e != nil {
+		cookie := sessions.GetCookie(r)
+		if cookie == nil {
+			e := response.NewError(http.StatusBadRequest, "not logged in")
 			e.Handle(w)
 			return
 		}
 
-		e = sessions.RemoveCookie(w, r)
+		e := sessions.RemoveCookie(w, cookie)
 		if e != nil {
 			e.Handle(w)
 		}

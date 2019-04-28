@@ -39,7 +39,14 @@ type User struct {
 // is past down to the given handler
 func RequireUser(fn http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		s, e := sessions.GetCurrent(r)
+		cookie := sessions.GetCookie(r)
+		if cookie == nil {
+			e := response.NewErrorf(http.StatusUnauthorized, "must be logged in")
+			e.Handle(w)
+			return
+		}
+
+		s, e := sessions.GetCurrent(cookie)
 		if e != nil {
 			e.Handle(w)
 			return

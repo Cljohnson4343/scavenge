@@ -140,16 +140,9 @@ func TestLoginHandler(t *testing.T) {
 				t.Errorf("failed to create request: %v", err)
 			}
 
-			rr := httptest.NewRecorder()
-			loginHandler := users.GetLoginHandler(env)
-			loginHandler.ServeHTTP(rr, req)
+			res := serveAndReturnResponse(users.GetLoginHandler(env), req)
 
-			res := rr.Result()
-
-			resBody, err := ioutil.ReadAll(res.Body)
-			if err != nil {
-				t.Errorf("error reading response body: %v", err)
-			}
+			resBody := getBody(t, res)
 
 			// Make sure login was successful
 			if res.StatusCode != table.statusCode {
@@ -167,15 +160,9 @@ func TestLoginHandler(t *testing.T) {
 					t.Error("failed to return a cookie")
 				}
 
-				// Make sure new cookie's name was set correctly
-				var cookie *http.Cookie
-				for i := range cookies {
-					if cookies[i].Name == sessions.SessionCookieName {
-						cookie = cookies[i]
-					}
-				}
+				cookie := getSessionCookie(cookies)
 				if cookie == nil {
-					t.Error("failed to find the cookie for new session")
+					t.Errorf("expected a cookie")
 				}
 			}
 		})
@@ -185,72 +172,69 @@ func TestLoginHandler(t *testing.T) {
 func TestLogoutHandler(t *testing.T) {
 	cases := []struct {
 		name       string
-		userData   loginRequest
 		statusCode int
+		withCookie bool
 	}{
 		{
-			name: "logged in user",
-			userData: loginRequest{
-				FirstName: "tj",
-				LastName:  "rrrrson",
-				Email:     "rrrrr43@gmail.com",
-				Username:  "tj43",
-				ImageURL:  "amazon.cdn.com",
-			},
+			name:       "logged in user",
 			statusCode: http.StatusOK,
+			withCookie: true,
 		},
+		{
+			name:       "logged out user",
+			statusCode: http.StatusBadRequest,
+			withCookie: false,
+		},
+	}
+
+	userInfo := loginRequest{
+		FirstName: "tj",
+		LastName:  "rrrrson",
+		Email:     "rrrrr43@gmail.com",
+		Username:  "tj43",
+		ImageURL:  "amazon.cdn.com",
+	}
+
+	// login to get a valid cookie
+	reqBody, err := json.Marshal(&userInfo)
+	if err != nil {
+		t.Errorf("error marshaling login request data: %v", err)
+	}
+
+	req, err := http.NewRequest("POST", "/", bytes.NewReader(reqBody))
+	if err != nil {
+		t.Errorf("error getting a new request: %v", err)
+	}
+
+	rr := httptest.NewRecorder()
+	login := users.GetLoginHandler(env)
+	login.ServeHTTP(rr, req)
+	res := rr.Result()
+	resBody := getBody(t, res)
+
+	if code := res.StatusCode; code != http.StatusOK {
+		t.Errorf("expected login status code %d got %d: %s", http.StatusOK, code, resBody)
+	}
+
+	cookie := getSessionCookie(res.Cookies())
+	if cookie == nil {
+		t.Error("expicted a cookie")
+		t.FailNow()
 	}
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			// login to get a valid cookie
-			loginReqBody, err := json.Marshal(&c.userData)
-			if err != nil {
-				t.Errorf("error marshaling login request data: %v", err)
-			}
-
-			loginReq, err := http.NewRequest("POST", "/", bytes.NewReader(loginReqBody))
-			if err != nil {
-				t.Errorf("error getting a new request: %v", err)
-			}
-
-			rr := httptest.NewRecorder()
-			login := users.GetLoginHandler(env)
-			login.ServeHTTP(rr, loginReq)
-			loginRes := rr.Result()
-			if code := loginRes.StatusCode; code != http.StatusOK {
-				loginResBody, err := ioutil.ReadAll(loginRes.Body)
-				if err != nil {
-					loginResBody = []byte("")
-				}
-
-				t.Errorf("expected login status code %d got %d: %s", http.StatusOK, code, loginResBody)
-			}
-
-			cookies := loginRes.Cookies()
-			var cookie *http.Cookie
-			for i := range cookies {
-				if cookies[i].Name == sessions.SessionCookieName {
-					cookie = cookies[i]
-				}
-			}
-
-			if cookie == nil {
-				t.Error("expicted a cookie")
-				t.FailNow()
-			}
-
-			logoutReq, err := http.NewRequest("POST", "/", nil)
+			req, err := http.NewRequest("POST", "/", nil)
 			if err != nil {
 				t.Errorf("error getting a logout request: %v", err)
 			}
 
-			logoutReq.AddCookie(cookie)
-			rr = httptest.NewRecorder()
-			logout := users.GetLogoutHandler(env)
-			logout.ServeHTTP(rr, logoutReq)
+			if c.withCookie {
+				req.AddCookie(cookie)
+			}
 
-			res := rr.Result()
+			res := serveAndReturnResponse(users.GetLogoutHandler(env), req)
+
 			resBody, err := ioutil.ReadAll(res.Body)
 			if err != nil {
 				t.Errorf("error reading response body: %v", err)
@@ -260,9 +244,38 @@ func TestLogoutHandler(t *testing.T) {
 				t.Errorf("expected a status code %d got %d: %s", c.statusCode, res.StatusCode, resBody)
 			}
 
-			if len(res.Cookies()) != 0 {
-				t.Error("expected all cookies to be deleted upon logout")
+			if c.statusCode == http.StatusOK {
+				if len(res.Cookies()) != 0 {
+					t.Error("expected all cookies to be deleted upon logout")
+				}
 			}
 		})
 	}
+}
+
+func getBody(t *testing.T, res *http.Response) string {
+	bodyBuf, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		t.Errorf("error getting response body: %v", err)
+	}
+
+	return string(bodyBuf)
+}
+
+func getSessionCookie(cookies []*http.Cookie) *http.Cookie {
+	// Make sure new cookie's name was set correctly
+	var cookie *http.Cookie
+	for i := range cookies {
+		if cookies[i].Name == sessions.SessionCookieName {
+			cookie = cookies[i]
+		}
+	}
+
+	return cookie
+}
+
+func serveAndReturnResponse(fn http.Handler, req *http.Request) *http.Response {
+	rr := httptest.NewRecorder()
+	fn.ServeHTTP(rr, req)
+	return rr.Result()
 }

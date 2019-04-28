@@ -59,49 +59,21 @@ func (s *Session) Cookie() *http.Cookie {
 	return &c
 }
 
-func getCurrentCookie(r *http.Request) (*http.Cookie, *response.Error) {
-	cookie, err := r.Cookie(SessionCookieName)
-	if err != nil {
-		return nil, response.NewErrorf(http.StatusInternalServerError,
-			"sessions.getCurrentCookie: error getting cookie: %v", err)
+// GetCookie returns the session cookie for the user agents
+func GetCookie(r *http.Request) *http.Cookie {
+	cookies := r.Cookies()
+	var cookie *http.Cookie
+	for _, c := range cookies {
+		if c.Name == SessionCookieName {
+			cookie = c
+		}
 	}
 
-	if cookie == nil {
-		return nil, response.NewError(http.StatusInternalServerError,
-			"sessions.getCurrentCookie: no cookie found")
-	}
-
-	return cookie, nil
-}
-
-// DeleteCurrent deletes the user agents current session.
-func DeleteCurrent(r *http.Request) *response.Error {
-	cookie, e := getCurrentCookie(r)
-	if e != nil {
-		return e
-	}
-
-	key, err := uuid.Parse(cookie.Value)
-	if err != nil {
-		return response.NewErrorf(http.StatusInternalServerError,
-			"sessions.DeleteCurrent: error parsing cookie.Value: %v", err)
-	}
-
-	e = db.DeleteSession(key)
-	if e != nil {
-		return e
-	}
-
-	return nil
+	return cookie
 }
 
 // GetCurrent returns the user agents current session.
-func GetCurrent(r *http.Request) (*Session, *response.Error) {
-	cookie, e := getCurrentCookie(r)
-	if e != nil {
-		return nil, e
-	}
-
+func GetCurrent(cookie *http.Cookie) (*Session, *response.Error) {
 	// TODO think about how to handle this case. i.e. redirect extend cookie etc.
 	if cookie.Expires.Before(time.Now()) {
 		return nil, response.NewError(http.StatusBadRequest,
@@ -122,9 +94,16 @@ func GetCurrent(r *http.Request) (*Session, *response.Error) {
 	return &Session{*s}, nil
 }
 
-// RemoveCookie removes the current session cookie from the user agent
-func RemoveCookie(w http.ResponseWriter, r *http.Request) *response.Error {
-	cookie, e := getCurrentCookie(r)
+// RemoveCookie removes the current session cookie from the user agent and deletes
+// the associated session from the db
+func RemoveCookie(w http.ResponseWriter, cookie *http.Cookie) *response.Error {
+	key, err := uuid.Parse(cookie.Value)
+	if err != nil {
+		return response.NewErrorf(http.StatusInternalServerError,
+			"sessions.DeleteCurrent: error parsing cookie.Value: %v", err)
+	}
+
+	e := db.DeleteSession(key)
 	if e != nil {
 		return e
 	}
