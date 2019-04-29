@@ -31,7 +31,13 @@ func update(v pgsql.TableColumnMapper, ex pgsql.Executioner, id int) *response.E
 
 	res, err := ex.Exec(cmd.Script(), cmd.Args()...)
 	if err != nil {
-		return response.NewErrorf(http.StatusInternalServerError, "%s id %d error: %s", tblName, id, err.Error())
+		return response.NewErrorf(
+			http.StatusInternalServerError,
+			"%s id %d error: %s",
+			tblName,
+			id,
+			err.Error(),
+		)
 	}
 
 	numRows, err := res.RowsAffected()
@@ -40,7 +46,11 @@ func update(v pgsql.TableColumnMapper, ex pgsql.Executioner, id int) *response.E
 	}
 
 	if numRows < 1 {
-		return response.NewErrorf(http.StatusBadRequest, "nothing was updated. Make sure an entity with id %d exists.", id)
+		return response.NewErrorf(
+			http.StatusBadRequest,
+			"nothing was updated. Make sure an entity with id %d exists.",
+			id,
+		)
 	}
 
 	return nil

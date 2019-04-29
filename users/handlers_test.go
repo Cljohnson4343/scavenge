@@ -387,25 +387,7 @@ func TestCreateUserHandler(t *testing.T) {
 					t.Error("expected new user JoinedAt to be returned")
 				}
 
-				if nu.ImageURL != c.reqData.ImageURL {
-					t.Error("expected new user ImageURL to be the same")
-				}
-
-				if nu.Email != c.reqData.Email {
-					t.Error("expected new user Email to be the same")
-				}
-
-				if nu.FirstName != c.reqData.FirstName {
-					t.Error("expected new user FirstName to be the same")
-				}
-
-				if nu.Username != c.reqData.Username {
-					t.Error("expected new user Username to be the same")
-				}
-
-				if nu.LastName != c.reqData.LastName {
-					t.Error("expected new user LastName to be the same")
-				}
+				c.reqData.compareSharedFields(t, &nu)
 			}
 		})
 	}
@@ -585,30 +567,108 @@ func TestSelectUserHandler(t *testing.T) {
 					t.Error("expected user JoinedAt to be returned")
 				}
 
-				if nu.ImageURL != c.newUserData.ImageURL {
-					t.Error("expected user ImageURL to be the same")
-				}
-
-				if nu.Email != c.newUserData.Email {
-					t.Error("expected user Email to be the same")
-				}
-
-				if nu.FirstName != c.newUserData.FirstName {
-					t.Error("expected user FirstName to be the same")
-				}
-
-				if nu.Username != c.newUserData.Username {
-					t.Error("expected user Username to be the same")
-				}
-
-				if nu.LastName != c.newUserData.LastName {
-					t.Error("expected user LastName to be the same")
-				}
+				c.newUserData.compareSharedFields(t, &nu)
 			}
-
 		})
 	}
 }
+
+func TestUpdateUserHandler(t *testing.T) {
+	// Create a user to update
+	newUserData := newUserReq{
+		FirstName: "Michael",
+		LastName:  "Scofield",
+		Username:  "ms43",
+		Email:     "ms43@gmail.com",
+		ImageURL:  "amazon.cdn.com",
+	}
+	bodyBuf, err := json.Marshal(&newUserData)
+	if err != nil {
+		t.Errorf("error marshalling user data: %v", err)
+		t.FailNow()
+	}
+
+	req, err := http.NewRequest("POST", "/", bytes.NewReader(bodyBuf))
+	if err != nil {
+		t.Errorf("error getting a new request: %v", err)
+		t.FailNow()
+	}
+
+	res := serveAndReturnResponse(users.Routes(env), req)
+	resBody := getBody(t, res)
+
+	if res.StatusCode != http.StatusOK {
+		t.Errorf("error creating user: %s", resBody)
+		t.FailNow()
+	}
+
+	resStruct := struct {
+		ID int `json:"id"`
+	}{}
+
+	err = json.Unmarshal([]byte(resBody), &resStruct)
+	if err != nil {
+		t.Errorf("error unmarshalling response string: %v", err)
+	}
+
+	cases := []struct {
+		name           string
+		updateUserJSON string
+		statusCode     int
+		userID         int
+	}{
+		{
+			name:           `update user first name`,
+			updateUserJSON: `{"first_name": "New First Name"}`,
+			statusCode:     http.StatusOK,
+			userID:         resStruct.ID,
+		},
+		{
+			name:           `update user last name`,
+			updateUserJSON: `{"last_name": "New Last Name"}`,
+			statusCode:     http.StatusOK,
+			userID:         resStruct.ID,
+		},
+		{
+			name:           `update user username`,
+			updateUserJSON: `{"username": "New Username"}`,
+			statusCode:     http.StatusOK,
+			userID:         resStruct.ID,
+		},
+		{
+			name:           `update user email`,
+			updateUserJSON: `{"email": "new_email433@gmail.com"}`,
+			statusCode:     http.StatusOK,
+			userID:         resStruct.ID,
+		},
+		{
+			name:           `update user image url`,
+			updateUserJSON: `{"image_url": "aws.cdn.com"}`,
+			statusCode:     http.StatusOK,
+			userID:         resStruct.ID,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			req, err := http.NewRequest(
+				"PATCH",
+				fmt.Sprintf("/%d", c.userID),
+				strings.NewReader(c.updateUserJSON))
+			if err != nil {
+				t.Errorf("error getting new request: %v", err)
+				t.FailNow()
+			}
+			res := serveAndReturnResponse(users.Routes(env), req)
+			resBody := getBody(t, res)
+
+			if res.StatusCode != c.statusCode {
+				t.Errorf("expected status code %d got %d: %s", c.statusCode, res.StatusCode, resBody)
+			}
+		})
+	}
+}
+
 func getBody(t *testing.T, res *http.Response) string {
 	bodyBuf, err := ioutil.ReadAll(res.Body)
 	if err != nil {
@@ -634,4 +694,26 @@ func serveAndReturnResponse(fn http.Handler, req *http.Request) *http.Response {
 	rr := httptest.NewRecorder()
 	fn.ServeHTTP(rr, req)
 	return rr.Result()
+}
+
+func (n *newUserReq) compareSharedFields(t *testing.T, u *users.User) {
+	if u.ImageURL != n.ImageURL {
+		t.Errorf("expected user ImageURL to be %s got %s", n.ImageURL, u.ImageURL)
+	}
+
+	if u.Email != n.Email {
+		t.Errorf("expected user Email to be %s got %s", n.Email, u.Email)
+	}
+
+	if u.FirstName != n.FirstName {
+		t.Errorf("expected user FirstName to be %s got %s", n.FirstName, u.FirstName)
+	}
+
+	if u.Username != n.Username {
+		t.Errorf("expected user Username to be %s got %s", n.Username, u.Username)
+	}
+
+	if u.LastName != n.LastName {
+		t.Errorf("expected user LastName to be %s got %s", n.LastName, u.LastName)
+	}
 }

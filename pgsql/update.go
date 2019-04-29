@@ -25,8 +25,13 @@ func GetUpdateSQLCommand(colMap ColumnMap, tbl string, id int) (*Command, *respo
 
 	nameExpStr := strings.Join(names, ", ")
 
-	_, err := cmd.AppendScript(fmt.Sprintf("\n\t\tUPDATE %s\n\t\tSET %s\n\t\tWHERE id=$%d;",
-		tbl, nameExpStr, numColUpdated+1))
+	_, err := cmd.AppendScript(
+		fmt.Sprintf("\n\t\tUPDATE %s\n\t\tSET %s\n\t\tWHERE id=$%d;",
+			tbl,
+			nameExpStr,
+			numColUpdated+1,
+		),
+	)
 	if err != nil {
 		return nil, response.NewError(http.StatusInternalServerError, err.Error())
 	}

@@ -205,6 +205,7 @@ func getUpdateUserHandler(env *c.Env) http.HandlerFunc {
 			return
 		}
 
+		render.JSON(w, r, &u)
 	}
 }
 
