@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strings"
 	"testing"
 
 	c "github.com/cljohnson4343/scavenge/config"
@@ -31,7 +32,7 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-type loginRequest struct {
+type newUserReq struct {
 	FirstName string `json:"first_name"`
 	LastName  string `json:"last_name"`
 	Username  string `json:"username"`
@@ -44,12 +45,12 @@ func TestLoginHandler(t *testing.T) {
 
 	tables := []struct {
 		testName   string
-		reqData    loginRequest
+		reqData    newUserReq
 		statusCode int
 	}{
 		{
 			testName: `new user`,
-			reqData: loginRequest{
+			reqData: newUserReq{
 				FirstName: "cj",
 				LastName:  "johnson",
 				Username:  "cj43",
@@ -60,7 +61,7 @@ func TestLoginHandler(t *testing.T) {
 		},
 		{
 			testName: `existing user`,
-			reqData: loginRequest{
+			reqData: newUserReq{
 				FirstName: "cj",
 				LastName:  "johnson",
 				Username:  "cj43",
@@ -72,7 +73,7 @@ func TestLoginHandler(t *testing.T) {
 		},
 		{
 			testName: `existing user without providing user_id`,
-			reqData: loginRequest{
+			reqData: newUserReq{
 				FirstName: "cj",
 				LastName:  "johnson",
 				Username:  "cj43",
@@ -83,7 +84,7 @@ func TestLoginHandler(t *testing.T) {
 		},
 		{
 			testName: `request missing first name`,
-			reqData: loginRequest{
+			reqData: newUserReq{
 				LastName: "johnson",
 				Username: "cj43",
 				Email:    "cj43@gmail.com",
@@ -94,7 +95,7 @@ func TestLoginHandler(t *testing.T) {
 		},
 		{
 			testName: `request missing last name`,
-			reqData: loginRequest{
+			reqData: newUserReq{
 				FirstName: "cj",
 				Username:  "cj43",
 				Email:     "cj43@gmail.com",
@@ -105,7 +106,7 @@ func TestLoginHandler(t *testing.T) {
 		},
 		{
 			testName: `request missing username`,
-			reqData: loginRequest{
+			reqData: newUserReq{
 				FirstName: "cj",
 				LastName:  "johnson",
 				Email:     "cj43@gmail.com",
@@ -116,7 +117,7 @@ func TestLoginHandler(t *testing.T) {
 		},
 		{
 			testName: `request missing email`,
-			reqData: loginRequest{
+			reqData: newUserReq{
 				FirstName: "cj",
 				LastName:  "johnson",
 				Username:  "cj43",
@@ -187,7 +188,7 @@ func TestLogoutHandler(t *testing.T) {
 		},
 	}
 
-	userInfo := loginRequest{
+	userInfo := newUserReq{
 		FirstName: "tj",
 		LastName:  "rrrrson",
 		Email:     "rrrrr43@gmail.com",
@@ -247,6 +248,167 @@ func TestLogoutHandler(t *testing.T) {
 			if c.statusCode == http.StatusOK {
 				if len(res.Cookies()) != 0 {
 					t.Error("expected all cookies to be deleted upon logout")
+				}
+			}
+		})
+	}
+}
+
+var newUsers []int
+
+func TestCreateUserHandler(t *testing.T) {
+	cases := []struct {
+		name       string
+		reqData    newUserReq
+		statusCode int
+	}{
+		{
+			name: `new user`,
+			reqData: newUserReq{
+				FirstName: "Create",
+				LastName:  "User",
+				Username:  "create_user_43",
+				Email:     "create433@gmail.com",
+				ImageURL:  "amazon.cdn.com",
+			},
+			statusCode: http.StatusOK,
+		},
+		{
+			name: `provide a user id`,
+			reqData: newUserReq{
+				FirstName: "cj1",
+				LastName:  "johnson1",
+				Username:  "cj431",
+				Email:     "cj43@gmail.com",
+				ImageURL:  "amazon.cdn.com",
+				ID:        1,
+			},
+			statusCode: http.StatusBadRequest,
+		},
+		{
+			name: `duplicate username`,
+			reqData: newUserReq{
+				FirstName: "rj",
+				LastName:  "mohnson",
+				Username:  "create_user_43",
+				Email:     "rj43@gmail.com",
+				ImageURL:  "amazon.cdn.com",
+			},
+			statusCode: http.StatusBadRequest,
+		},
+		{
+			name: `duplicate email`,
+			reqData: newUserReq{
+				FirstName: "rj",
+				LastName:  "mohnson",
+				Username:  "rj43",
+				Email:     "create433@gmail.com",
+				ImageURL:  "amazon.cdn.com",
+			},
+			statusCode: http.StatusBadRequest,
+		},
+		{
+			name: `request missing first name`,
+			reqData: newUserReq{
+				LastName: "johnson",
+				Username: "cj43",
+				Email:    "cj43@gmail.com",
+				ImageURL: "amazon.cdn.com",
+			},
+			statusCode: http.StatusBadRequest,
+		},
+		{
+			name: `request missing last name`,
+			reqData: newUserReq{
+				FirstName: "cj",
+				Username:  "cj43",
+				Email:     "cj43@gmail.com",
+				ImageURL:  "amazon.cdn.com",
+			},
+			statusCode: http.StatusBadRequest,
+		},
+		{
+			name: `request missing username`,
+			reqData: newUserReq{
+				FirstName: "cj",
+				LastName:  "johnson",
+				Email:     "cj43@gmail.com",
+				ImageURL:  "amazon.cdn.com",
+			},
+			statusCode: http.StatusBadRequest,
+		},
+		{
+			name: `request missing email`,
+			reqData: newUserReq{
+				FirstName: "cj",
+				LastName:  "johnson",
+				Username:  "cj43",
+				ImageURL:  "amazon.cdn.com",
+			},
+			statusCode: http.StatusBadRequest,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			bodyBuf, err := json.Marshal(&c.reqData)
+			if err != nil {
+				t.Errorf("error marshalling user data: %v", err)
+				t.FailNow()
+			}
+
+			req, err := http.NewRequest("POST", "/", bytes.NewReader(bodyBuf))
+			if err != nil {
+				t.Errorf("error getting a new request: %v", err)
+			}
+
+			res := serveAndReturnResponse(users.GetCreateUserHandler(env), req)
+			resBody := getBody(t, res)
+
+			if c.statusCode != res.StatusCode {
+				t.Errorf("expected code %d got %d: %s", c.statusCode, res.StatusCode, resBody)
+			}
+
+			if c.statusCode == http.StatusOK {
+				nu := users.User{}
+				err := json.NewDecoder(strings.NewReader(resBody)).Decode(&nu)
+				if err != nil {
+					t.Errorf("error decoding response: %v", err)
+				}
+
+				// keep up with all the ids of newly created users for other tests
+				newUsers = append(newUsers, nu.ID)
+
+				if nu.ID == 0 {
+					t.Error("expected new user ID to be returned")
+				}
+
+				if nu.LastVisit.IsZero() {
+					t.Error("expected new user LastVisit to be returned")
+				}
+
+				if nu.JoinedAt.IsZero() {
+					t.Error("expected new user JoinedAt to be returned")
+				}
+
+				if nu.ImageURL != c.reqData.ImageURL {
+					t.Error("expected new user ImageURL to be the same")
+				}
+
+				if nu.Email != c.reqData.Email {
+					t.Error("expected new user Email to be the same")
+				}
+
+				if nu.FirstName != c.reqData.FirstName {
+					t.Error("expected new user FirstName to be the same")
+				}
+
+				if nu.Username != c.reqData.Username {
+					t.Error("expected new user Username to be the same")
+				}
+
+				if nu.LastName != c.reqData.LastName {
+					t.Error("expected new user LastName to be the same")
 				}
 			}
 		})

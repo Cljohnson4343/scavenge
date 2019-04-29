@@ -208,9 +208,9 @@ func getUpdateUserHandler(env *c.Env) http.HandlerFunc {
 	}
 }
 
-// swagger:route POST /users/ creates user getCreateUserHandler
+// GetCreateUserHandler creates the given user.
 //
-// Creates the given user.
+// swagger:route POST /users/ creates user GetCreateUserHandler
 //
 // Consumes:
 // 	- application/json
@@ -223,7 +223,7 @@ func getUpdateUserHandler(env *c.Env) http.HandlerFunc {
 // Responses:
 // 	200:
 //  400:
-func getCreateUserHandler(env *c.Env) http.HandlerFunc {
+func GetCreateUserHandler(env *c.Env) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		u := User{}
 		e := request.DecodeAndValidate(r, &u)
