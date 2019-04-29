@@ -13,11 +13,6 @@ type userIDKeyType string
 
 var userIDKey userIDKeyType = "userID"
 
-// WithUserID returns a context that has the given userID added to its Values
-func WithUserID(ctx context.Context, userID int) context.Context {
-	return context.WithValue(ctx, userIDKey, userID)
-}
-
 // GetUserID gets the userID from the given context
 func GetUserID(ctx context.Context) (int, *response.Error) {
 	id, ok := ctx.Value(userIDKey).(int)
