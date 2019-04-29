@@ -3,7 +3,11 @@
 package teams_test
 
 import (
+	"bytes"
+	"encoding/json"
+	"io/ioutil"
 	"net/http"
+	"net/http/httptest"
 	"os"
 	"testing"
 	"time"
@@ -13,6 +17,7 @@ import (
 	"github.com/cljohnson4343/scavenge/db"
 	"github.com/cljohnson4343/scavenge/hunts"
 	"github.com/cljohnson4343/scavenge/response"
+	"github.com/cljohnson4343/scavenge/teams"
 	"github.com/cljohnson4343/scavenge/users"
 )
 
@@ -54,23 +59,70 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-/*
 func TestCreateTeamHandler(t *testing.T) {
 	cases := []struct {
-		name        string
-		newTeamData teams.Team
-		statusCode  int
+		name       string
+		team       teams.Team
+		statusCode int
 	}{
 		{
-			name:        "add new team",
-			newTeamData: teams.Team{
-				HuntID: hunt.ID,
-				name: ,
+			name: "add new team",
+			team: teams.Team{
+				TeamDB: db.TeamDB{
+					HuntID: hunt.ID,
+					Name:   "team 1",
+				},
 			},
-			statusCode:  http.StatusOK,
+			statusCode: http.StatusOK,
+		},
+		{
+			name: "add team with same name as another team in same hunt",
+			team: teams.Team{
+				TeamDB: db.TeamDB{
+					HuntID: hunt.ID,
+					Name:   "team 1",
+				},
+			},
+			statusCode: http.StatusBadRequest,
 		},
 	}
 
-}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			reqBody, err := json.Marshal(&c.team)
+			if err != nil {
+				t.Fatalf("error marshalling req data: %v", err)
+			}
+			req, err := http.NewRequest("POST", "/", bytes.NewReader(reqBody))
+			if err != nil {
+				t.Fatalf("error getting new request: %v", err)
+			}
 
-*/
+			rr := httptest.NewRecorder()
+			handler := teams.Routes(env)
+			handler.ServeHTTP(rr, req)
+
+			res := rr.Result()
+
+			if res.StatusCode != c.statusCode {
+				resBody, err := ioutil.ReadAll(res.Body)
+				if err != nil {
+					t.Fatalf("error reading res body: %v", err)
+				}
+
+				t.Fatalf("expected code %d got %d: %s", c.statusCode, res.StatusCode, resBody)
+			}
+
+			if c.statusCode == http.StatusOK {
+				err = json.NewDecoder(res.Body).Decode(&c.team)
+				if err != nil {
+					t.Fatalf("error decoding the res body: %v", err)
+				}
+
+				if c.team.ID == 0 {
+					t.Error("expected id to be returned")
+				}
+			}
+		})
+	}
+}

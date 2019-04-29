@@ -3,11 +3,11 @@ package db
 import (
 	"net/http"
 
-	"github.com/cljohnson4343/scavenge/pgsql"
-
-	"github.com/cljohnson4343/scavenge/request"
-
 	"github.com/asaskevich/govalidator"
+	"github.com/lib/pq"
+
+	"github.com/cljohnson4343/scavenge/pgsql"
+	"github.com/cljohnson4343/scavenge/request"
 	"github.com/cljohnson4343/scavenge/response"
 )
 
@@ -121,7 +121,7 @@ var teamInsertScript = `
 func (t *TeamDB) Insert() *response.Error {
 	err := stmtMap["teamInsert"].QueryRow(t.HuntID, t.Name).Scan(&t.ID)
 	if err != nil {
-		return response.NewErrorf(http.StatusInternalServerError, "error inserting team %s: %s", t.Name, err.Error())
+		return t.ParseError(err, "insert")
 	}
 
 	return nil
@@ -340,4 +340,29 @@ func TeamRemovePlayers(teamID int, players []int) *response.Error {
 	}
 
 	return e.GetError()
+}
+
+// ParseError maps a pq driver error to a response.Error that contains the information a
+// client needs to know.
+func (t *TeamDB) ParseError(err error, op string) *response.Error {
+	pqErr, ok := err.(*pq.Error)
+	if ok {
+		if pqErr.Constraint != "" {
+			switch pqErr.Constraint {
+			case "teams_in_same_hunt_name":
+				return response.NewErrorf(
+					http.StatusBadRequest,
+					"name: %s is already in use for this hunt",
+					t.Name,
+				)
+			}
+		}
+	}
+
+	return response.NewErrorf(
+		http.StatusInternalServerError,
+		"error performing operation %s: %v",
+		op,
+		err,
+	)
 }
