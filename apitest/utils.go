@@ -12,6 +12,7 @@ import (
 	c "github.com/cljohnson4343/scavenge/config"
 	"github.com/cljohnson4343/scavenge/hunts"
 	"github.com/cljohnson4343/scavenge/sessions"
+	"github.com/cljohnson4343/scavenge/teams"
 	"github.com/cljohnson4343/scavenge/users"
 )
 
@@ -109,7 +110,7 @@ func CreateHunt(h *hunts.Hunt, env *c.Env, cookie *http.Cookie) {
 	req.AddCookie(cookie)
 
 	rr := httptest.NewRecorder()
-	huntHandler := users.RequireUser(hunts.Routes(env))
+	huntHandler := hunts.Routes(env)
 	huntHandler.ServeHTTP(rr, req)
 
 	res := rr.Result()
@@ -130,5 +131,43 @@ func CreateHunt(h *hunts.Hunt, env *c.Env, cookie *http.Cookie) {
 
 	if h.ID == 0 {
 		panic("expected hunt id to be returned")
+	}
+}
+
+// CreateTeam creates a team. panics on any error.
+func CreateTeam(t *teams.Team, env *c.Env, cookie *http.Cookie) {
+	reqBody, err := json.Marshal(t)
+	if err != nil {
+		panic(fmt.Sprintf("error marshalling team data: %v", err))
+	}
+
+	req, err := http.NewRequest("POST", "/", bytes.NewReader(reqBody))
+	if err != nil {
+		panic(fmt.Sprintf("error getting new request: %v", err))
+	}
+	req.AddCookie(cookie)
+
+	rr := httptest.NewRecorder()
+	teamsHandler := teams.Routes(env)
+	teamsHandler.ServeHTTP(rr, req)
+
+	res := rr.Result()
+
+	if res.StatusCode != http.StatusOK {
+		resBody, err := ioutil.ReadAll(res.Body)
+		if err != nil {
+			panic(fmt.Sprintf("error reading res: %v", err))
+		}
+
+		panic(fmt.Sprintf("error creating new team: %s", resBody))
+	}
+
+	err = json.NewDecoder(res.Body).Decode(t)
+	if err != nil {
+		panic(fmt.Sprintf("error decoding res body: %v", err))
+	}
+
+	if t.ID == 0 {
+		panic("expected team id to be returned")
 	}
 }

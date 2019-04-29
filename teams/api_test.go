@@ -5,6 +5,7 @@ package teams_test
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -61,9 +62,9 @@ func TestMain(m *testing.M) {
 
 func TestCreateTeamHandler(t *testing.T) {
 	cases := []struct {
-		name       string
-		team       teams.Team
-		statusCode int
+		name string
+		team teams.Team
+		code int
 	}{
 		{
 			name: "add new team",
@@ -73,7 +74,7 @@ func TestCreateTeamHandler(t *testing.T) {
 					Name:   "team 1",
 				},
 			},
-			statusCode: http.StatusOK,
+			code: http.StatusOK,
 		},
 		{
 			name: "add team with same name as another team in same hunt",
@@ -83,7 +84,7 @@ func TestCreateTeamHandler(t *testing.T) {
 					Name:   "team 1",
 				},
 			},
-			statusCode: http.StatusBadRequest,
+			code: http.StatusBadRequest,
 		},
 		{
 			name: "add team with ID",
@@ -94,7 +95,7 @@ func TestCreateTeamHandler(t *testing.T) {
 					ID:     1,
 				},
 			},
-			statusCode: http.StatusBadRequest,
+			code: http.StatusBadRequest,
 		},
 		{
 			name: "add team without hunt id",
@@ -103,7 +104,7 @@ func TestCreateTeamHandler(t *testing.T) {
 					Name: "team 3",
 				},
 			},
-			statusCode: http.StatusBadRequest,
+			code: http.StatusBadRequest,
 		},
 		{
 			name: "add team without name",
@@ -112,7 +113,7 @@ func TestCreateTeamHandler(t *testing.T) {
 					HuntID: hunt.ID,
 				},
 			},
-			statusCode: http.StatusBadRequest,
+			code: http.StatusBadRequest,
 		},
 	}
 
@@ -133,16 +134,16 @@ func TestCreateTeamHandler(t *testing.T) {
 
 			res := rr.Result()
 
-			if res.StatusCode != c.statusCode {
+			if res.StatusCode != c.code {
 				resBody, err := ioutil.ReadAll(res.Body)
 				if err != nil {
 					t.Fatalf("error reading res body: %v", err)
 				}
 
-				t.Fatalf("expected code %d got %d: %s", c.statusCode, res.StatusCode, resBody)
+				t.Fatalf("expected code %d got %d: %s", c.code, res.StatusCode, resBody)
 			}
 
-			if c.statusCode == http.StatusOK {
+			if c.code == http.StatusOK {
 				err = json.NewDecoder(res.Body).Decode(&c.team)
 				if err != nil {
 					t.Fatalf("error decoding the res body: %v", err)
@@ -153,5 +154,179 @@ func TestCreateTeamHandler(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestGetTeamsHandler(t *testing.T) {
+	cases := []struct {
+		name  string
+		code  int
+		teams []teams.Team
+	}{
+		{
+			name: "get teams",
+			code: http.StatusOK,
+			teams: []teams.Team{
+				teams.Team{
+					TeamDB: db.TeamDB{
+						Name:   "first get teams",
+						HuntID: hunt.ID,
+					},
+				},
+				teams.Team{
+					TeamDB: db.TeamDB{
+						Name:   "second get teams",
+						HuntID: hunt.ID,
+					},
+				},
+				teams.Team{
+					TeamDB: db.TeamDB{
+						Name:   "third get teams",
+						HuntID: hunt.ID,
+					},
+				},
+				teams.Team{
+					TeamDB: db.TeamDB{
+						Name:   "fourth get teams",
+						HuntID: hunt.ID,
+					},
+				},
+				teams.Team{
+					TeamDB: db.TeamDB{
+						Name:   "fifth get teams",
+						HuntID: hunt.ID,
+					},
+				},
+				teams.Team{
+					TeamDB: db.TeamDB{
+						Name:   "sixth get teams",
+						HuntID: hunt.ID,
+					},
+				},
+				teams.Team{
+					TeamDB: db.TeamDB{
+						Name:   "seventh get teams",
+						HuntID: hunt.ID,
+					},
+				},
+				teams.Team{
+					TeamDB: db.TeamDB{
+						Name:   "eighth get teams",
+						HuntID: hunt.ID,
+					},
+				},
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			for _, t := range c.teams {
+				// use logged in user's session to create each team
+				apitest.CreateTeam(&t, env, sessionCookie)
+			}
+
+			req, err := http.NewRequest("GET", "/", nil)
+			if err != nil {
+				t.Fatalf("error getting new request: %v", err)
+			}
+			rr := httptest.NewRecorder()
+			handler := teams.Routes(env)
+			handler.ServeHTTP(rr, req)
+
+			res := rr.Result()
+
+			if res.StatusCode != c.code {
+				resBody, err := ioutil.ReadAll(res.Body)
+				if err != nil {
+					t.Errorf("error reading res body: %v", err)
+				}
+				t.Fatalf("expected code %d got %d: %s", c.code, res.StatusCode, resBody)
+			}
+
+			gotTeams := make([]teams.Team, 0)
+			err = json.NewDecoder(res.Body).Decode(&gotTeams)
+			if err != nil {
+				t.Fatalf("error decoding res body: %v", err)
+			}
+
+			if len(gotTeams) <= len(c.teams) {
+				t.Fatalf("expected at least %d teams to be returned but got %d", len(c.teams), len(gotTeams))
+			}
+
+		})
+	}
+}
+
+func TestGetTeamHandler(t *testing.T) {
+	expected := teams.Team{
+		TeamDB: db.TeamDB{
+			Name:   "Get this team",
+			HuntID: hunt.ID,
+		},
+	}
+	apitest.CreateTeam(&expected, env, sessionCookie)
+
+	cases := []struct {
+		name   string
+		code   int
+		teamID int
+	}{
+		{
+			name:   "valid team",
+			code:   http.StatusOK,
+			teamID: expected.ID,
+		},
+		{
+			name:   "invalid team",
+			code:   http.StatusBadRequest,
+			teamID: 0,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			req, err := http.NewRequest("GET", fmt.Sprintf("/%d", c.teamID), nil)
+			if err != nil {
+				t.Fatalf("error getting new request: %v", err)
+			}
+
+			rr := httptest.NewRecorder()
+			handler := teams.Routes(env)
+			handler.ServeHTTP(rr, req)
+			res := rr.Result()
+
+			if res.StatusCode != c.code {
+				resBody, err := ioutil.ReadAll(res.Body)
+				if err != nil {
+					t.Errorf("error reading res body: %v", err)
+				}
+				t.Fatalf("expected code %d got %d: %s", c.code, res.StatusCode, resBody)
+			}
+
+			if c.code == http.StatusOK {
+				got := teams.Team{}
+				err = json.NewDecoder(res.Body).Decode(&got)
+				if err != nil {
+					t.Fatalf("error decoding team: %v", err)
+				}
+
+				compareTeams(t, &expected, &got)
+			}
+		})
+	}
+}
+
+func compareTeams(t *testing.T, expected *teams.Team, got *teams.Team) {
+	if got.ID != expected.ID {
+		t.Errorf("expected id to be %d got %d", expected.ID, got.ID)
+	}
+
+	if got.HuntID != expected.HuntID {
+		t.Errorf("expected hunt id to be %d got %d", expected.HuntID, got.HuntID)
+	}
+
+	if got.Name != expected.Name {
+		t.Errorf("expected name to be %s got %s", expected.Name, got.Name)
 	}
 }

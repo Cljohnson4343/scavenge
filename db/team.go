@@ -1,6 +1,7 @@
 package db
 
 import (
+	"database/sql"
 	"net/http"
 
 	"github.com/asaskevich/govalidator"
@@ -136,11 +137,24 @@ var teamSelectScript = `
 func GetTeam(id int) (*TeamDB, *response.Error) {
 	team := TeamDB{}
 	err := stmtMap["teamSelect"].QueryRow(id).Scan(&team.HuntID, &team.Name, &team.ID)
-	if err != nil {
-		return nil, response.NewErrorf(http.StatusInternalServerError, "error getting team with id %d: %s", id, err.Error())
+	if err == nil {
+		return &team, nil
 	}
 
-	return &team, nil
+	if err == sql.ErrNoRows {
+		return nil, response.NewErrorf(
+			http.StatusBadRequest,
+			"team_id: no team with id %d",
+			id,
+		)
+	}
+
+	return nil, response.NewErrorf(
+		http.StatusInternalServerError,
+		"error getting team with id %d: %s",
+		id,
+		err.Error(),
+	)
 }
 
 var teamsSelectScript = `
