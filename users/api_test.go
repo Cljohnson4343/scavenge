@@ -12,7 +12,9 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/cljohnson4343/scavenge/apitest"
 	c "github.com/cljohnson4343/scavenge/config"
 	"github.com/cljohnson4343/scavenge/db"
 	"github.com/cljohnson4343/scavenge/response"
@@ -22,12 +24,13 @@ import (
 
 var env *c.Env
 var sessionCookie *http.Cookie
-
-var newUser = db.UserDB{
-	FirstName: "Lincoln",
-	LastName:  "Burrows",
-	Username:  "sink43",
-	Email:     "linkthesink@gmail.com",
+var newUser = users.User{
+	UserDB: db.UserDB{
+		FirstName: "Lincoln",
+		LastName:  "Burrows",
+		Username:  "sink43",
+		Email:     "linkthesink@gmail.com",
+	},
 }
 
 func TestMain(m *testing.M) {
@@ -38,46 +41,8 @@ func TestMain(m *testing.M) {
 	response.SetDevMode(true)
 
 	// Login in user to get a valid user session cookie
-	reqBody, err := json.Marshal(&newUser)
-	if err != nil {
-		panic(err)
-	}
-
-	req, err := http.NewRequest("POST", "/login/", bytes.NewReader(reqBody))
-	if err != nil {
-		panic(err)
-	}
-	rr := httptest.NewRecorder()
-	handler := users.Routes(env)
-	handler.ServeHTTP(rr, req)
-	res := rr.Result()
-	if res.StatusCode != http.StatusOK {
-		resBody, err := ioutil.ReadAll(res.Body)
-		if err != nil {
-			panic(err)
-		}
-		panic(fmt.Sprintf("error logging in: %s", resBody))
-	}
-
-	err = json.NewDecoder(res.Body).Decode(&newUser)
-	if err != nil {
-		panic(fmt.Sprintf("error decoding the res body: %v", err))
-	}
-
-	if newUser.ID == 0 {
-		panic("expected user's id to be returned")
-	}
-
-	cookies := res.Cookies()
-	for _, c := range cookies {
-		if c.Name == sessions.SessionCookieName {
-			sessionCookie = c
-		}
-	}
-
-	if sessionCookie == nil {
-		panic("expected a cookie on login")
-	}
+	apitest.CreateUser(&newUser, env)
+	sessionCookie = apitest.Login(&newUser, env)
 
 	os.Exit(m.Run())
 }
@@ -298,44 +263,22 @@ func TestLogoutHandler(t *testing.T) {
 		},
 	}
 
-	userInfo := newUserReq{
-		FirstName: "tj",
-		LastName:  "rrrrson",
-		Email:     "rrrrr43@gmail.com",
-		Username:  "tj43",
-		ImageURL:  "amazon.cdn.com",
-	}
-
 	// login to get a valid cookie
-	reqBody, err := json.Marshal(&userInfo)
-	if err != nil {
-		t.Errorf("error marshaling login request data: %v", err)
+	user := users.User{
+		UserDB: db.UserDB{
+			FirstName: "tj",
+			LastName:  "rrrrson",
+			Email:     "rrrrr43@gmail.com",
+			Username:  "tj43",
+			ImageURL:  "amazon.cdn.com",
+		},
 	}
-
-	req, err := http.NewRequest("POST", "/", bytes.NewReader(reqBody))
-	if err != nil {
-		t.Errorf("error getting a new request: %v", err)
-	}
-
-	rr := httptest.NewRecorder()
-	login := users.GetLoginHandler(env)
-	login.ServeHTTP(rr, req)
-	res := rr.Result()
-	resBody := getBody(t, res)
-
-	if code := res.StatusCode; code != http.StatusOK {
-		t.Errorf("expected login status code %d got %d: %s", http.StatusOK, code, resBody)
-	}
-
-	cookie := getSessionCookie(res.Cookies())
-	if cookie == nil {
-		t.Error("expicted a cookie")
-		t.FailNow()
-	}
+	apitest.CreateUser(&user, env)
+	cookie := apitest.Login(&user, env)
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			req, err := http.NewRequest("POST", "/", nil)
+			req, err := http.NewRequest("POST", "/logout/", nil)
 			if err != nil {
 				t.Errorf("error getting a logout request: %v", err)
 			}
@@ -344,8 +287,7 @@ func TestLogoutHandler(t *testing.T) {
 				req.AddCookie(cookie)
 			}
 
-			res := serveAndReturnResponse(users.GetLogoutHandler(env), req)
-
+			res := serveAndReturnResponse(users.Routes(env), req)
 			resBody, err := ioutil.ReadAll(res.Body)
 			if err != nil {
 				t.Errorf("error reading response body: %v", err)
@@ -367,91 +309,107 @@ func TestLogoutHandler(t *testing.T) {
 func TestCreateUserHandler(t *testing.T) {
 	cases := []struct {
 		name       string
-		reqData    newUserReq
+		user       users.User
 		statusCode int
 	}{
 		{
 			name: `new user`,
-			reqData: newUserReq{
-				FirstName: "Create",
-				LastName:  "User",
-				Username:  "create_user_43",
-				Email:     "create433@gmail.com",
-				ImageURL:  "amazon.cdn.com",
+			user: users.User{
+				UserDB: db.UserDB{
+					FirstName: "Create",
+					LastName:  "User",
+					Username:  "create_user_43",
+					Email:     "create433@gmail.com",
+					ImageURL:  "amazon.cdn.com",
+				},
 			},
 			statusCode: http.StatusOK,
 		},
 		{
 			name: `provide a user id`,
-			reqData: newUserReq{
-				FirstName: "cj1",
-				LastName:  "johnson1",
-				Username:  "cj431",
-				Email:     "cj43@gmail.com",
-				ImageURL:  "amazon.cdn.com",
-				ID:        1,
+			user: users.User{
+				UserDB: db.UserDB{
+					FirstName: "cj1",
+					LastName:  "johnson1",
+					Username:  "cj431",
+					Email:     "cj43@gmail.com",
+					ImageURL:  "amazon.cdn.com",
+					ID:        1,
+				},
 			},
 			statusCode: http.StatusBadRequest,
 		},
 		{
 			name: `duplicate username`,
-			reqData: newUserReq{
-				FirstName: "rj",
-				LastName:  "mohnson",
-				Username:  "create_user_43",
-				Email:     "rj43@gmail.com",
-				ImageURL:  "amazon.cdn.com",
+			user: users.User{
+				UserDB: db.UserDB{
+					FirstName: "rj",
+					LastName:  "mohnson",
+					Username:  "create_user_43",
+					Email:     "rj43@gmail.com",
+					ImageURL:  "amazon.cdn.com",
+				},
 			},
 			statusCode: http.StatusBadRequest,
 		},
 		{
 			name: `duplicate email`,
-			reqData: newUserReq{
-				FirstName: "rj",
-				LastName:  "mohnson",
-				Username:  "rj43",
-				Email:     "create433@gmail.com",
-				ImageURL:  "amazon.cdn.com",
+			user: users.User{
+				UserDB: db.UserDB{
+					FirstName: "rj",
+					LastName:  "mohnson",
+					Username:  "rj43",
+					Email:     "create433@gmail.com",
+					ImageURL:  "amazon.cdn.com",
+				},
 			},
 			statusCode: http.StatusBadRequest,
 		},
 		{
 			name: `request missing first name`,
-			reqData: newUserReq{
-				LastName: "johnson",
-				Username: "cj43",
-				Email:    "cj43@gmail.com",
-				ImageURL: "amazon.cdn.com",
+			user: users.User{
+				UserDB: db.UserDB{
+					LastName: "johnson",
+					Username: "cj43",
+					Email:    "cj43@gmail.com",
+					ImageURL: "amazon.cdn.com",
+				},
 			},
 			statusCode: http.StatusBadRequest,
 		},
 		{
 			name: `request missing last name`,
-			reqData: newUserReq{
-				FirstName: "cj",
-				Username:  "cj43",
-				Email:     "cj43@gmail.com",
-				ImageURL:  "amazon.cdn.com",
+			user: users.User{
+				UserDB: db.UserDB{
+					FirstName: "cj",
+					Username:  "cj43",
+					Email:     "cj43@gmail.com",
+					ImageURL:  "amazon.cdn.com",
+				},
 			},
 			statusCode: http.StatusBadRequest,
 		},
 		{
 			name: `request missing username`,
-			reqData: newUserReq{
-				FirstName: "cj",
-				LastName:  "johnson",
-				Email:     "cj43@gmail.com",
-				ImageURL:  "amazon.cdn.com",
+			user: users.User{
+				UserDB: db.UserDB{
+					FirstName: "cj",
+					LastName:  "johnson",
+					Email:     "cj43@gmail.com",
+					ImageURL:  "amazon.cdn.com",
+				},
 			},
 			statusCode: http.StatusBadRequest,
 		},
 		{
 			name: `request missing email`,
-			reqData: newUserReq{
-				FirstName: "cj",
-				LastName:  "johnson",
-				Username:  "cj43",
-				ImageURL:  "amazon.cdn.com",
+			user: users.User{
+				UserDB: db.UserDB{
+					FirstName: "cj",
+					LastName:  "johnson",
+					Username:  "cj43",
+					ImageURL:  "amazon.cdn.com",
+				},
 			},
 			statusCode: http.StatusBadRequest,
 		},
@@ -459,7 +417,7 @@ func TestCreateUserHandler(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			bodyBuf, err := json.Marshal(&c.reqData)
+			bodyBuf, err := json.Marshal(&c.user)
 			if err != nil {
 				t.Errorf("error marshalling user data: %v", err)
 				t.FailNow()
@@ -470,7 +428,7 @@ func TestCreateUserHandler(t *testing.T) {
 				t.Errorf("error getting a new request: %v", err)
 			}
 
-			res := serveAndReturnResponse(users.GetCreateUserHandler(env), req)
+			res := serveAndReturnResponse(users.Routes(env), req)
 			resBody := getBody(t, res)
 
 			if c.statusCode != res.StatusCode {
@@ -496,7 +454,7 @@ func TestCreateUserHandler(t *testing.T) {
 					t.Error("expected new user JoinedAt to be returned")
 				}
 
-				c.reqData.compareSharedFields(t, &nu)
+				compareSharedFields(t, &nu, &c.user)
 			}
 		})
 	}
@@ -505,25 +463,27 @@ func TestCreateUserHandler(t *testing.T) {
 func TestDeleteUserHandler(t *testing.T) {
 	cases := []struct {
 		name        string
-		newUserData newUserReq
+		user        users.User
 		withNewUser bool
 		statusCode  int
 	}{
 		{
 			name: `delete existing user`,
-			newUserData: newUserReq{
-				FirstName: "Delete",
-				LastName:  "User II",
-				Username:  "delete_user_43",
-				Email:     "delete433@gmail.com",
-				ImageURL:  "amazon.cdn.com",
+			user: users.User{
+				UserDB: db.UserDB{
+					FirstName: "Delete",
+					LastName:  "User II",
+					Username:  "delete_user_43",
+					Email:     "delete433@gmail.com",
+					ImageURL:  "amazon.cdn.com",
+				},
 			},
 			statusCode:  http.StatusOK,
 			withNewUser: true,
 		},
 		{
 			name:        `non-existing user`,
-			newUserData: newUserReq{},
+			user:        users.User{},
 			statusCode:  http.StatusBadRequest,
 			withNewUser: false,
 		},
@@ -534,36 +494,8 @@ func TestDeleteUserHandler(t *testing.T) {
 			userID := 0
 
 			if c.withNewUser {
-				bodyBuf, err := json.Marshal(&c.newUserData)
-				if err != nil {
-					t.Errorf("error marshalling user data: %v", err)
-					t.FailNow()
-				}
-
-				req, err := http.NewRequest("POST", "/", bytes.NewReader(bodyBuf))
-				if err != nil {
-					t.Errorf("error getting a new request: %v", err)
-					t.FailNow()
-				}
-
-				res := serveAndReturnResponse(users.GetCreateUserHandler(env), req)
-				resBody := getBody(t, res)
-
-				if res.StatusCode != http.StatusOK {
-					t.Errorf("error creating user: %s", resBody)
-					t.FailNow()
-				}
-
-				resStruct := struct {
-					ID int `json:"id"`
-				}{}
-
-				err = json.Unmarshal([]byte(resBody), &resStruct)
-				if err != nil {
-					t.Errorf("error unmarshalling response string: %v", err)
-				}
-
-				userID = resStruct.ID
+				apitest.CreateUser(&c.user, env)
+				userID = c.user.ID
 			}
 
 			req, err := http.NewRequest("DELETE", fmt.Sprintf("/%d", userID), nil)
@@ -584,25 +516,27 @@ func TestDeleteUserHandler(t *testing.T) {
 func TestSelectUserHandler(t *testing.T) {
 	cases := []struct {
 		name        string
-		newUserData newUserReq
+		user        users.User
 		withNewUser bool
 		statusCode  int
 	}{
 		{
 			name: `select existing user`,
-			newUserData: newUserReq{
-				FirstName: "select",
-				LastName:  "user III",
-				Username:  "select_user_43",
-				Email:     "select433@gmail.com",
-				ImageURL:  "amazon.cdn.com",
+			user: users.User{
+				UserDB: db.UserDB{
+					FirstName: "select",
+					LastName:  "user III",
+					Username:  "select_user_43",
+					Email:     "select433@gmail.com",
+					ImageURL:  "amazon.cdn.com",
+				},
 			},
 			statusCode:  http.StatusOK,
 			withNewUser: true,
 		},
 		{
 			name:        `select non-existing user`,
-			newUserData: newUserReq{},
+			user:        users.User{},
 			statusCode:  http.StatusBadRequest,
 			withNewUser: false,
 		},
@@ -613,36 +547,8 @@ func TestSelectUserHandler(t *testing.T) {
 			userID := 0
 
 			if c.withNewUser {
-				bodyBuf, err := json.Marshal(&c.newUserData)
-				if err != nil {
-					t.Errorf("error marshalling user data: %v", err)
-					t.FailNow()
-				}
-
-				req, err := http.NewRequest("POST", "/", bytes.NewReader(bodyBuf))
-				if err != nil {
-					t.Errorf("error getting a new request: %v", err)
-					t.FailNow()
-				}
-
-				res := serveAndReturnResponse(users.Routes(env), req)
-				resBody := getBody(t, res)
-
-				if res.StatusCode != http.StatusOK {
-					t.Errorf("error creating user: %s", resBody)
-					t.FailNow()
-				}
-
-				resStruct := struct {
-					ID int `json:"id"`
-				}{}
-
-				err = json.Unmarshal([]byte(resBody), &resStruct)
-				if err != nil {
-					t.Errorf("error unmarshalling response string: %v", err)
-				}
-
-				userID = resStruct.ID
+				apitest.CreateUser(&c.user, env)
+				userID = c.user.ID
 			}
 
 			req, err := http.NewRequest("GET", fmt.Sprintf("/%d", userID), nil)
@@ -676,50 +582,13 @@ func TestSelectUserHandler(t *testing.T) {
 					t.Error("expected user JoinedAt to be returned")
 				}
 
-				c.newUserData.compareSharedFields(t, &nu)
+				compareSharedFields(t, &nu, &c.user)
 			}
 		})
 	}
 }
 
 func TestUpdateUserHandler(t *testing.T) {
-	// Create a user to update
-	newUserData := newUserReq{
-		FirstName: "Michael",
-		LastName:  "Scofield",
-		Username:  "fish",
-		Email:     "fish43@gmail.com",
-		ImageURL:  "amazon.cdn.com",
-	}
-	bodyBuf, err := json.Marshal(&newUserData)
-	if err != nil {
-		t.Errorf("error marshalling user data: %v", err)
-		t.FailNow()
-	}
-
-	req, err := http.NewRequest("POST", "/", bytes.NewReader(bodyBuf))
-	if err != nil {
-		t.Errorf("error getting a new request: %v", err)
-		t.FailNow()
-	}
-
-	res := serveAndReturnResponse(users.Routes(env), req)
-	resBody := getBody(t, res)
-
-	if res.StatusCode != http.StatusOK {
-		t.Errorf("error creating user: %s", resBody)
-		t.FailNow()
-	}
-
-	resStruct := struct {
-		ID int `json:"id"`
-	}{}
-
-	err = json.Unmarshal([]byte(resBody), &resStruct)
-	if err != nil {
-		t.Errorf("error unmarshalling response string: %v", err)
-	}
-
 	cases := []struct {
 		name           string
 		updateUserJSON string
@@ -730,31 +599,43 @@ func TestUpdateUserHandler(t *testing.T) {
 			name:           `update user first name`,
 			updateUserJSON: `{"first_name": "New First Name"}`,
 			statusCode:     http.StatusOK,
-			userID:         resStruct.ID,
+			userID:         newUser.ID,
 		},
 		{
 			name:           `update user last name`,
 			updateUserJSON: `{"last_name": "New Last Name"}`,
 			statusCode:     http.StatusOK,
-			userID:         resStruct.ID,
+			userID:         newUser.ID,
 		},
 		{
 			name:           `update user username`,
 			updateUserJSON: `{"username": "New Username"}`,
 			statusCode:     http.StatusOK,
-			userID:         resStruct.ID,
+			userID:         newUser.ID,
 		},
 		{
 			name:           `update user email`,
 			updateUserJSON: `{"email": "new_email433@gmail.com"}`,
 			statusCode:     http.StatusOK,
-			userID:         resStruct.ID,
+			userID:         newUser.ID,
 		},
 		{
 			name:           `update user image url`,
 			updateUserJSON: `{"image_url": "aws.cdn.com"}`,
 			statusCode:     http.StatusOK,
-			userID:         resStruct.ID,
+			userID:         newUser.ID,
+		},
+		{
+			name:           `update joined at time`,
+			updateUserJSON: fmt.Sprintf("{\"joined_at\": %v}", time.Now()),
+			statusCode:     http.StatusBadRequest,
+			userID:         newUser.ID,
+		},
+		{
+			name:           `update last visit time`,
+			updateUserJSON: fmt.Sprintf("{\"last_visit\": %v}", time.Now()),
+			statusCode:     http.StatusBadRequest,
+			userID:         newUser.ID,
 		},
 	}
 
@@ -805,24 +686,24 @@ func serveAndReturnResponse(fn http.Handler, req *http.Request) *http.Response {
 	return rr.Result()
 }
 
-func (n *newUserReq) compareSharedFields(t *testing.T, u *users.User) {
-	if u.ImageURL != n.ImageURL {
-		t.Errorf("expected user ImageURL to be %s got %s", n.ImageURL, u.ImageURL)
+func compareSharedFields(t *testing.T, got *users.User, expected *users.User) {
+	if got.ImageURL != expected.ImageURL {
+		t.Errorf("expected user ImageURL to be %s got %s", expected.ImageURL, got.ImageURL)
 	}
 
-	if u.Email != n.Email {
-		t.Errorf("expected user Email to be %s got %s", n.Email, u.Email)
+	if got.Email != expected.Email {
+		t.Errorf("expected user Email to be %s got %s", expected.Email, got.Email)
 	}
 
-	if u.FirstName != n.FirstName {
-		t.Errorf("expected user FirstName to be %s got %s", n.FirstName, u.FirstName)
+	if got.FirstName != expected.FirstName {
+		t.Errorf("expected user FirstName to be %s got %s", expected.FirstName, got.FirstName)
 	}
 
-	if u.Username != n.Username {
-		t.Errorf("expected user Username to be %s got %s", n.Username, u.Username)
+	if got.Username != expected.Username {
+		t.Errorf("expected user Username to be %s got %s", expected.Username, got.Username)
 	}
 
-	if u.LastName != n.LastName {
-		t.Errorf("expected user LastName to be %s got %s", n.LastName, u.LastName)
+	if got.LastName != expected.LastName {
+		t.Errorf("expected user LastName to be %s got %s", expected.LastName, got.LastName)
 	}
 }
