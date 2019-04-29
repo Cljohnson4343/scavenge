@@ -490,6 +490,125 @@ func TestDeleteUserHandler(t *testing.T) {
 	}
 }
 
+func TestSelectUserHandler(t *testing.T) {
+	cases := []struct {
+		name        string
+		newUserData newUserReq
+		withNewUser bool
+		statusCode  int
+	}{
+		{
+			name: `select existing user`,
+			newUserData: newUserReq{
+				FirstName: "select",
+				LastName:  "user III",
+				Username:  "select_user_43",
+				Email:     "select433@gmail.com",
+				ImageURL:  "amazon.cdn.com",
+			},
+			statusCode:  http.StatusOK,
+			withNewUser: true,
+		},
+		{
+			name:        `select non-existing user`,
+			newUserData: newUserReq{},
+			statusCode:  http.StatusBadRequest,
+			withNewUser: false,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			userID := 0
+
+			if c.withNewUser {
+				bodyBuf, err := json.Marshal(&c.newUserData)
+				if err != nil {
+					t.Errorf("error marshalling user data: %v", err)
+					t.FailNow()
+				}
+
+				req, err := http.NewRequest("POST", "/", bytes.NewReader(bodyBuf))
+				if err != nil {
+					t.Errorf("error getting a new request: %v", err)
+					t.FailNow()
+				}
+
+				res := serveAndReturnResponse(users.Routes(env), req)
+				resBody := getBody(t, res)
+
+				if res.StatusCode != http.StatusOK {
+					t.Errorf("error creating user: %s", resBody)
+					t.FailNow()
+				}
+
+				resStruct := struct {
+					ID int `json:"id"`
+				}{}
+
+				err = json.Unmarshal([]byte(resBody), &resStruct)
+				if err != nil {
+					t.Errorf("error unmarshalling response string: %v", err)
+				}
+
+				userID = resStruct.ID
+			}
+
+			req, err := http.NewRequest("GET", fmt.Sprintf("/%d", userID), nil)
+			if err != nil {
+				t.Errorf("error getting new request: %v", err)
+				t.FailNow()
+			}
+			res := serveAndReturnResponse(users.Routes(env), req)
+			resBody := getBody(t, res)
+
+			if res.StatusCode != c.statusCode {
+				t.Errorf("expected status code %d got %d: %s", c.statusCode, res.StatusCode, resBody)
+			}
+
+			if c.statusCode == http.StatusOK {
+				nu := users.User{}
+				err := json.NewDecoder(strings.NewReader(resBody)).Decode(&nu)
+				if err != nil {
+					t.Errorf("error decoding response: %v", err)
+				}
+
+				if nu.ID == 0 {
+					t.Error("expected user ID to be returned")
+				}
+
+				if nu.LastVisit.IsZero() {
+					t.Error("expected user LastVisit to be returned")
+				}
+
+				if nu.JoinedAt.IsZero() {
+					t.Error("expected user JoinedAt to be returned")
+				}
+
+				if nu.ImageURL != c.newUserData.ImageURL {
+					t.Error("expected user ImageURL to be the same")
+				}
+
+				if nu.Email != c.newUserData.Email {
+					t.Error("expected user Email to be the same")
+				}
+
+				if nu.FirstName != c.newUserData.FirstName {
+					t.Error("expected user FirstName to be the same")
+				}
+
+				if nu.Username != c.newUserData.Username {
+					t.Error("expected user Username to be the same")
+				}
+
+				if nu.LastName != c.newUserData.LastName {
+					t.Error("expected user LastName to be the same")
+				}
+			}
+
+		})
+	}
+}
 func getBody(t *testing.T, res *http.Response) string {
 	bodyBuf, err := ioutil.ReadAll(res.Body)
 	if err != nil {
