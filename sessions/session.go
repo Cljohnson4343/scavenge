@@ -45,14 +45,13 @@ func New(userID int) (*Session, *response.Error) {
 
 // Cookie creates a cookie for the given session and returns it
 func (s *Session) Cookie() *http.Cookie {
-	secs := 60 * 60 * 24 * 365
+	secs := s.Expires.Sub(time.Now()).Seconds()
 	c := http.Cookie{
 		Name:     SessionCookieName,
 		Value:    s.Key.String(),
-		Expires:  s.Expires,
 		Secure:   false,
 		HttpOnly: false,
-		MaxAge:   secs,
+		MaxAge:   int(secs),
 		Path:     "/",
 	}
 
@@ -74,12 +73,6 @@ func GetCookie(r *http.Request) *http.Cookie {
 
 // GetCurrent returns the user agents current session.
 func GetCurrent(cookie *http.Cookie) (*Session, *response.Error) {
-	// TODO think about how to handle this case. i.e. redirect extend cookie etc.
-	if cookie.Expires.Before(time.Now()) {
-		return nil, response.NewError(http.StatusBadRequest,
-			"sessions.GetCurrent: the current session is expired")
-	}
-
 	key, err := uuid.Parse(cookie.Value)
 	if err != nil {
 		return nil, response.NewErrorf(http.StatusInternalServerError,
@@ -89,6 +82,10 @@ func GetCurrent(cookie *http.Cookie) (*Session, *response.Error) {
 	s, e := db.GetSession(key)
 	if e != nil {
 		return nil, e
+	}
+
+	if s.Expires.Before(time.Now()) {
+		return nil, response.NewError(http.StatusBadRequest, "session expired")
 	}
 
 	return &Session{*s}, nil

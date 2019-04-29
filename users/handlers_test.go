@@ -9,29 +9,12 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"strings"
 	"testing"
 
-	c "github.com/cljohnson4343/scavenge/config"
-	"github.com/cljohnson4343/scavenge/db"
-	"github.com/cljohnson4343/scavenge/response"
 	"github.com/cljohnson4343/scavenge/sessions"
 	"github.com/cljohnson4343/scavenge/users"
 )
-
-var env *c.Env
-
-func TestMain(m *testing.M) {
-	d := db.InitDB("../db/db_info_test.json")
-	defer db.Shutdown(d)
-
-	env = c.CreateEnv(d)
-
-	response.SetDevMode(true)
-
-	os.Exit(m.Run())
-}
 
 type newUserReq struct {
 	FirstName string `json:"first_name"`

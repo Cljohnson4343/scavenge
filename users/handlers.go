@@ -99,8 +99,9 @@ func GetLoginHandler(env *c.Env) http.HandlerFunc {
 		}
 
 		cookie := sess.Cookie()
-
 		http.SetCookie(w, cookie)
+
+		render.JSON(w, r, &u)
 		return
 	}
 }
