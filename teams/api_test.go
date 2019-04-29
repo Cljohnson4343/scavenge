@@ -317,6 +317,57 @@ func TestGetTeamHandler(t *testing.T) {
 	}
 }
 
+func TestDeleteTeamHandler(t *testing.T) {
+	team := teams.Team{
+		TeamDB: db.TeamDB{
+			Name:   "fox river eight",
+			HuntID: hunt.ID,
+		},
+	}
+	apitest.CreateTeam(&team, env, sessionCookie)
+
+	cases := []struct {
+		name string
+		code int
+		id   int
+	}{
+		{
+			name: "valid team",
+			code: http.StatusOK,
+			id:   team.ID,
+		},
+		{
+			name: "invalid team",
+			code: http.StatusBadRequest,
+			id:   0,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			req, err := http.NewRequest("DELETE", fmt.Sprintf("/%d", c.id), nil)
+			if err != nil {
+				t.Fatalf("error creating new request: %v", err)
+			}
+
+			rr := httptest.NewRecorder()
+			handler := teams.Routes(env)
+			handler.ServeHTTP(rr, req)
+
+			res := rr.Result()
+
+			if res.StatusCode != c.code {
+				resBody, err := ioutil.ReadAll(res.Body)
+				if err != nil {
+					t.Errorf("error reading the res body: %v", err)
+				}
+
+				t.Fatalf("expoected code %d got %d: %s", c.code, res.StatusCode, resBody)
+			}
+		})
+	}
+}
+
 func compareTeams(t *testing.T, expected *teams.Team, got *teams.Team) {
 	if got.ID != expected.ID {
 		t.Errorf("expected id to be %d got %d", expected.ID, got.ID)
