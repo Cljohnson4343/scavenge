@@ -355,6 +355,12 @@ func (t *TeamDB) ParseError(err error, op string) *response.Error {
 					"name: %s is already in use for this hunt",
 					t.Name,
 				)
+			case "teams_hunt_id_fkey":
+				return response.NewErrorf(
+					http.StatusBadRequest,
+					"hunt_id: hunt %d does not exist",
+					t.HuntID,
+				)
 			}
 		}
 	}
