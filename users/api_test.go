@@ -107,97 +107,101 @@ func TestRequireUser(t *testing.T) {
 	}
 }
 
-type newUserReq struct {
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
-	Username  string `json:"username"`
-	Email     string `json:"email"`
-	ID        int    `json:"id"`
-	ImageURL  string `json:"image_url"`
-}
-
 func TestLoginHandler(t *testing.T) {
-
 	tables := []struct {
 		testName   string
-		reqData    newUserReq
+		user       users.User
 		statusCode int
 	}{
 		{
 			testName: `new user`,
-			reqData: newUserReq{
-				FirstName: "cj",
-				LastName:  "johnson",
-				Username:  "cj43",
-				Email:     "cj43@gmail.com",
-				ImageURL:  "amazon.cdn.com",
+			user: users.User{
+				UserDB: db.UserDB{
+					FirstName: "cj",
+					LastName:  "johnson",
+					Username:  "cj43",
+					Email:     "cj43@gmail.com",
+					ImageURL:  "amazon.cdn.com",
+				},
 			},
 			statusCode: http.StatusOK,
 		},
 		{
 			testName: `existing user`,
-			reqData: newUserReq{
-				FirstName: "cj",
-				LastName:  "johnson",
-				Username:  "cj43",
-				Email:     "cj43@gmail.com",
-				ImageURL:  "amazon.cdn.com",
-				ID:        1,
+			user: users.User{
+				UserDB: db.UserDB{
+					FirstName: "cj",
+					LastName:  "johnson",
+					Username:  "cj43",
+					Email:     "cj43@gmail.com",
+					ImageURL:  "amazon.cdn.com",
+					ID:        1,
+				},
 			},
 			statusCode: http.StatusOK,
 		},
 		{
 			testName: `existing user without providing user_id`,
-			reqData: newUserReq{
-				FirstName: "cj",
-				LastName:  "johnson",
-				Username:  "cj43",
-				Email:     "cj43@gmail.com",
-				ImageURL:  "amazon.cdn.com",
+			user: users.User{
+				UserDB: db.UserDB{
+					FirstName: "cj",
+					LastName:  "johnson",
+					Username:  "cj43",
+					Email:     "cj43@gmail.com",
+					ImageURL:  "amazon.cdn.com",
+				},
 			},
 			statusCode: http.StatusBadRequest,
 		},
 		{
 			testName: `request missing first name`,
-			reqData: newUserReq{
-				LastName: "johnson",
-				Username: "cj43",
-				Email:    "cj43@gmail.com",
-				ImageURL: "amazon.cdn.com",
-				ID:       1,
+			user: users.User{
+				UserDB: db.UserDB{
+					LastName: "johnson",
+					Username: "cj43",
+					Email:    "cj43@gmail.com",
+					ImageURL: "amazon.cdn.com",
+					ID:       1,
+				},
 			},
 			statusCode: http.StatusBadRequest,
 		},
 		{
 			testName: `request missing last name`,
-			reqData: newUserReq{
-				FirstName: "cj",
-				Username:  "cj43",
-				Email:     "cj43@gmail.com",
-				ImageURL:  "amazon.cdn.com",
-				ID:        1,
+			user: users.User{
+				UserDB: db.UserDB{
+					FirstName: "cj",
+					Username:  "cj43",
+					Email:     "cj43@gmail.com",
+					ImageURL:  "amazon.cdn.com",
+					ID:        1,
+				},
 			},
 			statusCode: http.StatusBadRequest,
 		},
 		{
 			testName: `request missing username`,
-			reqData: newUserReq{
-				FirstName: "cj",
-				LastName:  "johnson",
-				Email:     "cj43@gmail.com",
-				ImageURL:  "amazon.cdn.com",
-				ID:        1,
+			user: users.User{
+				UserDB: db.UserDB{
+					FirstName: "cj",
+					LastName:  "johnson",
+					Email:     "cj43@gmail.com",
+					ImageURL:  "amazon.cdn.com",
+					ID:        1,
+				},
 			},
 			statusCode: http.StatusBadRequest,
 		},
 		{
 			testName: `request missing email`,
-			reqData: newUserReq{
-				FirstName: "cj",
-				LastName:  "johnson",
-				Username:  "cj43",
-				ImageURL:  "amazon.cdn.com",
-				ID:        1,
+			user: users.User{
+				UserDB: db.UserDB{
+					FirstName: "cj",
+					LastName:  "johnson",
+					Username:  "cj43",
+					ImageURL:  "amazon.cdn.com",
+					ID:        1,
+				},
 			},
 			statusCode: http.StatusBadRequest,
 		},
@@ -205,7 +209,7 @@ func TestLoginHandler(t *testing.T) {
 
 	for _, table := range tables {
 		t.Run(table.testName, func(t *testing.T) {
-			bodyJSON, err := json.Marshal(&table.reqData)
+			bodyJSON, err := json.Marshal(&table.user)
 			if err != nil {
 				t.Errorf("failed to marshal req body: %v", err)
 			}
