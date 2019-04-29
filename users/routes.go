@@ -38,7 +38,7 @@ func Routes(env *c.Env) *chi.Mux {
 	router.Post("/login/", GetLoginHandler(env))
 	router.Post("/logout/", GetLogoutHandler(env))
 	router.Post("/", GetCreateUserHandler(env))
-	router.Delete("/{userID}", getDeleteUserHandler(env))
+	router.Delete("/{userID}", GetDeleteUserHandler(env))
 	router.Patch("/{userID}", getUpdateUserHandler(env))
 
 	return router

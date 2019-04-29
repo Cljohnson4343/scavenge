@@ -5,6 +5,7 @@ package users_test
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -254,8 +255,6 @@ func TestLogoutHandler(t *testing.T) {
 	}
 }
 
-var newUsers []int
-
 func TestCreateUserHandler(t *testing.T) {
 	cases := []struct {
 		name       string
@@ -376,9 +375,6 @@ func TestCreateUserHandler(t *testing.T) {
 					t.Errorf("error decoding response: %v", err)
 				}
 
-				// keep up with all the ids of newly created users for other tests
-				newUsers = append(newUsers, nu.ID)
-
 				if nu.ID == 0 {
 					t.Error("expected new user ID to be returned")
 				}
@@ -410,6 +406,85 @@ func TestCreateUserHandler(t *testing.T) {
 				if nu.LastName != c.reqData.LastName {
 					t.Error("expected new user LastName to be the same")
 				}
+			}
+		})
+	}
+}
+
+func TestDeleteUserHandler(t *testing.T) {
+	cases := []struct {
+		name        string
+		newUserData newUserReq
+		withNewUser bool
+		statusCode  int
+	}{
+		{
+			name: `delete existing user`,
+			newUserData: newUserReq{
+				FirstName: "Delete",
+				LastName:  "User II",
+				Username:  "delete_user_43",
+				Email:     "delete433@gmail.com",
+				ImageURL:  "amazon.cdn.com",
+			},
+			statusCode:  http.StatusOK,
+			withNewUser: true,
+		},
+		{
+			name:        `non-existing user`,
+			newUserData: newUserReq{},
+			statusCode:  http.StatusBadRequest,
+			withNewUser: false,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			userID := 0
+
+			if c.withNewUser {
+				bodyBuf, err := json.Marshal(&c.newUserData)
+				if err != nil {
+					t.Errorf("error marshalling user data: %v", err)
+					t.FailNow()
+				}
+
+				req, err := http.NewRequest("POST", "/", bytes.NewReader(bodyBuf))
+				if err != nil {
+					t.Errorf("error getting a new request: %v", err)
+					t.FailNow()
+				}
+
+				res := serveAndReturnResponse(users.GetCreateUserHandler(env), req)
+				resBody := getBody(t, res)
+
+				if res.StatusCode != http.StatusOK {
+					t.Errorf("error creating user: %s", resBody)
+					t.FailNow()
+				}
+
+				resStruct := struct {
+					ID int `json:"id"`
+				}{}
+
+				err = json.Unmarshal([]byte(resBody), &resStruct)
+				if err != nil {
+					t.Errorf("error unmarshalling response string: %v", err)
+				}
+
+				userID = resStruct.ID
+			}
+
+			req, err := http.NewRequest("DELETE", fmt.Sprintf("/%d", userID), nil)
+			if err != nil {
+				t.Errorf("error getting new request: %v", err)
+				t.FailNow()
+			}
+			res := serveAndReturnResponse(users.Routes(env), req)
+			resBody := getBody(t, res)
+
+			if res.StatusCode != c.statusCode {
+				t.Errorf("expected status code %d got %d: %s", c.statusCode, res.StatusCode, resBody)
 			}
 		})
 	}

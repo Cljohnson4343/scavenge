@@ -138,9 +138,9 @@ func getSelectUserHandler(env *c.Env) http.HandlerFunc {
 	}
 }
 
-// swagger:route DELETE /users/{userID} delete user getDeleteUserHandler
+// GetDeleteUserHandler deletes the user with the given id.
 //
-// Deletes the user with the given id.
+// swagger:route DELETE /users/{userID} delete user GetDeleteUserHandler
 //
 // Consumes:
 // 	- application/json
@@ -153,7 +153,7 @@ func getSelectUserHandler(env *c.Env) http.HandlerFunc {
 // Responses:
 // 	200:
 //  400:
-func getDeleteUserHandler(env *c.Env) http.HandlerFunc {
+func GetDeleteUserHandler(env *c.Env) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID, e := request.GetIntURLParam(r, "userID")
 		if e != nil {
