@@ -60,6 +60,13 @@ func GetTeam(teamID int) (*Team, *response.Error) {
 
 // InsertTeam inserts a Team into the db
 func InsertTeam(team *Team) *response.Error {
+	// inserting a team that has a non-zero id is not valid
+	if team.ID != 0 {
+		return response.NewError(
+			http.StatusBadRequest,
+			"id: can not provide id when creating team",
+		)
+	}
 	return team.Insert()
 }
 

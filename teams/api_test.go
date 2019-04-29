@@ -85,6 +85,17 @@ func TestCreateTeamHandler(t *testing.T) {
 			},
 			statusCode: http.StatusBadRequest,
 		},
+		{
+			name: "add team with ID",
+			team: teams.Team{
+				TeamDB: db.TeamDB{
+					HuntID: hunt.ID,
+					Name:   "team 2",
+					ID:     1,
+				},
+			},
+			statusCode: http.StatusBadRequest,
+		},
 	}
 
 	for _, c := range cases {
