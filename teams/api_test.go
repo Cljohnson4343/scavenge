@@ -526,6 +526,69 @@ func TestCreateMediaHandler(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "invalid media team id",
+			code: http.StatusBadRequest,
+			media: db.MediaMetaDB{
+				TeamID: 0,
+				ItemID: item.ID,
+				URL:    "amazon.com/cdn/media",
+				Location: db.LocationDB{
+					TimeStamp: time.Now().AddDate(0, 0, -3),
+					Latitude:  34.730705,
+					Longitude: -86.59481,
+					TeamID:    team.ID,
+				},
+			},
+		},
+		{
+			name: "invalid team id for location",
+			code: http.StatusBadRequest,
+			media: db.MediaMetaDB{
+				TeamID: team.ID,
+				ItemID: item.ID,
+				URL:    "amazon.com/cdn/media",
+				Location: db.LocationDB{
+					TimeStamp: time.Now().AddDate(0, 0, -3),
+					Latitude:  34.730705,
+					Longitude: -86.59481,
+					TeamID:    0,
+				},
+			},
+		},
+		{
+			name: "with media id",
+			code: http.StatusBadRequest,
+			media: db.MediaMetaDB{
+				TeamID: team.ID,
+				ID:     43,
+				ItemID: item.ID,
+				URL:    "amazon.com/cdn/media",
+				Location: db.LocationDB{
+					TimeStamp: time.Now().AddDate(0, 0, -3),
+					Latitude:  34.730705,
+					Longitude: -86.59481,
+					TeamID:    0,
+				},
+			},
+		},
+		{
+			name: "with location id",
+			code: http.StatusBadRequest,
+			media: db.MediaMetaDB{
+				TeamID: team.ID,
+				ID:     43,
+				ItemID: item.ID,
+				URL:    "amazon.com/cdn/media",
+				Location: db.LocationDB{
+					ID:        43,
+					TimeStamp: time.Now().AddDate(0, 0, -3),
+					Latitude:  34.730705,
+					Longitude: -86.59481,
+					TeamID:    0,
+				},
+			},
+		},
 	}
 
 	for _, c := range cases {

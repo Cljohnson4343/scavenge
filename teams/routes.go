@@ -51,7 +51,7 @@ func Routes(env *c.Env) *chi.Mux {
 
 	// media routes
 	router.Get("/{teamID}/media/", getMediaForTeamHandler(env))
-	router.Post("/{teamID}/media/", createMediaHandler(env))
+	router.Post("/{teamID}/media/", createMediaHandler(env)) // tested
 	router.Delete("/{teamID}/media/{mediaID}", deleteMediaHandler(env))
 	router.Post("/populate/", populateMediaDBHandler(env))
 
