@@ -5,6 +5,7 @@ import (
 
 	"github.com/asaskevich/govalidator"
 	"github.com/cljohnson4343/scavenge/response"
+	"github.com/lib/pq"
 )
 
 // MediaMetaDB is info  associated with a media file
@@ -120,7 +121,7 @@ func (m *MediaMetaDB) Insert(teamID int) *response.Error {
 		m.Location.Longitude, m.Location.TimeStamp, m.TeamID, m.ItemID,
 		m.URL).Scan(&m.Location.ID, &m.ID)
 	if err != nil {
-		return response.NewErrorf(http.StatusInternalServerError, "error inserting media meta info with team %d: %v", teamID, err)
+		return m.ParseError(err, "insert")
 	}
 
 	return nil
@@ -170,4 +171,35 @@ func GetTeamPoints(teamID int) (int, *response.Error) {
 	}
 
 	return pts, nil
+}
+
+// ParseError maps a pq driver error to a response.Error
+func (m *MediaMetaDB) ParseError(err error, op string) *response.Error {
+	pqErr, ok := err.(*pq.Error)
+	if ok {
+		if pqErr.Constraint != "" {
+			switch pqErr.Constraint {
+			case "media_item_id_fkey":
+				return response.NewErrorf(
+					http.StatusBadRequest,
+					"item_id: item %d does not exist",
+					m.ItemID,
+				)
+			case "media_location_id_fkey":
+				return response.NewErrorf(
+					http.StatusBadRequest,
+					"location.id: location %d does not exist",
+					m.Location.ID,
+				)
+			case "media_team_id_fkey":
+				return response.NewErrorf(
+					http.StatusBadRequest,
+					"team_id: team %d does not exist",
+					m.TeamID,
+				)
+			}
+		}
+	}
+
+	return m.Location.ParseError(err, op)
 }

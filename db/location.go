@@ -6,6 +6,7 @@ import (
 
 	"github.com/asaskevich/govalidator"
 	"github.com/cljohnson4343/scavenge/response"
+	"github.com/lib/pq"
 )
 
 // A LocationDB is a representation of a row in the locations table
@@ -96,14 +97,16 @@ var locationInsertScript = `
 func (l *LocationDB) Insert(teamID int) *response.Error {
 	// make sure that the location's teamID and teamID match
 	if l.TeamID != teamID {
-		return response.NewErrorf(http.StatusBadRequest, "team_id: team_id must match the URL team id %d", teamID)
-
+		return response.NewErrorf(
+			http.StatusBadRequest,
+			"team_id: team_id must match the URL team id %d",
+			teamID,
+		)
 	}
 
 	err := stmtMap["locationInsert"].QueryRow(l.TeamID, l.Latitude, l.Longitude, l.TimeStamp).Scan(&l.ID)
 	if err != nil {
-		return response.NewErrorf(http.StatusInternalServerError, "error inserting location: %s", err.Error())
-
+		return l.ParseError(err, "insert")
 	}
 
 	return nil
@@ -133,4 +136,33 @@ func DeleteLocation(id int, teamID int) *response.Error {
 	}
 
 	return nil
+}
+
+// ParseError maps a pq driver error to a response.Error that provides client with
+// the info they need.
+func (l *LocationDB) ParseError(err error, op string) *response.Error {
+	pqErr, ok := err.(*pq.Error)
+	if ok {
+		if pqErr.Constraint != "" {
+			switch pqErr.Constraint {
+			case "team_same_loc_and_time":
+				return response.NewError(
+					http.StatusBadRequest,
+					"location and time: same time and location as existing location",
+				)
+			case "locations_team_id_fkey":
+				return response.NewErrorf(
+					http.StatusBadRequest,
+					"team_id: no team with id %d",
+					l.TeamID,
+				)
+			}
+		}
+	}
+
+	return response.NewErrorf(
+		http.StatusInternalServerError,
+		"error performing operation %s on location",
+		op,
+	)
 }

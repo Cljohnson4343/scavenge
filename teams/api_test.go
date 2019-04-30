@@ -476,6 +476,7 @@ func TestCreateMediaHandler(t *testing.T) {
 	}
 	apitest.CreateItem(&item, env, sessionCookie)
 
+	duplicatTime := time.Now().AddDate(0, 0, -2)
 	cases := []struct {
 		name  string
 		code  int
@@ -489,6 +490,36 @@ func TestCreateMediaHandler(t *testing.T) {
 				URL:    "amazon.com/cdn/media",
 				Location: db.LocationDB{
 					TimeStamp: time.Now().AddDate(0, 0, -1),
+					Latitude:  34.730705,
+					Longitude: -86.59481,
+					TeamID:    team.ID,
+				},
+			},
+		},
+		{
+			name: "valid team with item id",
+			code: http.StatusOK,
+			media: db.MediaMetaDB{
+				TeamID: team.ID,
+				ItemID: item.ID,
+				URL:    "amazon.com/cdn/media",
+				Location: db.LocationDB{
+					TimeStamp: duplicatTime,
+					Latitude:  34.730705,
+					Longitude: -86.59481,
+					TeamID:    team.ID,
+				},
+			},
+		},
+		{
+			name: "same location and timestamp",
+			code: http.StatusBadRequest,
+			media: db.MediaMetaDB{
+				TeamID: team.ID,
+				ItemID: item.ID,
+				URL:    "amazon.com/cdn/media",
+				Location: db.LocationDB{
+					TimeStamp: duplicatTime,
 					Latitude:  34.730705,
 					Longitude: -86.59481,
 					TeamID:    team.ID,
@@ -526,24 +557,26 @@ func TestCreateMediaHandler(t *testing.T) {
 				}
 
 				t.Fatalf(
-					"expected code %d got %d: %v",
+					"expected code %d got %d: %s",
 					c.code,
 					res.StatusCode,
 					resBody,
 				)
 			}
 
-			err = json.NewDecoder(res.Body).Decode(&c.media)
-			if err != nil {
-				t.Fatalf("error decoding res body: %v", err)
-			}
+			if c.code == http.StatusOK {
+				err = json.NewDecoder(res.Body).Decode(&c.media)
+				if err != nil {
+					t.Fatalf("error decoding res body: %v", err)
+				}
 
-			if c.media.ID == 0 {
-				t.Errorf("expected media id to be returned")
-			}
+				if c.media.ID == 0 {
+					t.Errorf("expected media id to be returned")
+				}
 
-			if c.media.Location.ID == 0 {
-				t.Errorf("expected location id to be returned")
+				if c.media.Location.ID == 0 {
+					t.Errorf("expected location id to be returned")
+				}
 			}
 		})
 	}
