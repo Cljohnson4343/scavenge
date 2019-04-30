@@ -1144,3 +1144,164 @@ func TestDeleteLocationHandler(t *testing.T) {
 		})
 	}
 }
+
+func TestGetLocationsForTeamHandler(t *testing.T) {
+	team := teams.Team{
+		TeamDB: db.TeamDB{
+			Name:   "Get locations for team",
+			HuntID: hunt.ID,
+		},
+	}
+	apitest.CreateTeam(&team, env, sessionCookie)
+
+	locations := []db.LocationDB{
+		{
+			TimeStamp: time.Now().AddDate(0, 0, -1),
+			Latitude:  34.730705,
+			Longitude: -86.59481,
+			TeamID:    team.ID,
+		},
+		{
+			TimeStamp: time.Now().AddDate(0, -1, 0),
+			Latitude:  34.730705,
+			Longitude: -86.59481,
+			TeamID:    team.ID,
+		},
+		{
+			TimeStamp: time.Now().AddDate(0, 0, -3),
+			Latitude:  34.730705,
+			Longitude: -86.59481,
+			TeamID:    team.ID,
+		},
+		{
+			TimeStamp: time.Now().AddDate(0, 0, -4),
+			Latitude:  34.730705,
+			Longitude: -86.59481,
+			TeamID:    team.ID,
+		},
+		{
+			TimeStamp: time.Now().AddDate(0, 0, -5),
+			Latitude:  34.730705,
+			Longitude: -86.59481,
+			TeamID:    team.ID,
+		},
+		{
+			TimeStamp: time.Now().AddDate(0, 0, -6),
+			Latitude:  34.730705,
+			Longitude: -86.59481,
+			TeamID:    team.ID,
+		},
+		{
+			TimeStamp: time.Now().AddDate(0, 0, -7),
+			Latitude:  34.730705,
+			Longitude: -86.59481,
+			TeamID:    team.ID,
+		},
+		{
+			TimeStamp: time.Now().AddDate(0, 0, -8),
+			Latitude:  34.730705,
+			Longitude: -86.59481,
+			TeamID:    team.ID,
+		},
+		{
+			TimeStamp: time.Now().AddDate(0, 0, -9),
+			Latitude:  34.730705,
+			Longitude: -86.59481,
+			TeamID:    team.ID,
+		},
+		{
+			TimeStamp: time.Now().AddDate(0, 0, -10),
+			Latitude:  34.730705,
+			Longitude: -86.59481,
+			TeamID:    team.ID,
+		},
+		{
+			TimeStamp: time.Now().AddDate(0, 0, -11),
+			Latitude:  34.730705,
+			Longitude: -86.59481,
+			TeamID:    team.ID,
+		},
+		{
+			TimeStamp: time.Now().AddDate(0, 0, -12),
+			Latitude:  34.730705,
+			Longitude: -86.59481,
+			TeamID:    team.ID,
+		},
+		{
+			TimeStamp: time.Now().AddDate(0, 0, -13),
+			Latitude:  34.730705,
+			Longitude: -86.59481,
+			TeamID:    team.ID,
+		},
+		{
+			TimeStamp: time.Now().AddDate(0, 0, -14),
+			Latitude:  34.730705,
+			Longitude: -86.59481,
+			TeamID:    team.ID,
+		},
+	}
+	for _, l := range locations {
+		apitest.CreateLocation(&l, env, sessionCookie)
+	}
+
+	cases := []struct {
+		name              string
+		code              int
+		teamID            int
+		returnedLocations int
+	}{
+		{
+			name:              "valid team",
+			code:              http.StatusOK,
+			teamID:            team.ID,
+			returnedLocations: len(locations),
+		},
+		{
+			name:              "invalid team",
+			code:              http.StatusOK,
+			teamID:            434343,
+			returnedLocations: 0,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			req, err := http.NewRequest(
+				"GET",
+				fmt.Sprintf("/%d/locations/", c.teamID),
+				nil,
+			)
+			if err != nil {
+				t.Fatalf("error getting new request: %v", err)
+			}
+			req.AddCookie(sessionCookie)
+
+			rr := httptest.NewRecorder()
+			handler := teams.Routes(env)
+			handler.ServeHTTP(rr, req)
+			res := rr.Result()
+
+			if res.StatusCode != c.code {
+				resBody, err := ioutil.ReadAll(res.Body)
+				if err != nil {
+					t.Errorf("error reading the response body: %v", err)
+				}
+				t.Fatalf("expected code %d got %d: %s", c.code, res.StatusCode, resBody)
+			}
+
+			got := make([]db.LocationDB, 0, len(locations))
+			err = json.NewDecoder(res.Body).Decode(&got)
+			if err != nil {
+				t.Fatalf("error decoding the response body: %v", err)
+			}
+
+			if c.returnedLocations != len(got) {
+				t.Errorf(
+					"expected %d locations to be returned but got %d",
+					c.returnedLocations,
+					len(got),
+				)
+			}
+		})
+	}
+}
