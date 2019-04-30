@@ -878,3 +878,85 @@ func TestGetMediaForTeamHandler(t *testing.T) {
 		})
 	}
 }
+
+func TestDeleteMediaHandler(t *testing.T) {
+	team := teams.Team{
+		TeamDB: db.TeamDB{
+			Name:   "Delete media team",
+			HuntID: hunt.ID,
+		},
+	}
+	apitest.CreateTeam(&team, env, sessionCookie)
+
+	media := db.MediaMetaDB{
+		TeamID: team.ID,
+		URL:    "amazon.com/cdn/media",
+		Location: db.LocationDB{
+			TimeStamp: time.Now().AddDate(0, 0, -1),
+			Latitude:  34.730705,
+			Longitude: -86.59481,
+			TeamID:    team.ID,
+		},
+	}
+	apitest.CreateMedia(&media, env, sessionCookie)
+
+	cases := []struct {
+		name    string
+		code    int
+		mediaID int
+		teamID  int
+	}{
+		{
+			name:    "invalid team and valid media",
+			code:    http.StatusBadRequest,
+			mediaID: media.ID,
+			teamID:  4343,
+		},
+		{
+			name:    "valid team and invalid media",
+			code:    http.StatusBadRequest,
+			mediaID: 434343,
+			teamID:  team.ID,
+		},
+		{
+			name:    "invalid team and invalid media",
+			code:    http.StatusBadRequest,
+			mediaID: 434343,
+			teamID:  43434343,
+		},
+		{
+			name:    "valid team and media",
+			code:    http.StatusOK,
+			mediaID: media.ID,
+			teamID:  team.ID,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			req, err := http.NewRequest(
+				"DELETE",
+				fmt.Sprintf("/%d/media/%d", c.teamID, c.mediaID),
+				nil,
+			)
+			if err != nil {
+				t.Fatalf("error getting new request: %v", err)
+			}
+			req.AddCookie(sessionCookie)
+
+			rr := httptest.NewRecorder()
+			handler := teams.Routes(env)
+			handler.ServeHTTP(rr, req)
+			res := rr.Result()
+
+			if res.StatusCode != c.code {
+				resBody, err := ioutil.ReadAll(res.Body)
+				if err != nil {
+					t.Errorf("error reading response body: %v", err)
+				}
+
+				t.Fatalf("expected code %d got %d: %s", c.code, res.StatusCode, resBody)
+			}
+		})
+	}
+}
