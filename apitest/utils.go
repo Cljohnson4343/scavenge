@@ -258,3 +258,48 @@ func CreateMedia(m *db.MediaMetaDB, env *c.Env, cookie *http.Cookie) {
 	}
 
 }
+
+// CreateLocation creates a location. panics on any errors.
+func CreateLocation(l *db.LocationDB, env *c.Env, cookie *http.Cookie) {
+	reqBody, err := json.Marshal(l)
+	if err != nil {
+		panic(fmt.Sprintf("error marshalling req data: %v", err))
+	}
+
+	req, err := http.NewRequest(
+		"POST",
+		fmt.Sprintf("/%d/locations/", l.TeamID),
+		bytes.NewReader(reqBody),
+	)
+	if err != nil {
+		panic(fmt.Sprintf("error getting new request: %v", err))
+	}
+	req.AddCookie(cookie)
+
+	rr := httptest.NewRecorder()
+	handler := teams.Routes(env)
+	handler.ServeHTTP(rr, req)
+	res := rr.Result()
+
+	if res.StatusCode != http.StatusOK {
+		resBody, err := ioutil.ReadAll(res.Body)
+		if err != nil {
+			panic(fmt.Sprintf("error reading response: %v", err))
+		}
+		panic(fmt.Sprintf(
+			"expected code %d got %d: %s",
+			http.StatusOK,
+			res.StatusCode,
+			resBody),
+		)
+	}
+
+	err = json.NewDecoder(res.Body).Decode(l)
+	if err != nil {
+		panic(fmt.Sprintf("error decoding response: %v", err))
+	}
+
+	if l.ID == 0 {
+		panic("expected id to be returned")
+	}
+}

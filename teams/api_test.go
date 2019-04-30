@@ -1068,3 +1068,79 @@ func TestCreateLocationHandler(t *testing.T) {
 		})
 	}
 }
+
+func TestDeleteLocationHandler(t *testing.T) {
+	team := teams.Team{
+		TeamDB: db.TeamDB{
+			Name:   "delete location team",
+			HuntID: hunt.ID,
+		},
+	}
+	apitest.CreateTeam(&team, env, sessionCookie)
+
+	location := db.LocationDB{
+		TimeStamp: time.Now().AddDate(0, 0, -1),
+		Latitude:  34.730705,
+		Longitude: -86.59481,
+		TeamID:    team.ID,
+	}
+	apitest.CreateLocation(&location, env, sessionCookie)
+
+	cases := []struct {
+		name       string
+		code       int
+		teamID     int
+		locationID int
+	}{
+		{
+			name:       "invalid team and valid location",
+			code:       http.StatusBadRequest,
+			teamID:     4343,
+			locationID: location.ID,
+		},
+		{
+			name:       "invalid team and location",
+			code:       http.StatusBadRequest,
+			teamID:     434343,
+			locationID: 4343,
+		},
+		{
+			name:       "valid team and invalid location",
+			code:       http.StatusBadRequest,
+			teamID:     team.ID,
+			locationID: 4343,
+		},
+		{
+			name:       "valid team and location",
+			code:       http.StatusOK,
+			teamID:     team.ID,
+			locationID: location.ID,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			req, err := http.NewRequest(
+				"DELETE",
+				fmt.Sprintf("/%d/locations/%d", c.teamID, c.locationID),
+				nil,
+			)
+			if err != nil {
+				t.Fatalf("error getting new request: %v", err)
+			}
+			req.AddCookie(sessionCookie)
+			rr := httptest.NewRecorder()
+			handler := teams.Routes(env)
+			handler.ServeHTTP(rr, req)
+			res := rr.Result()
+
+			if res.StatusCode != c.code {
+				resBody, err := ioutil.ReadAll(res.Body)
+				if err != nil {
+					t.Errorf("error reading the response body: %v", err)
+				}
+				t.Fatalf("expected code %d got %d: %v", c.code, res.StatusCode, resBody)
+			}
+		})
+	}
+}
