@@ -960,3 +960,111 @@ func TestDeleteMediaHandler(t *testing.T) {
 		})
 	}
 }
+
+func TestCreateLocationHandler(t *testing.T) {
+	team := teams.Team{
+		TeamDB: db.TeamDB{
+			Name:   "create location team",
+			HuntID: hunt.ID,
+		},
+	}
+	apitest.CreateTeam(&team, env, sessionCookie)
+
+	cases := []struct {
+		name     string
+		code     int
+		location db.LocationDB
+	}{
+		{
+			name: "valid team",
+			code: http.StatusOK,
+			location: db.LocationDB{
+				TimeStamp: time.Now().AddDate(0, 0, -1),
+				Latitude:  34.730705,
+				Longitude: -86.59481,
+				TeamID:    team.ID,
+			},
+		},
+		{
+			name: "without team id",
+			code: http.StatusBadRequest,
+			location: db.LocationDB{
+				TimeStamp: time.Now().AddDate(0, 0, -1),
+				Latitude:  34.730705,
+				Longitude: -86.59481,
+			},
+		},
+		{
+			name: "time stamp in the future",
+			code: http.StatusBadRequest,
+			location: db.LocationDB{
+				TimeStamp: time.Now().AddDate(0, 0, 1),
+				Latitude:  34.730705,
+				Longitude: -86.59481,
+				TeamID:    team.ID,
+			},
+		},
+		{
+			name: "no longitude",
+			code: http.StatusBadRequest,
+			location: db.LocationDB{
+				TimeStamp: time.Now().AddDate(0, 0, -2),
+				Latitude:  34.730705,
+				TeamID:    team.ID,
+			},
+		},
+		{
+			name: "no latitude",
+			code: http.StatusBadRequest,
+			location: db.LocationDB{
+				TimeStamp: time.Now().AddDate(0, 0, -4),
+				Longitude: -86.59481,
+				TeamID:    team.ID,
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			reqBody, err := json.Marshal(&c.location)
+			if err != nil {
+				t.Fatalf("error marshalling the request data: %v", err)
+			}
+
+			req, err := http.NewRequest(
+				"POST",
+				fmt.Sprintf("/%d/locations/", c.location.TeamID),
+				bytes.NewReader(reqBody),
+			)
+			if err != nil {
+				t.Fatalf("error getting new request: %v", err)
+			}
+			req.AddCookie(sessionCookie)
+
+			rr := httptest.NewRecorder()
+			handler := teams.Routes(env)
+			handler.ServeHTTP(rr, req)
+			res := rr.Result()
+
+			if res.StatusCode != c.code {
+				resBody, err := ioutil.ReadAll(res.Body)
+				if err != nil {
+					t.Errorf("error reading response body: %v", err)
+				}
+
+				t.Fatalf("expected code %d got %d: %s", c.code, res.StatusCode, resBody)
+			}
+
+			if c.code == http.StatusOK {
+				err = json.NewDecoder(res.Body).Decode(&c.location)
+				if err != nil {
+					t.Fatalf("error decoding response: %v", err)
+				}
+
+				if c.location.ID == 0 {
+					t.Errorf("expected location id to be returned")
+				}
+			}
+		})
+	}
+}

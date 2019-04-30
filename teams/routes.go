@@ -46,13 +46,13 @@ func Routes(env *c.Env) *chi.Mux {
 
 	// location routes
 	router.Get("/{teamID}/locations/", getLocationsForTeamHandler(env))
-	router.Post("/{teamID}/locations/", createLocationHandler(env))
+	router.Post("/{teamID}/locations/", createLocationHandler(env)) // tested
 	router.Delete("/{teamID}/locations/{locationID}", deleteLocationHandler(env))
 
 	// media routes
-	router.Get("/{teamID}/media/", getMediaForTeamHandler(env)) // tested
-	router.Post("/{teamID}/media/", createMediaHandler(env))    // tested
-	router.Delete("/{teamID}/media/{mediaID}", deleteMediaHandler(env))
+	router.Get("/{teamID}/media/", getMediaForTeamHandler(env))         // tested
+	router.Post("/{teamID}/media/", createMediaHandler(env))            // tested
+	router.Delete("/{teamID}/media/{mediaID}", deleteMediaHandler(env)) // tested
 	router.Post("/populate/", populateMediaDBHandler(env))
 
 	return router
