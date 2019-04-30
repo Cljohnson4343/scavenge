@@ -658,3 +658,223 @@ func compareTeams(t *testing.T, expected *teams.Team, got *teams.Team) {
 		t.Errorf("expected name to be %s got %s", expected.Name, got.Name)
 	}
 }
+
+func TestGetMediaForTeamHandler(t *testing.T) {
+	team := teams.Team{
+		TeamDB: db.TeamDB{
+			Name:   "Get media team",
+			HuntID: hunt.ID,
+		},
+	}
+	apitest.CreateTeam(&team, env, sessionCookie)
+
+	media := []db.MediaMetaDB{
+		{
+			TeamID: team.ID,
+			URL:    "amazon.com/cdn/media",
+			Location: db.LocationDB{
+				TimeStamp: time.Now().AddDate(0, 0, -1),
+				Latitude:  34.730705,
+				Longitude: -86.59481,
+				TeamID:    team.ID,
+			},
+		},
+		{
+			TeamID: team.ID,
+			URL:    "amazon.com/cdn/media",
+			Location: db.LocationDB{
+				TimeStamp: time.Now().AddDate(0, -1, 0),
+				Latitude:  34.730705,
+				Longitude: -86.59481,
+				TeamID:    team.ID,
+			},
+		},
+		{
+			TeamID: team.ID,
+			URL:    "amazon.com/cdn/media",
+			Location: db.LocationDB{
+				TimeStamp: time.Now().AddDate(0, 0, -3),
+				Latitude:  34.730705,
+				Longitude: -86.59481,
+				TeamID:    team.ID,
+			},
+		},
+		{
+			TeamID: team.ID,
+			URL:    "amazon.com/cdn/media",
+			Location: db.LocationDB{
+				TimeStamp: time.Now().AddDate(0, 0, -4),
+				Latitude:  34.730705,
+				Longitude: -86.59481,
+				TeamID:    team.ID,
+			},
+		},
+		{
+			TeamID: team.ID,
+			URL:    "amazon.com/cdn/media",
+			Location: db.LocationDB{
+				TimeStamp: time.Now().AddDate(0, 0, -5),
+				Latitude:  34.730705,
+				Longitude: -86.59481,
+				TeamID:    team.ID,
+			},
+		},
+		{
+			TeamID: team.ID,
+			URL:    "amazon.com/cdn/media",
+			Location: db.LocationDB{
+				TimeStamp: time.Now().AddDate(0, 0, -6),
+				Latitude:  34.730705,
+				Longitude: -86.59481,
+				TeamID:    team.ID,
+			},
+		},
+		{
+			TeamID: team.ID,
+			URL:    "amazon.com/cdn/media",
+			Location: db.LocationDB{
+				TimeStamp: time.Now().AddDate(0, 0, -7),
+				Latitude:  34.730705,
+				Longitude: -86.59481,
+				TeamID:    team.ID,
+			},
+		},
+		{
+			TeamID: team.ID,
+			URL:    "amazon.com/cdn/media",
+			Location: db.LocationDB{
+				TimeStamp: time.Now().AddDate(0, 0, -8),
+				Latitude:  34.730705,
+				Longitude: -86.59481,
+				TeamID:    team.ID,
+			},
+		},
+		{
+			TeamID: team.ID,
+			URL:    "amazon.com/cdn/media",
+			Location: db.LocationDB{
+				TimeStamp: time.Now().AddDate(0, 0, -9),
+				Latitude:  34.730705,
+				Longitude: -86.59481,
+				TeamID:    team.ID,
+			},
+		},
+		{
+			TeamID: team.ID,
+			URL:    "amazon.com/cdn/media",
+			Location: db.LocationDB{
+				TimeStamp: time.Now().AddDate(0, 0, -10),
+				Latitude:  34.730705,
+				Longitude: -86.59481,
+				TeamID:    team.ID,
+			},
+		},
+		{
+			TeamID: team.ID,
+			URL:    "amazon.com/cdn/media",
+			Location: db.LocationDB{
+				TimeStamp: time.Now().AddDate(0, 0, -11),
+				Latitude:  34.730705,
+				Longitude: -86.59481,
+				TeamID:    team.ID,
+			},
+		},
+		{
+			TeamID: team.ID,
+			URL:    "amazon.com/cdn/media",
+			Location: db.LocationDB{
+				TimeStamp: time.Now().AddDate(0, 0, -12),
+				Latitude:  34.730705,
+				Longitude: -86.59481,
+				TeamID:    team.ID,
+			},
+		},
+		{
+			TeamID: team.ID,
+			URL:    "amazon.com/cdn/media",
+			Location: db.LocationDB{
+				TimeStamp: time.Now().AddDate(0, 0, -13),
+				Latitude:  34.730705,
+				Longitude: -86.59481,
+				TeamID:    team.ID,
+			},
+		},
+		{
+			TeamID: team.ID,
+			URL:    "amazon.com/cdn/media",
+			Location: db.LocationDB{
+				TimeStamp: time.Now().AddDate(0, 0, -14),
+				Latitude:  34.730705,
+				Longitude: -86.59481,
+				TeamID:    team.ID,
+			},
+		},
+	}
+	for _, m := range media {
+		apitest.CreateMedia(&m, env, sessionCookie)
+	}
+
+	cases := []struct {
+		name          string
+		code          int
+		teamID        int
+		returnedMedia int
+	}{
+		{
+			name:          "valid team",
+			code:          http.StatusOK,
+			teamID:        team.ID,
+			returnedMedia: len(media),
+		},
+		{
+			name:          "invalid team",
+			code:          http.StatusOK,
+			teamID:        0,
+			returnedMedia: 0,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			req, err := http.NewRequest(
+				"GET",
+				fmt.Sprintf("/%d/media/", c.teamID),
+				nil,
+			)
+			if err != nil {
+				t.Fatalf("error getting new request: %v", err)
+			}
+			req.AddCookie(sessionCookie)
+
+			rr := httptest.NewRecorder()
+			handler := teams.Routes(env)
+			handler.ServeHTTP(rr, req)
+
+			res := rr.Result()
+			if res.StatusCode != c.code {
+				resBody, err := ioutil.ReadAll(res.Body)
+				if err != nil {
+					t.Errorf("error reading res body: %v", err)
+				}
+
+				t.Fatalf("expected code %d got %d: %s", c.code, res.StatusCode, resBody)
+			}
+
+			got := make([]db.MediaMetaDB, 0, len(media))
+			err = json.NewDecoder(res.Body).Decode(&got)
+			if err != nil {
+				t.Fatalf("error decoding the response body: %v", err)
+			}
+
+			if c.code == http.StatusOK {
+				if len(got) != c.returnedMedia {
+					t.Errorf(
+						"expected to recieve %d media entities got %d",
+						c.returnedMedia,
+						len(got),
+					)
+				}
+			}
+		})
+	}
+}

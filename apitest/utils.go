@@ -9,6 +9,8 @@ import (
 	"net/http/httptest"
 	"time"
 
+	"github.com/cljohnson4343/scavenge/db"
+
 	c "github.com/cljohnson4343/scavenge/config"
 	"github.com/cljohnson4343/scavenge/hunts"
 	"github.com/cljohnson4343/scavenge/hunts/models"
@@ -212,4 +214,47 @@ func CreateItem(i *models.Item, env *c.Env, cookie *http.Cookie) {
 	if i.ID == 0 {
 		panic("expected item id to be returned")
 	}
+}
+
+// CreateMedia creates the given media. panics on any erors
+func CreateMedia(m *db.MediaMetaDB, env *c.Env, cookie *http.Cookie) {
+	reqBody, err := json.Marshal(m)
+	if err != nil {
+		panic(fmt.Sprintf("error marshalling req body: %v", err))
+	}
+
+	req, err := http.NewRequest(
+		"POST",
+		fmt.Sprintf("/%d/media/", m.TeamID),
+		bytes.NewReader(reqBody),
+	)
+	if err != nil {
+		panic(fmt.Sprintf("error getting new request: %v", err))
+	}
+	req.AddCookie(cookie)
+
+	rr := httptest.NewRecorder()
+	handler := teams.Routes(env)
+	handler.ServeHTTP(rr, req)
+
+	res := rr.Result()
+
+	if res.StatusCode != http.StatusOK {
+		resBody, _ := ioutil.ReadAll(res.Body)
+		panic(fmt.Sprintf(
+			"expected return code of 200 got %d: %s",
+			res.StatusCode,
+			resBody),
+		)
+	}
+
+	err = json.NewDecoder(res.Body).Decode(m)
+	if err != nil {
+		panic(fmt.Sprintf("error decoding response body: %v", err))
+	}
+
+	if m.ID == 0 {
+		panic("expected media id to be returned")
+	}
+
 }

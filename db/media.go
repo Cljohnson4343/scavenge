@@ -72,7 +72,12 @@ var mediaMetasForTeamScript = `
 func GetMediaMetasForTeam(teamID int) ([]*MediaMetaDB, *response.Error) {
 	rows, err := stmtMap["mediaMetasForTeam"].Query(teamID)
 	if err != nil {
-		return nil, response.NewErrorf(http.StatusInternalServerError, "error getting all media meta info for team %d: %v", teamID, err)
+		return nil, response.NewErrorf(
+			http.StatusInternalServerError,
+			"error getting all media meta info for team %d: %v",
+			teamID,
+			err,
+		)
 	}
 	defer rows.Close()
 
@@ -82,17 +87,37 @@ func GetMediaMetasForTeam(teamID int) ([]*MediaMetaDB, *response.Error) {
 	for rows.Next() {
 		m := MediaMetaDB{}
 
-		err = rows.Scan(&m.ID, &m.TeamID, &m.ItemID, &m.URL, &m.Location.ID, &m.Location.Latitude,
-			&m.Location.Longitude, &m.Location.TimeStamp, &m.Location.TeamID, &m.Location.ID)
+		err = rows.Scan(
+			&m.ID,
+			&m.TeamID,
+			&m.ItemID,
+			&m.URL,
+			&m.Location.ID,
+			&m.Location.Latitude,
+			&m.Location.Longitude,
+			&m.Location.TimeStamp,
+			&m.Location.TeamID,
+			&m.Location.ID,
+		)
 		if err != nil {
-			e.Addf(http.StatusInternalServerError, "error getting media meta info for team %d: %v", teamID, err)
+			e.Addf(
+				http.StatusInternalServerError,
+				"error getting media meta info for team %d: %v",
+				teamID,
+				err,
+			)
 			break
 		}
 		metas = append(metas, &m)
 	}
 
 	if err = rows.Err(); err != nil {
-		e.Addf(http.StatusInternalServerError, "error getting media meta info for team %d: %v", teamID, err)
+		e.Addf(
+			http.StatusInternalServerError,
+			"error getting media meta info for team %d: %v",
+			teamID,
+			err,
+		)
 	}
 
 	return metas, e.GetError()
