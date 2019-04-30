@@ -17,6 +17,7 @@ import (
 	c "github.com/cljohnson4343/scavenge/config"
 	"github.com/cljohnson4343/scavenge/db"
 	"github.com/cljohnson4343/scavenge/hunts"
+	"github.com/cljohnson4343/scavenge/hunts/models"
 	"github.com/cljohnson4343/scavenge/response"
 	"github.com/cljohnson4343/scavenge/teams"
 	"github.com/cljohnson4343/scavenge/users"
@@ -363,6 +364,186 @@ func TestDeleteTeamHandler(t *testing.T) {
 				}
 
 				t.Fatalf("expoected code %d got %d: %s", c.code, res.StatusCode, resBody)
+			}
+		})
+	}
+}
+
+/*
+func TestPatchTeamHandler(t *testing.T) {
+	team := teams.Team{
+		TeamDB: db.TeamDB{
+			Name:   "Breaking Bad",
+			HuntID: hunt.ID,
+		},
+	}
+	apitest.CreateTeam(&team, env, sessionCookie)
+
+	cases := []struct {
+		name   string
+		code   int
+		update teams.Team
+		id     int
+	}{
+		{
+			name: "update valid team",
+			id:   team.ID,
+			code: http.StatusOK,
+			update: teams.Team{
+				TeamDB: db.TeamDB{
+					Name: "patched team name",
+				},
+			},
+		},
+		{
+			name: "update hunt id",
+			id:   team.ID,
+			code: http.StatusBadRequest,
+			update: teams.Team{
+				TeamDB: db.TeamDB{
+					HuntID: 43,
+				},
+			},
+		},
+		{
+			name: "update id",
+			id:   team.ID,
+			code: http.StatusBadRequest,
+			update: teams.Team{
+				TeamDB: db.TeamDB{
+					ID: 43,
+				},
+			},
+		},
+		{
+			name:   "update invalid team",
+			id:     0,
+			code:   http.StatusBadRequest,
+			update: teams.Team{},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			reqBody, err := json.Marshal(&c.update)
+			if err != nil {
+				t.Fatalf("error marshalling update data: %v", err)
+			}
+
+			req, err := http.NewRequest(
+				"PATCH",
+				fmt.Sprintf("/%d", c.id),
+				bytes.NewReader(reqBody),
+			)
+			if err != nil {
+				t.Fatalf("error getting new request: %v", err)
+			}
+
+			rr := httptest.NewRecorder()
+			handler := teams.Routes(env)
+			handler.ServeHTTP(rr, req)
+			res := rr.Result()
+
+			if res.StatusCode != c.code {
+				resBody, err := ioutil.ReadAll(res.Body)
+				if err != nil {
+					t.Errorf("error reading res body: %v", err)
+				}
+
+				t.Fatalf("expected code %d got %d: %s", c.code, res.StatusCode, resBody)
+			}
+		})
+	}
+
+}
+*/
+
+func TestCreateMediaHandler(t *testing.T) {
+	team := teams.Team{
+		TeamDB: db.TeamDB{
+			Name:   "Create media team",
+			HuntID: hunt.ID,
+		},
+	}
+	apitest.CreateTeam(&team, env, sessionCookie)
+
+	item := models.Item{
+		ItemDB: db.ItemDB{
+			HuntID: hunt.ID,
+			Name:   "easter egg",
+			Points: 43,
+		},
+	}
+	apitest.CreateItem(&item, env, sessionCookie)
+
+	cases := []struct {
+		name  string
+		code  int
+		media db.MediaMetaDB
+	}{
+		{
+			name: "valid team",
+			code: http.StatusOK,
+			media: db.MediaMetaDB{
+				TeamID: team.ID,
+				URL:    "amazon.com/cdn/media",
+				Location: db.LocationDB{
+					TimeStamp: time.Now().AddDate(0, 0, -1),
+					Latitude:  34.730705,
+					Longitude: -86.59481,
+					TeamID:    team.ID,
+				},
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			reqBody, err := json.Marshal(&c.media)
+			if err != nil {
+				t.Fatalf("error marshalling request: %v", err)
+			}
+
+			req, err := http.NewRequest(
+				"POST",
+				fmt.Sprintf("/%d/media/", team.ID),
+				bytes.NewReader(reqBody),
+			)
+			if err != nil {
+				t.Fatalf("error getting new request: %v", err)
+			}
+			req.AddCookie(sessionCookie)
+
+			rr := httptest.NewRecorder()
+			handler := teams.Routes(env)
+			handler.ServeHTTP(rr, req)
+
+			res := rr.Result()
+			if res.StatusCode != c.code {
+				resBody, err := ioutil.ReadAll(res.Body)
+				if err != nil {
+					t.Errorf("error reading res body: %v", err)
+				}
+
+				t.Fatalf(
+					"expected code %d got %d: %v",
+					c.code,
+					res.StatusCode,
+					resBody,
+				)
+			}
+
+			err = json.NewDecoder(res.Body).Decode(&c.media)
+			if err != nil {
+				t.Fatalf("error decoding res body: %v", err)
+			}
+
+			if c.media.ID == 0 {
+				t.Errorf("expected media id to be returned")
+			}
+
+			if c.media.Location.ID == 0 {
+				t.Errorf("expected location id to be returned")
 			}
 		})
 	}

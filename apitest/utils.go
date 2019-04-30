@@ -11,6 +11,7 @@ import (
 
 	c "github.com/cljohnson4343/scavenge/config"
 	"github.com/cljohnson4343/scavenge/hunts"
+	"github.com/cljohnson4343/scavenge/hunts/models"
 	"github.com/cljohnson4343/scavenge/sessions"
 	"github.com/cljohnson4343/scavenge/teams"
 	"github.com/cljohnson4343/scavenge/users"
@@ -169,5 +170,46 @@ func CreateTeam(t *teams.Team, env *c.Env, cookie *http.Cookie) {
 
 	if t.ID == 0 {
 		panic("expected team id to be returned")
+	}
+}
+
+// CreateItem creates an item. panics on any errors.
+func CreateItem(i *models.Item, env *c.Env, cookie *http.Cookie) {
+	reqBody, err := json.Marshal(i)
+	if err != nil {
+		panic(fmt.Sprintf("error marshalling request data: %v", err))
+	}
+
+	req, err := http.NewRequest(
+		"POST",
+		fmt.Sprintf("/%d/items/", i.HuntID),
+		bytes.NewReader(reqBody),
+	)
+	if err != nil {
+		panic(fmt.Sprintf("error getting new request: %v", err))
+	}
+	req.AddCookie(cookie)
+
+	rr := httptest.NewRecorder()
+	handler := hunts.Routes(env)
+	handler.ServeHTTP(rr, req)
+
+	res := rr.Result()
+	if res.StatusCode != http.StatusOK {
+		resBody, err := ioutil.ReadAll(res.Body)
+		if err != nil {
+			panic(fmt.Sprintf("error reading res body: %v", err))
+		}
+
+		panic(fmt.Sprintf("expected code 200 got %d: %s", res.StatusCode, resBody))
+	}
+
+	err = json.NewDecoder(res.Body).Decode(i)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	if i.ID == 0 {
+		panic("expected item id to be returned")
 	}
 }

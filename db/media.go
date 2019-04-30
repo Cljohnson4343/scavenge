@@ -16,8 +16,6 @@ type MediaMetaDB struct {
 	ID int `json:"id" valid:"int,optional"`
 
 	// The id of the item, if available, for the media file described by this object
-	//
-	// required: true
 	ItemID int `json:"item_id" valid:"int,optional"`
 
 	// The id of the team associated with the media file described by this object

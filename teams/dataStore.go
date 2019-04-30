@@ -86,16 +86,30 @@ func UpdateTeam(env *c.Env, team *Team) *response.Error {
 
 	res, err := cmd.Exec(env)
 	if err != nil {
-		return response.NewErrorf(http.StatusInternalServerError, "error updating team %d", team.ID)
+		return response.NewErrorf(
+			http.StatusInternalServerError,
+			"error updating team %d: %v",
+			team.ID,
+			err,
+		)
 	}
 
 	n, err := res.RowsAffected()
 	if err != nil {
-		return response.NewErrorf(http.StatusInternalServerError, "error updating team %d", team.ID)
+		return response.NewErrorf(
+			http.StatusInternalServerError,
+			"error updating team %d: %v",
+			team.ID,
+			err,
+		)
 	}
 
 	if n < 1 {
-		return response.NewErrorf(http.StatusInternalServerError, "team %d was not updated. Check to make sure teamID and huntID are valid", team.ID)
+		return response.NewErrorf(
+			http.StatusInternalServerError,
+			"team %d was not updated. Check to make sure teamID and huntID are valid",
+			team.ID,
+		)
 	}
 
 	return nil

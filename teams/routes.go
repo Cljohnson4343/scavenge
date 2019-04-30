@@ -34,14 +34,14 @@ func Routes(env *c.Env) *chi.Mux {
 	router := chi.NewRouter()
 
 	// /teams routes
-	router.Get("/", getTeamsHandler(env))
-	router.Get("/{teamID}", getTeamHandler(env))
+	router.Get("/", getTeamsHandler(env))        // tested
+	router.Get("/{teamID}", getTeamHandler(env)) // tested
 	router.Get("/{teamID}/points/", getTeamPointsHandler(env))
 	router.Get("/{teamID}/players/", getTeamPlayersHandler(env))
 	router.Post("/{teamID}/join/", getJoinTeamHandler(env))
 	router.Post("/{teamID}/remove/", getRemovePlayersHandler(env))
-	router.Delete("/{teamID}", deleteTeamHandler(env))
-	router.Post("/", createTeamHandler(env))
+	router.Delete("/{teamID}", deleteTeamHandler(env)) // tested
+	router.Post("/", createTeamHandler(env))           // tested
 	router.Patch("/{teamID}", patchTeamHandler(env))
 
 	// location routes
