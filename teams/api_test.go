@@ -1334,6 +1334,14 @@ func TestGetAddPlayerHandler(t *testing.T) {
 		teamID int
 	}{
 		{
+			name:   "invalid user and team",
+			code:   http.StatusBadRequest,
+			teamID: 0,
+			addReq: addPlayerData{
+				PlayerID: 0,
+			},
+		},
+		{
 			name:   "valid user and team",
 			code:   http.StatusOK,
 			teamID: team.ID,

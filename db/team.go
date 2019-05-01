@@ -309,8 +309,8 @@ var teamAddPlayerScript = `
 func TeamAddPlayer(teamID, userID int) *response.Error {
 	res, err := stmtMap["teamAddPlayer"].Exec(teamID, userID)
 	if err != nil {
-		return response.NewErrorf(http.StatusInternalServerError,
-			"TeamAddPlayer: error adding player %d to team %d: %v", userID, teamID, err)
+		team := TeamDB{ID: teamID}
+		return team.ParseError(err, "insert")
 	}
 
 	numRows, err := res.RowsAffected()
@@ -320,7 +320,7 @@ func TeamAddPlayer(teamID, userID int) *response.Error {
 	}
 
 	if numRows < 1 {
-		return response.NewErrorf(http.StatusInternalServerError,
+		return response.NewErrorf(http.StatusBadRequest,
 			"TeamAddPlayer: error adding player %d to team %d", userID, teamID)
 	}
 
@@ -374,6 +374,17 @@ func (t *TeamDB) ParseError(err error, op string) *response.Error {
 					http.StatusBadRequest,
 					"hunt_id: hunt %d does not exist",
 					t.HuntID,
+				)
+			case "users_teams_team_id_fkey":
+				return response.NewErrorf(
+					http.StatusBadRequest,
+					"team_id: team %d does not exist",
+					t.ID,
+				)
+			case "users_teams_user_id_fkey":
+				return response.NewError(
+					http.StatusBadRequest,
+					"user_id: user being added does not exist",
 				)
 			}
 		}
