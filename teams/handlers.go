@@ -589,7 +589,7 @@ func getAddPlayerHandler(env *c.Env) http.HandlerFunc {
 	})
 }
 
-// swagger:route POST /teams/{teamID}/remove/ remove players getRemovePlayersHandler
+// swagger:route DELETE /teams/{teamID}/players/{playerID} remove players getRemovePlayerHandler
 //
 // Gets the handler to remove players from a team.
 //
@@ -605,7 +605,7 @@ func getAddPlayerHandler(env *c.Env) http.HandlerFunc {
 // 	200:
 // 	400:
 // 	404:
-func getRemovePlayersHandler(env *c.Env) http.HandlerFunc {
+func getRemovePlayerHandler(env *c.Env) http.HandlerFunc {
 	return (func(w http.ResponseWriter, r *http.Request) {
 		teamID, e := request.GetIntURLParam(r, "teamID")
 		if e != nil {
@@ -613,19 +613,13 @@ func getRemovePlayersHandler(env *c.Env) http.HandlerFunc {
 			return
 		}
 
-		playerList := struct {
-			Players []int `json:"user_ids"`
-		}{}
-
-		err := json.NewDecoder(r.Body).Decode(&playerList)
-		if err != nil {
-			e := response.NewError(http.StatusBadRequest,
-				"user_ids: a list of user_id are needed to remove players")
+		playerID, e := request.GetIntURLParam(r, "playerID")
+		if e != nil {
 			e.Handle(w)
 			return
 		}
 
-		e = db.TeamRemovePlayers(teamID, playerList.Players)
+		e = db.TeamRemovePlayer(teamID, playerID)
 		if e != nil {
 			e.Handle(w)
 			return

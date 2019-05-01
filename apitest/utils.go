@@ -303,3 +303,44 @@ func CreateLocation(l *db.LocationDB, env *c.Env, cookie *http.Cookie) {
 		panic("expected id to be returned")
 	}
 }
+
+// AddPlayer adds the player with teh given user_id to the given team. Panics
+// on all errors.
+func AddPlayer(playerID, teamID int, env *c.Env, cookie *http.Cookie) {
+	reqData := struct {
+		PlayerID int `json:"id"`
+	}{PlayerID: playerID}
+
+	reqBody, err := json.Marshal(&reqData)
+	if err != nil {
+		panic(fmt.Sprintf("error marshalling req data: %v", err))
+	}
+
+	req, err := http.NewRequest(
+		"POST",
+		fmt.Sprintf("/%d/players/", teamID),
+		bytes.NewReader(reqBody),
+	)
+	if err != nil {
+		panic(fmt.Sprintf("error getting new request: %v", err))
+	}
+
+	rr := httptest.NewRecorder()
+	handler := teams.Routes(env)
+	handler.ServeHTTP(rr, req)
+
+	res := rr.Result()
+
+	if res.StatusCode != http.StatusOK {
+		resBody, err := ioutil.ReadAll(res.Body)
+		if err != nil {
+			panic(fmt.Sprintf("error reading res body: %v", err))
+		}
+		panic(fmt.Sprintf(
+			"expected code %d got %d: %s",
+			http.StatusOK,
+			res.StatusCode,
+			resBody),
+		)
+	}
+}

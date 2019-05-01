@@ -1440,3 +1440,88 @@ func TestGetAddPlayerHandler(t *testing.T) {
 		})
 	}
 }
+
+func TestGetRemovePlayerHandler(t *testing.T) {
+	removePlayerHunt := hunts.Hunt{
+		HuntDB: db.HuntDB{
+			Name:         "Remove players Hunt 43",
+			MaxTeams:     43,
+			StartTime:    time.Now().AddDate(0, 0, 1),
+			EndTime:      time.Now().AddDate(0, 0, 2),
+			LocationName: "Fake Location",
+			Latitude:     34.730705,
+			Longitude:    -86.59481,
+		},
+	}
+	apitest.CreateHunt(&removePlayerHunt, env, sessionCookie)
+
+	team := teams.Team{
+		TeamDB: db.TeamDB{
+			Name:   "Remove player handler",
+			HuntID: removePlayerHunt.ID,
+		},
+	}
+	apitest.CreateTeam(&team, env, sessionCookie)
+
+	playerID := newUser.ID
+	apitest.AddPlayer(playerID, team.ID, env, sessionCookie)
+
+	cases := []struct {
+		name     string
+		code     int
+		playerID int
+		teamID   int
+	}{
+		{
+			name:     "invalid team and player",
+			code:     http.StatusBadRequest,
+			playerID: 0,
+			teamID:   0,
+		},
+		{
+			name:     "invalid team and valid player",
+			code:     http.StatusBadRequest,
+			playerID: playerID,
+			teamID:   0,
+		},
+		{
+			name:     "valid team and invalid player",
+			code:     http.StatusBadRequest,
+			playerID: 0,
+			teamID:   team.ID,
+		},
+		{
+			name:     "valid team and player",
+			code:     http.StatusOK,
+			playerID: playerID,
+			teamID:   team.ID,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			req, err := http.NewRequest(
+				"DELETE",
+				fmt.Sprintf("/%d/players/%d", c.teamID, c.playerID),
+				nil,
+			)
+			if err != nil {
+				t.Fatalf("error getting new request: %v", err)
+			}
+			req.AddCookie(sessionCookie)
+
+			rr := httptest.NewRecorder()
+			handler := teams.Routes(env)
+			handler.ServeHTTP(rr, req)
+			res := rr.Result()
+
+			if res.StatusCode != c.code {
+				resBody, err := ioutil.ReadAll(res.Body)
+				if err != nil {
+					t.Errorf("error reading the res body: %v", err)
+				}
+				t.Fatalf("expected code %d got %d: %s", c.code, res.StatusCode, resBody)
+			}
+		})
+	}
+}

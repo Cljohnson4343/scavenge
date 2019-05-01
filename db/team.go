@@ -342,33 +342,43 @@ func TeamAddPlayer(teamID, userID int) *response.Error {
 	return nil
 }
 
-var teamRemovePlayersScript = `
+var teamRemovePlayerScript = `
 	DELETE FROM users_teams
 	WHERE team_id = $1 AND user_id = $2;`
 
-// TeamRemovePlayers removes the users from the given team
-func TeamRemovePlayers(teamID int, players []int) *response.Error {
-	e := response.NewNilError()
-	for _, id := range players {
-		res, err := stmtMap["teamRemovePlayers"].Exec(teamID, id)
-		if err != nil {
-			e.Addf(http.StatusInternalServerError,
-				"TeamAddPlayer: error removing player %d from team %d: %v", id, teamID, err)
-		}
-
-		numRows, err := res.RowsAffected()
-		if err != nil {
-			e.Addf(http.StatusInternalServerError,
-				"TeamAddPlayer: error removing player %d from team %d: %v", id, teamID, err)
-		}
-
-		if numRows < 1 {
-			e.Addf(http.StatusInternalServerError,
-				"TeamAddPlayer: error removing player %d from team %d", id, teamID)
-		}
+// TeamRemovePlayer removes the user from the given team
+func TeamRemovePlayer(teamID int, playerID int) *response.Error {
+	res, err := stmtMap["teamRemovePlayer"].Exec(teamID, playerID)
+	if err != nil {
+		return response.NewErrorf(
+			http.StatusInternalServerError,
+			"TeamAddPlayer: error removing player %d from team %d: %v",
+			playerID,
+			teamID,
+			err,
+		)
 	}
 
-	return e.GetError()
+	numRows, err := res.RowsAffected()
+	if err != nil {
+		return response.NewErrorf(
+			http.StatusInternalServerError,
+			"TeamAddPlayer: error removing player %d from team %d: %v",
+			playerID,
+			teamID,
+			err,
+		)
+	}
+
+	if numRows < 1 {
+		return response.NewErrorf(
+			http.StatusBadRequest,
+			"no player %d on team %d",
+			playerID,
+			teamID,
+		)
+	}
+	return nil
 }
 
 // ParseError maps a pq driver error to a response.Error that contains the information a
