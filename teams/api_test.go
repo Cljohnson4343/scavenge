@@ -1305,3 +1305,78 @@ func TestGetLocationsForTeamHandler(t *testing.T) {
 		})
 	}
 }
+
+func TestGetAddPlayerHandler(t *testing.T) {
+	team := teams.Team{
+		TeamDB: db.TeamDB{
+			Name:   "Add player handler",
+			HuntID: hunt.ID,
+		},
+	}
+	apitest.CreateTeam(&team, env, sessionCookie)
+	/*
+		team2 := teams.Team{
+			TeamDB: db.TeamDB{
+				Name:   "Another add player handler",
+				HuntID: hunt.ID,
+			},
+		}
+		apitest.CreateTeam(&team, env, sessionCookie)
+	*/
+	type addPlayerData struct {
+		PlayerID int `json:"id"`
+	}
+
+	cases := []struct {
+		name   string
+		code   int
+		addReq addPlayerData
+		teamID int
+	}{
+		{
+			name:   "valid user and team",
+			code:   http.StatusOK,
+			teamID: team.ID,
+			addReq: addPlayerData{
+				PlayerID: newUser.ID,
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			reqBody, err := json.Marshal(&c.addReq)
+			if err != nil {
+				t.Fatalf("error marshalling req data: %v", err)
+			}
+
+			req, err := http.NewRequest(
+				"POST",
+				fmt.Sprintf("/%d/players/", c.teamID),
+				bytes.NewReader(reqBody),
+			)
+			if err != nil {
+				t.Fatalf("error getting new request: %v", err)
+			}
+			req.AddCookie(sessionCookie)
+
+			rr := httptest.NewRecorder()
+			handler := teams.Routes(env)
+			handler.ServeHTTP(rr, req)
+			res := rr.Result()
+
+			if res.StatusCode != c.code {
+				resBody, err := ioutil.ReadAll(res.Body)
+				if err != nil {
+					t.Errorf("error reading the response body: %v", err)
+				}
+				t.Fatalf(
+					"expected code %d got %d: %s",
+					c.code,
+					res.StatusCode,
+					resBody,
+				)
+			}
+		})
+	}
+}
