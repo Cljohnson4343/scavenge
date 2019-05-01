@@ -1525,3 +1525,107 @@ func TestGetRemovePlayerHandler(t *testing.T) {
 		})
 	}
 }
+
+func TestGetTeamPlayersHandler(t *testing.T) {
+	getTeamPlayersHunt := hunts.Hunt{
+		HuntDB: db.HuntDB{
+			Name:         "GetTeamPlayers Hunt 43",
+			MaxTeams:     43,
+			StartTime:    time.Now().AddDate(0, 0, 1),
+			EndTime:      time.Now().AddDate(0, 0, 2),
+			LocationName: "Fake Location",
+			Latitude:     34.730705,
+			Longitude:    -86.59481,
+		},
+	}
+	apitest.CreateHunt(&getTeamPlayersHunt, env, sessionCookie)
+
+	team := teams.Team{
+		TeamDB: db.TeamDB{
+			Name:   "GetTeamPlayers handler",
+			HuntID: getTeamPlayersHunt.ID,
+		},
+	}
+	apitest.CreateTeam(&team, env, sessionCookie)
+
+	secondUser := &users.User{
+		db.UserDB{
+			FirstName: "Michael",
+			LastName:  "Jordan",
+			Username:  "theGreatest23",
+			Email:     "mj_23@gmail.com",
+		},
+	}
+	apitest.CreateUser(secondUser, env)
+	apitest.AddPlayer(secondUser.ID, team.ID, env, sessionCookie)
+	apitest.AddPlayer(newUser.ID, team.ID, env, sessionCookie)
+
+	cases := []struct {
+		name            string
+		code            int
+		teamID          int
+		returnedPlayers int
+	}{
+		{
+			name:            "valid team",
+			code:            http.StatusOK,
+			teamID:          team.ID,
+			returnedPlayers: 2,
+		},
+		{
+			name:            "invalid team",
+			code:            http.StatusOK,
+			teamID:          0,
+			returnedPlayers: 0,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			req, err := http.NewRequest(
+				"GET",
+				fmt.Sprintf("/%d/players/", c.teamID),
+				nil,
+			)
+			if err != nil {
+				t.Fatalf("error getting new request: %v", err)
+			}
+			req.AddCookie(sessionCookie)
+
+			rr := httptest.NewRecorder()
+			handler := teams.Routes(env)
+			handler.ServeHTTP(rr, req)
+			res := rr.Result()
+
+			if res.StatusCode != c.code {
+				resBody, err := ioutil.ReadAll(res.Body)
+				if err != nil {
+					t.Errorf("error reading res body: %v", err)
+				}
+
+				t.Fatalf(
+					"expected code %d got %d: %s",
+					c.code,
+					res.StatusCode,
+					resBody,
+				)
+			}
+
+			if c.code == http.StatusOK {
+				got := make([]*users.User, 0)
+				err = json.NewDecoder(res.Body).Decode(&got)
+				if err != nil {
+					t.Fatalf("error decoding the res body: %v", err)
+				}
+
+				if len(got) != c.returnedPlayers {
+					t.Fatalf(
+						"expected %d players returned but got %d",
+						c.returnedPlayers,
+						len(got),
+					)
+				}
+			}
+		})
+	}
+}

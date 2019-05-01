@@ -34,11 +34,11 @@ func Routes(env *c.Env) *chi.Mux {
 	router := chi.NewRouter()
 
 	// /users routes
-	router.Get("/{userID}", getSelectUserHandler(env))
-	router.Post("/login/", GetLoginHandler(env))
-	router.Post("/logout/", GetLogoutHandler(env))
-	router.Post("/", GetCreateUserHandler(env))
-	router.Delete("/{userID}", GetDeleteUserHandler(env))
+	router.Get("/{userID}", getSelectUserHandler(env))    // tested
+	router.Post("/login/", GetLoginHandler(env))          // tested
+	router.Post("/logout/", GetLogoutHandler(env))        // tested
+	router.Post("/", GetCreateUserHandler(env))           // tested
+	router.Delete("/{userID}", GetDeleteUserHandler(env)) // tested
 	router.Patch("/{userID}", getUpdateUserHandler(env))
 
 	return router

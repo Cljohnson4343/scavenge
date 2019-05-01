@@ -263,7 +263,7 @@ var teamGetPlayersScript = `
 		u.username, 
 		u.joined_at, 
 		u.last_visit, 
-		u.image_url, 
+		COALESCE(u.image_url, ''), 
 		u.email
 	FROM users_teams u_t 
 	INNER JOIN users u 
@@ -282,8 +282,16 @@ func GetUsersForTeam(teamID int) ([]*UserDB, *response.Error) {
 	users := make([]*UserDB, 0)
 	for rows.Next() {
 		u := UserDB{}
-		err = rows.Scan(&u.ID, &u.FirstName, &u.LastName, &u.Username, &u.JoinedAt,
-			&u.ImageURL, &u.Email)
+		err = rows.Scan(
+			&u.ID,
+			&u.FirstName,
+			&u.LastName,
+			&u.Username,
+			&u.JoinedAt,
+			&u.LastVisit,
+			&u.ImageURL,
+			&u.Email,
+		)
 		if err != nil {
 			e.Addf(http.StatusInternalServerError,
 				"GetUsersForTeam: error getting user for team %d: %v", teamID, err)
