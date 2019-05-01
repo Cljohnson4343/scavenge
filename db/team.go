@@ -301,6 +301,7 @@ func GetUsersForTeam(teamID int) ([]*UserDB, *response.Error) {
 	return users, e.GetError()
 }
 
+// TODO revisit this command. It is probably inefficient.
 var teamAddPlayerScript = `
 	WITH hunt_for_team AS (
 		SELECT hunt_id h_id FROM teams WHERE id = $1

@@ -25,6 +25,7 @@ import (
 
 var env *c.Env
 var hunt hunts.Hunt
+var hunt2 hunts.Hunt
 var sessionCookie *http.Cookie
 var newUser *users.User
 
@@ -46,7 +47,7 @@ func TestMain(m *testing.M) {
 	apitest.CreateUser(newUser, env)
 	sessionCookie = apitest.Login(newUser, env)
 
-	// Create hunt to use for tests
+	// Create hunts to use for tests
 	hunt.HuntDB = db.HuntDB{
 		Name:         "Teams Test Hunt 43",
 		MaxTeams:     43,
@@ -57,6 +58,17 @@ func TestMain(m *testing.M) {
 		Longitude:    -86.59481,
 	}
 	apitest.CreateHunt(&hunt, env, sessionCookie)
+
+	hunt2.HuntDB = db.HuntDB{
+		Name:         "Teams Second Hunt43",
+		MaxTeams:     4,
+		StartTime:    time.Now().AddDate(0, 0, 1),
+		EndTime:      time.Now().AddDate(0, 0, 2),
+		LocationName: "Fake Location",
+		Latitude:     34.730705,
+		Longitude:    -86.59481,
+	}
+	apitest.CreateHunt(&hunt2, env, sessionCookie)
 
 	os.Exit(m.Run())
 }
@@ -1323,6 +1335,14 @@ func TestGetAddPlayerHandler(t *testing.T) {
 	}
 	apitest.CreateTeam(&team2, env, sessionCookie)
 
+	diffHuntTeam := teams.Team{
+		TeamDB: db.TeamDB{
+			Name:   "Different hunt",
+			HuntID: hunt2.ID,
+		},
+	}
+	apitest.CreateTeam(&diffHuntTeam, env, sessionCookie)
+
 	type addPlayerData struct {
 		PlayerID int `json:"id"`
 	}
@@ -1369,6 +1389,14 @@ func TestGetAddPlayerHandler(t *testing.T) {
 			name:   "add user to second team in same hunt",
 			code:   http.StatusBadRequest,
 			teamID: team2.ID,
+			addReq: addPlayerData{
+				PlayerID: newUser.ID,
+			},
+		},
+		{
+			name:   "add user to different hunt",
+			code:   http.StatusOK,
+			teamID: diffHuntTeam.ID,
 			addReq: addPlayerData{
 				PlayerID: newUser.ID,
 			},
