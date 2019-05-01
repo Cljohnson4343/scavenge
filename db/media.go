@@ -177,11 +177,11 @@ func DeleteMedia(mediaID, teamID int) *response.Error {
 
 var teamPointsScript = `
 	WITH media_for_team AS (
-		SELECT media.item_id
+		SELECT item_id
 		FROM media
-		WHERE media.team_id = $1
+		WHERE media.team_id = $1 AND media.item_id IS NOT NULL
 	)
-		SELECT SUM(i.points) AS total_points
+		SELECT COALESCE(SUM(i.points), 0)
 		FROM media_for_team m
 		INNER JOIN items i ON m.item_id = i.id; 
 	`

@@ -1629,3 +1629,194 @@ func TestGetTeamPlayersHandler(t *testing.T) {
 		})
 	}
 }
+
+func TestGetTeamPointsHandler(t *testing.T) {
+	pointsHunt := hunts.Hunt{
+		HuntDB: db.HuntDB{
+			Name:         "points Hunt 43",
+			MaxTeams:     43,
+			StartTime:    time.Now().AddDate(0, 0, 1),
+			EndTime:      time.Now().AddDate(0, 0, 2),
+			LocationName: "Fake Location",
+			Latitude:     34.730705,
+			Longitude:    -86.59481,
+		},
+	}
+	apitest.CreateHunt(&pointsHunt, env, sessionCookie)
+
+	team := teams.Team{
+		TeamDB: db.TeamDB{
+			Name:   "team points team",
+			HuntID: pointsHunt.ID,
+		},
+	}
+	apitest.CreateTeam(&team, env, sessionCookie)
+
+	items := []*models.Item{
+		{
+			ItemDB: db.ItemDB{
+				Name:   "Santa Clause",
+				Points: 10,
+				HuntID: pointsHunt.ID,
+			},
+		},
+		{
+			ItemDB: db.ItemDB{
+				Name:   "Rudolph",
+				Points: 10,
+				HuntID: pointsHunt.ID,
+			},
+		},
+		{
+			ItemDB: db.ItemDB{
+				Name:   "Reindeer on the Roof",
+				Points: 40,
+				HuntID: pointsHunt.ID,
+			},
+		},
+		{
+			ItemDB: db.ItemDB{
+				Name:   "Mrs. Clause",
+				Points: 30,
+				HuntID: pointsHunt.ID,
+			},
+		},
+		{
+			ItemDB: db.ItemDB{
+				Name:   "Snow Globe",
+				Points: 40,
+				HuntID: pointsHunt.ID,
+			},
+		},
+	}
+	for _, i := range items {
+		apitest.CreateItem(i, env, sessionCookie)
+	}
+
+	media := []db.MediaMetaDB{
+		{
+			TeamID: team.ID,
+			URL:    "amazon.com/cdn/media",
+			ItemID: items[0].ID,
+			Location: db.LocationDB{
+				TimeStamp: time.Now().AddDate(0, -1, 0),
+				Latitude:  34.730705,
+				Longitude: -86.59481,
+				TeamID:    team.ID,
+			},
+		},
+		{
+			TeamID: team.ID,
+			URL:    "amazon.com/cdn/media",
+			ItemID: items[1].ID,
+			Location: db.LocationDB{
+				TimeStamp: time.Now().AddDate(0, 0, -3),
+				Latitude:  34.730705,
+				Longitude: -86.59481,
+				TeamID:    team.ID,
+			},
+		},
+		{
+			TeamID: team.ID,
+			URL:    "amazon.com/cdn/media",
+			ItemID: items[2].ID,
+			Location: db.LocationDB{
+				TimeStamp: time.Now().AddDate(0, 0, -4),
+				Latitude:  34.730705,
+				Longitude: -86.59481,
+				TeamID:    team.ID,
+			},
+		},
+		{
+			TeamID: team.ID,
+			URL:    "amazon.com/cdn/media",
+			ItemID: items[3].ID,
+			Location: db.LocationDB{
+				TimeStamp: time.Now().AddDate(0, 0, -5),
+				Latitude:  34.730705,
+				Longitude: -86.59481,
+				TeamID:    team.ID,
+			},
+		},
+		{
+			TeamID: team.ID,
+			URL:    "amazon.com/cdn/media",
+			ItemID: items[4].ID,
+			Location: db.LocationDB{
+				TimeStamp: time.Now().AddDate(0, 0, -6),
+				Latitude:  34.730705,
+				Longitude: -86.59481,
+				TeamID:    team.ID,
+			},
+		},
+	}
+	for _, m := range media {
+		apitest.CreateMedia(&m, env, sessionCookie)
+	}
+
+	cases := []struct {
+		name     string
+		code     int
+		teamID   int
+		expected int
+	}{
+		{
+			name:     "valid team",
+			code:     http.StatusOK,
+			teamID:   team.ID,
+			expected: 130,
+		},
+		{
+			name:     "invalid team",
+			code:     http.StatusOK,
+			teamID:   0,
+			expected: 0,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			req, err := http.NewRequest(
+				"GET",
+				fmt.Sprintf("/%d/points/", c.teamID),
+				nil,
+			)
+			if err != nil {
+				t.Fatalf("error getting new request: %v", err)
+			}
+			req.AddCookie(sessionCookie)
+			rr := httptest.NewRecorder()
+			handler := teams.Routes(env)
+			handler.ServeHTTP(rr, req)
+			res := rr.Result()
+
+			if res.StatusCode != c.code {
+				resBody, err := ioutil.ReadAll(res.Body)
+				if err != nil {
+					t.Errorf("error reading res body: %v", err)
+				}
+
+				t.Fatalf(
+					"expected code %d got %d: %s",
+					c.code,
+					res.StatusCode,
+					resBody,
+				)
+			}
+
+			if c.code == http.StatusOK {
+				resData := struct {
+					Points int `json:"points"`
+				}{}
+				err = json.NewDecoder(res.Body).Decode(&resData)
+				if err != nil {
+					t.Fatalf("error decoding res body: %v", err)
+				}
+
+				if c.expected != resData.Points {
+					t.Errorf("expected %d points but got %d", c.expected, resData.Points)
+				}
+			}
+		})
+	}
+}
