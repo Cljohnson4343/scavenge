@@ -1314,15 +1314,15 @@ func TestGetAddPlayerHandler(t *testing.T) {
 		},
 	}
 	apitest.CreateTeam(&team, env, sessionCookie)
-	/*
-		team2 := teams.Team{
-			TeamDB: db.TeamDB{
-				Name:   "Another add player handler",
-				HuntID: hunt.ID,
-			},
-		}
-		apitest.CreateTeam(&team, env, sessionCookie)
-	*/
+
+	team2 := teams.Team{
+		TeamDB: db.TeamDB{
+			Name:   "Another add player handler",
+			HuntID: hunt.ID,
+		},
+	}
+	apitest.CreateTeam(&team2, env, sessionCookie)
+
 	type addPlayerData struct {
 		PlayerID int `json:"id"`
 	}
@@ -1342,9 +1342,33 @@ func TestGetAddPlayerHandler(t *testing.T) {
 			},
 		},
 		{
+			name:   "invalid user and valid team",
+			code:   http.StatusBadRequest,
+			teamID: team.ID,
+			addReq: addPlayerData{
+				PlayerID: 0,
+			},
+		},
+		{
+			name:   "valid user and invalid team",
+			code:   http.StatusBadRequest,
+			teamID: 0,
+			addReq: addPlayerData{
+				PlayerID: newUser.ID,
+			},
+		},
+		{
 			name:   "valid user and team",
 			code:   http.StatusOK,
 			teamID: team.ID,
+			addReq: addPlayerData{
+				PlayerID: newUser.ID,
+			},
+		},
+		{
+			name:   "add user to second team in same hunt",
+			code:   http.StatusBadRequest,
+			teamID: team2.ID,
 			addReq: addPlayerData{
 				PlayerID: newUser.ID,
 			},
