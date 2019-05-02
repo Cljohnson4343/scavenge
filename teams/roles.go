@@ -43,7 +43,7 @@ func GeneratePermission(perm string, id int) *roles.Permission {
 }
 
 /*
-// CreateRole reates a role for the given entity id
+// CreateRole creates a role for the given entity id
 func CreateRole(role string, id int) *roles.Role {
 
 }
