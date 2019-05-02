@@ -13,6 +13,12 @@ type Role struct {
 	Child       *Role
 }
 
+// Add adds the childRole to the given role. This is how inheritence relationships
+// are modeled
+func (r *Role) Add(childRole *Role) {
+	r.Child = childRole
+}
+
 // Permission is the primitive that is responsible for an endpoint authorization
 type Permission struct {
 	URLRegex string
