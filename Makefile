@@ -5,3 +5,7 @@ api-test: clean-db
 clean-db:
 	@echo "\nCleaning the database...\n"
 	psql -d scavengedb_test -f ./db/scavenge_schema.sql
+
+unit:
+	@echo "Running unit tests...\n"
+	@go test -v -tags=unit ./...
