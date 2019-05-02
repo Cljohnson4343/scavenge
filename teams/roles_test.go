@@ -52,7 +52,7 @@ func getReq(id int, key string) *http.Request {
 	return req
 }
 
-func generateCases(perm string, id int) []*testCase {
+func generatePermissionCases(perm string, id int) []*testCase {
 	cases := make([]*testCase, 0, len(routes))
 
 	for k, _ := range routes {
@@ -73,7 +73,7 @@ func generateCases(perm string, id int) []*testCase {
 
 func TestGenerateGetTeams(t *testing.T) {
 	perm := teams.GeneratePermission("get_teams", 1)
-	cases := generateCases("get_teams", 1)
+	cases := generatePermissionCases("get_teams", 1)
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -93,7 +93,7 @@ func TestGenerateGetTeams(t *testing.T) {
 
 func TestGenerateGetTeam(t *testing.T) {
 	perm := teams.GeneratePermission("get_team", 1)
-	cases := append(generateCases("get_team", 1), &testCase{
+	cases := append(generatePermissionCases("get_team", 1), &testCase{
 		name:     "wrong_id_get_team",
 		req:      getReq(43, "get_team"),
 		expected: false,
@@ -112,7 +112,7 @@ func TestGenerateGetTeam(t *testing.T) {
 
 func TestGenerateGetPoints(t *testing.T) {
 	perm := teams.GeneratePermission("get_points", 1)
-	cases := append(generateCases("get_points", 1), &testCase{
+	cases := append(generatePermissionCases("get_points", 1), &testCase{
 		name:     "wrong_id_get_points",
 		req:      getReq(43, "get_points"),
 		expected: false,
@@ -131,7 +131,7 @@ func TestGenerateGetPoints(t *testing.T) {
 
 func TestGenerateGetPlayers(t *testing.T) {
 	perm := teams.GeneratePermission("get_players", 1)
-	cases := append(generateCases("get_players", 1), &testCase{
+	cases := append(generatePermissionCases("get_players", 1), &testCase{
 		name:     "wrong_id_get_players",
 		req:      getReq(43, "get_players"),
 		expected: false,
@@ -150,7 +150,7 @@ func TestGenerateGetPlayers(t *testing.T) {
 
 func TestGeneratePostPlayer(t *testing.T) {
 	perm := teams.GeneratePermission("post_player", 1)
-	cases := append(generateCases("post_player", 1), &testCase{
+	cases := append(generatePermissionCases("post_player", 1), &testCase{
 		name:     "wrong_id_post_player",
 		req:      getReq(43, "post_player"),
 		expected: false,
@@ -169,7 +169,7 @@ func TestGeneratePostPlayer(t *testing.T) {
 
 func TestGenerateDeletePlayer(t *testing.T) {
 	perm := teams.GeneratePermission("delete_player", 1)
-	cases := append(generateCases("delete_player", 1), &testCase{
+	cases := append(generatePermissionCases("delete_player", 1), &testCase{
 		name:     "wrong_id_delete_player",
 		req:      getReq(43, "delete_player"),
 		expected: false,
@@ -188,7 +188,7 @@ func TestGenerateDeletePlayer(t *testing.T) {
 
 func TestGenerateDeleteTeam(t *testing.T) {
 	perm := teams.GeneratePermission("delete_team", 1)
-	cases := append(generateCases("delete_team", 1), &testCase{
+	cases := append(generatePermissionCases("delete_team", 1), &testCase{
 		name:     "wrong_id_delete_team",
 		req:      getReq(43, "delete_team"),
 		expected: false,
@@ -206,7 +206,7 @@ func TestGenerateDeleteTeam(t *testing.T) {
 }
 func TestGeneratePostTeam(t *testing.T) {
 	perm := teams.GeneratePermission("post_team", 1)
-	cases := generateCases("post_team", 1)
+	cases := generatePermissionCases("post_team", 1)
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -221,7 +221,7 @@ func TestGeneratePostTeam(t *testing.T) {
 
 func TestGeneratePatchTeam(t *testing.T) {
 	perm := teams.GeneratePermission("patch_team", 1)
-	cases := append(generateCases("patch_team", 1), &testCase{
+	cases := append(generatePermissionCases("patch_team", 1), &testCase{
 		name:     "wrong_id_patch_team",
 		req:      getReq(43, "patch_team"),
 		expected: false,
@@ -240,7 +240,7 @@ func TestGeneratePatchTeam(t *testing.T) {
 
 func TestGenerateGetLocations(t *testing.T) {
 	perm := teams.GeneratePermission("get_locations", 1)
-	cases := append(generateCases("get_locations", 1), &testCase{
+	cases := append(generatePermissionCases("get_locations", 1), &testCase{
 		name:     "wrong_id_get_locations",
 		req:      getReq(43, "get_locations"),
 		expected: false,
@@ -259,7 +259,7 @@ func TestGenerateGetLocations(t *testing.T) {
 
 func TestGeneratePostLocation(t *testing.T) {
 	perm := teams.GeneratePermission("post_location", 1)
-	cases := append(generateCases("post_location", 1), &testCase{
+	cases := append(generatePermissionCases("post_location", 1), &testCase{
 		name:     "wrong_id_post_location",
 		req:      getReq(43, "post_location"),
 		expected: false,
@@ -278,7 +278,7 @@ func TestGeneratePostLocation(t *testing.T) {
 
 func TestGenerateDeleteLocation(t *testing.T) {
 	perm := teams.GeneratePermission("delete_location", 1)
-	cases := append(generateCases("delete_location", 1), &testCase{
+	cases := append(generatePermissionCases("delete_location", 1), &testCase{
 		name:     "wrong_id_delete_location",
 		req:      getReq(43, "delete_location"),
 		expected: false,
@@ -297,7 +297,7 @@ func TestGenerateDeleteLocation(t *testing.T) {
 
 func TestGenerateGetMedia(t *testing.T) {
 	perm := teams.GeneratePermission("get_media", 1)
-	cases := append(generateCases("get_media", 1), &testCase{
+	cases := append(generatePermissionCases("get_media", 1), &testCase{
 		name:     "wrong_id_get_media",
 		req:      getReq(43, "get_media"),
 		expected: false,
@@ -315,7 +315,7 @@ func TestGenerateGetMedia(t *testing.T) {
 }
 func TestGeneratePostMedia(t *testing.T) {
 	perm := teams.GeneratePermission("post_media", 1)
-	cases := append(generateCases("post_media", 1), &testCase{
+	cases := append(generatePermissionCases("post_media", 1), &testCase{
 		name:     "wrong_id_post_media",
 		req:      getReq(43, "post_media"),
 		expected: false,
@@ -334,7 +334,7 @@ func TestGeneratePostMedia(t *testing.T) {
 
 func TestGenerateDeleteMedia(t *testing.T) {
 	perm := teams.GeneratePermission("delete_media", 1)
-	cases := append(generateCases("delete_media", 1), &testCase{
+	cases := append(generatePermissionCases("delete_media", 1), &testCase{
 		name:     "wrong_id_delete_media",
 		req:      getReq(43, "delete_media"),
 		expected: false,
@@ -353,7 +353,7 @@ func TestGenerateDeleteMedia(t *testing.T) {
 
 func TestGeneratePostPopulate(t *testing.T) {
 	perm := teams.GeneratePermission("post_populate", 1)
-	cases := generateCases("post_populate", 1)
+	cases := generatePermissionCases("post_populate", 1)
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -361,6 +361,89 @@ func TestGeneratePostPopulate(t *testing.T) {
 
 			if got != c.expected {
 				t.Fatalf("expected %v got %v", c.expected, got)
+			}
+		})
+	}
+}
+
+func generateRoleCases(role string, id int) []*testCase {
+	cases := make([]*testCase, 0, len(routes))
+
+	for k, _ := range routes {
+		c := testCase{
+			name:     k,
+			expected: getExpected(role, k),
+			req:      getReq(id, k),
+		}
+
+		cases = append(cases, &c)
+	}
+
+	return cases
+}
+
+func getExpected(role, permKey string) bool {
+	switch role {
+	case "team_owner":
+		if teams.PermToRole[permKey] == role ||
+			teams.PermToRole[permKey] == "team_editor" ||
+			teams.PermToRole[permKey] == "team_member" {
+			return true
+		}
+	case "team_editor":
+		if teams.PermToRole[permKey] == role ||
+			teams.PermToRole[permKey] == "team_member" {
+			return true
+		}
+	case "team_member":
+		if teams.PermToRole[permKey] == role {
+			return true
+		}
+	}
+
+	return false
+}
+
+func TestGenerateTeamOwnerRole(t *testing.T) {
+	role := teams.GenerateRole("team_owner", 1)
+	cases := generateRoleCases("team_owner", 1)
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			got := role.Authorized(c.req)
+
+			if got != c.expected {
+				t.Errorf("expected %v got %v", c.expected, got)
+			}
+		})
+	}
+}
+
+func TestGenerateTeamEditorRole(t *testing.T) {
+	role := teams.GenerateRole("team_editor", 1)
+	cases := generateRoleCases("team_editor", 1)
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			got := role.Authorized(c.req)
+
+			if got != c.expected {
+				t.Errorf("expected %v got %v", c.expected, got)
+			}
+		})
+	}
+}
+
+func TestGenerateTeamMemberRole(t *testing.T) {
+	role := teams.GenerateRole("team_member", 1)
+	cases := generateRoleCases("team_member", 1)
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			got := role.Authorized(c.req)
+
+			if got != c.expected {
+				t.Errorf("expected %v got %v", c.expected, got)
 			}
 		})
 	}

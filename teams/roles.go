@@ -42,7 +42,8 @@ func GeneratePermission(perm string, id int) *roles.Permission {
 	return &permission
 }
 
-var permToRole = map[string]string{
+// PermToRole maps a permissions key to a role
+var PermToRole = map[string]string{
 	"get_teams":       `admin`,
 	"get_team":        `hunt_invitee`,
 	"get_points":      `hunt_member`,
@@ -79,7 +80,7 @@ func genTeamOwnerRole(id int) *roles.Role {
 		Permissions: make([]*roles.Permission, 0),
 	}
 	// create owner specific permissions
-	for k, v := range permToRole {
+	for k, v := range PermToRole {
 		if v == "team_owner" {
 			perm := GeneratePermission(k, id)
 
@@ -99,7 +100,7 @@ func genTeamEditorRole(id int) *roles.Role {
 		Permissions: make([]*roles.Permission, 0),
 	}
 	// create owner specific permissions
-	for k, v := range permToRole {
+	for k, v := range PermToRole {
 		if v == "team_editor" {
 			perm := GeneratePermission(k, id)
 
@@ -119,7 +120,7 @@ func genTeamMemberRole(id int) *roles.Role {
 		Permissions: make([]*roles.Permission, 0),
 	}
 	// create owner specific permissions
-	for k, v := range permToRole {
+	for k, v := range PermToRole {
 		if v == "team_member" {
 			perm := GeneratePermission(k, id)
 
@@ -137,7 +138,7 @@ func genTeamMemberRole(id int) *roles.Role {
 func genHuntMemberRole(id int) *roles.Role {
 	perms := make([]*roles.Permission, 0)
 	// create member specific permissions
-	for k, v := range permToRole {
+	for k, v := range PermToRole {
 		if v == "hunt_member" {
 			perm := GeneratePermission(k, id)
 			perms = append(perms, perm)

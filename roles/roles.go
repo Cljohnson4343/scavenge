@@ -19,6 +19,22 @@ func (r *Role) Add(childRole *Role) {
 	r.Child = childRole
 }
 
+// Authorized returns whether or not the role contains a permission that is
+// authorized for the given req
+func (r *Role) Authorized(req *http.Request) bool {
+	for _, p := range r.Permissions {
+		if p.Authorized(req) {
+			return true
+		}
+	}
+
+	if r.Child != nil {
+		return r.Child.Authorized(req)
+	}
+
+	return false
+}
+
 // Permission is the primitive that is responsible for an endpoint authorization
 type Permission struct {
 	URLRegex string
