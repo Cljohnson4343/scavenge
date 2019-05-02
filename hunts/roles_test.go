@@ -269,3 +269,27 @@ func TestGeneratePostItem(t *testing.T) {
 		})
 	}
 }
+
+func TestGeneratePatchItem(t *testing.T) {
+	perm := hunts.GeneratePermission("patch_item", 1)
+	cases := append(generateCases("patch_item", 1), &testCase{
+		name:     "wrong_id_patch_item",
+		req:      getReq(43, "patch_item"),
+		expected: false,
+	})
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			got := perm.Authorized(c.req)
+			if got != c.expected {
+				t.Errorf(
+					"expected %v got %v\n\tregex: %s\n\turl: %s\n",
+					c.expected,
+					got,
+					perm.URLRegex,
+					c.req.URL.Path,
+				)
+			}
+		})
+	}
+}
