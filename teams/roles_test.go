@@ -128,3 +128,22 @@ func TestGenerateGetPoints(t *testing.T) {
 		})
 	}
 }
+
+func TestGenerateGetPlayers(t *testing.T) {
+	perm := teams.GeneratePermission("get_players", 1)
+	cases := append(generateCases("get_players", 1), &testCase{
+		name:     "wrong_id_get_players",
+		req:      getReq(43, "get_players"),
+		expected: false,
+	})
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			got := perm.Authorized(c.req)
+
+			if got != c.expected {
+				t.Fatalf("expected %v got %v", c.expected, got)
+			}
+		})
+	}
+}
