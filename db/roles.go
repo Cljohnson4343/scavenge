@@ -55,7 +55,7 @@ func AddRoles(roles []*RoleDB) *response.Error {
 	permInsStmt := tx.Stmt(stmtMap["permissionInsert"])
 
 	for _, r := range roles {
-		err := roleInsStmt.QueryRow(r.Name, r.UserID).Scan(&r.CreatedAt, &r.ID)
+		err := roleInsStmt.QueryRow(r.Name, r.UserID).Scan(&r.ID, &r.CreatedAt)
 		if err != nil {
 			if rollbackErr := tx.Rollback(); rollbackErr != nil {
 				return response.NewErrorf(
