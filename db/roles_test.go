@@ -80,9 +80,12 @@ func TestAddRoles(t *testing.T) {
 		},
 	}
 
+	entityID := 43
+
+	// the is
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			role := roles.New(c.role, 43)
+			role := roles.New(c.role, entityID)
 			got := db.AddRoles(role.RoleDBs(newUser.ID))
 			if got != nil {
 				t.Errorf("expected no errors but got: \n%s", got.JSON())

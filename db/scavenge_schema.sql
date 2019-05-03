@@ -10,6 +10,8 @@ DROP TABLE IF EXISTS permissions CASCADE;
 DROP TABLE IF EXISTS roles CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
 
+CREATE EXTENSION IF NOT EXISTS plpgsql;
+
 /*
     This table represents a user. 
 
@@ -188,7 +190,31 @@ CREATE TABLE roles (
     created_at       timestamp DEFAULT NOW(),
     PRIMARY KEY(id)
 );
-CREATE INDEX roles_name_asc_idx ON roles(name ASC);
+CREATE UNIQUE INDEX roles_name_asc_idx ON roles(name ASC);
+
+CREATE OR REPLACE FUNCTION ins_sel_role(_name varchar(64), _user_id int, OUT _role_id int)
+AS $func$
+BEGIN
+    SELECT id 
+    FROM roles
+    WHERE name = _name
+    INTO _role_id;
+
+    IF NOT FOUND THEN 
+        INSERT INTO roles(name)
+        VALUES (_name)
+        ON CONFLICT (name) DO NOTHING
+        RETURNING id
+        INTO _role_id;
+    END IF;
+
+    INSERT INTO users_roles(user_id, role_id)
+    VALUES (_user_id, _role_id)
+    ON CONFLICT ON CONSTRAINT users_roles_no_dups DO NOTHING;
+
+END; $func$
+LANGUAGE plpgsql;
+
 
 /*
     This table is a junction table for the users and roles
@@ -197,6 +223,7 @@ CREATE INDEX roles_name_asc_idx ON roles(name ASC);
 CREATE TABLE users_roles (
     user_id         int NOT NULL,
     role_id        int NOT NULL,
+    CONSTRAINT users_roles_no_dups UNIQUE(user_id, role_id),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE
 );
