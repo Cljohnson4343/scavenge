@@ -17,12 +17,70 @@ import (
 
 var env *c.Env
 var sessionCookie *http.Cookie
-var newUser = users.User{
-	UserDB: db.UserDB{
-		FirstName: "Rowdy",
-		LastName:  "Johnson",
-		Username:  "pretty_girl",
-		Email:     "pretty_girl43@gmail.com",
+var newUsers map[string]*users.User = map[string]*users.User{
+	"team_owner": &users.User{
+		UserDB: db.UserDB{
+			FirstName: "team",
+			LastName:  "owner",
+			Username:  "team_owner",
+			Email:     "team_owner43@gmail.com",
+		},
+	},
+	"team_editor": &users.User{
+		UserDB: db.UserDB{
+			FirstName: "team",
+			LastName:  "editor",
+			Username:  "team_editor",
+			Email:     "team_editor@gmail.com",
+		},
+	},
+	"team_member": &users.User{
+		UserDB: db.UserDB{
+			FirstName: "team",
+			LastName:  "member",
+			Username:  "team_member",
+			Email:     "team_member@gmail.com",
+		},
+	},
+	"hunt_owner": &users.User{
+		UserDB: db.UserDB{
+			FirstName: "hunt",
+			LastName:  "owner",
+			Username:  "hunt_owner",
+			Email:     "hunt_owner43@gmail.com",
+		},
+	},
+	"hunt_editor": &users.User{
+		UserDB: db.UserDB{
+			FirstName: "hunt",
+			LastName:  "editor",
+			Username:  "hunt_editor",
+			Email:     "hunt_editor@gmail.com",
+		},
+	},
+	"hunt_member": &users.User{
+		UserDB: db.UserDB{
+			FirstName: "hunt",
+			LastName:  "member",
+			Username:  "hunt_member",
+			Email:     "hunt_member@gmail.com",
+		},
+	},
+	"user": &users.User{
+		UserDB: db.UserDB{
+			FirstName: "user",
+			LastName:  "user",
+			Username:  "user",
+			Email:     "user@gmail.com",
+		},
+	},
+	"user_owner": &users.User{
+		UserDB: db.UserDB{
+			FirstName: "user",
+			LastName:  "owner",
+			Username:  "user_owner",
+			Email:     "user_owner@gmail.com",
+		},
 	},
 }
 
@@ -34,8 +92,9 @@ func TestMain(m *testing.M) {
 	response.SetDevMode(true)
 
 	// Login in user to get a valid user session cookie
-	apitest.CreateUser(&newUser, env)
-	sessionCookie = apitest.Login(&newUser, env)
+	for _, v := range newUsers {
+		apitest.CreateUser(v, env)
+	}
 
 	os.Exit(m.Run())
 }
@@ -43,40 +102,58 @@ func TestMain(m *testing.M) {
 // TODO add failure test cases, especially for non-existent users
 func TestAddRoles(t *testing.T) {
 	cases := []struct {
-		name string
-		role string
+		name     string
+		role     string
+		numRoles int
+		userID   int
 	}{
 		{
-			name: "team owner",
-			role: "team_owner",
+			name:     "team owner",
+			role:     "team_owner",
+			userID:   newUsers["team_owner"].ID,
+			numRoles: 3,
 		},
 		{
-			name: "team editor",
-			role: "team_editor",
+			name:     "team editor",
+			role:     "team_editor",
+			userID:   newUsers["team_editor"].ID,
+			numRoles: 2,
 		},
 		{
-			name: "team member",
-			role: "team_member",
+			name:     "team member",
+			role:     "team_member",
+			userID:   newUsers["team_member"].ID,
+			numRoles: 1,
 		},
 		{
-			name: "hunt owner",
-			role: "hunt_owner",
+			name:     "hunt owner",
+			role:     "hunt_owner",
+			userID:   newUsers["hunt_owner"].ID,
+			numRoles: 3,
 		},
 		{
-			name: "hunt editor",
-			role: "hunt_editor",
+			name:     "hunt editor",
+			role:     "hunt_editor",
+			userID:   newUsers["hunt_editor"].ID,
+			numRoles: 2,
 		},
 		{
-			name: "hunt member",
-			role: "hunt_member",
+			name:     "hunt member",
+			role:     "hunt_member",
+			userID:   newUsers["hunt_member"].ID,
+			numRoles: 1,
 		},
 		{
-			name: "user",
-			role: "user",
+			name:     "user",
+			role:     "user",
+			userID:   newUsers["user"].ID,
+			numRoles: 1,
 		},
 		{
-			name: "user owner",
-			role: "user_owner",
+			name:     "user owner",
+			role:     "user_owner",
+			userID:   newUsers["user_owner"].ID,
+			numRoles: 1,
 		},
 	}
 
@@ -86,9 +163,21 @@ func TestAddRoles(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			role := roles.New(c.role, entityID)
-			got := db.AddRoles(role.RoleDBs(newUser.ID))
-			if got != nil {
-				t.Errorf("expected no errors but got: \n%s", got.JSON())
+			e := db.AddRoles(role.RoleDBs(c.userID))
+			if e != nil {
+				t.Fatalf(
+					"expected no errors for user %d but got: \n%s",
+					c.userID,
+					e.JSON(),
+				)
+			}
+
+			got, e := db.RolesForUser(c.userID)
+			if e != nil {
+				t.Fatalf("error getting roles: \n%s", e.JSON())
+			}
+			if len(got) != c.numRoles {
+				t.Fatalf("expected %d roles got %d", c.numRoles, len(got))
 			}
 		})
 	}

@@ -38,6 +38,10 @@ var permissionInsertScript = `
 
 // AddRoles stores the given roles in the db
 func AddRoles(roles []*RoleDB) *response.Error {
+
+	// TODO look into using a sql stored procedure to handle the whole
+	// role insertion instead of breaking it up in a transaction.
+
 	tx, err := db.Begin()
 	if err != nil {
 		return response.NewErrorf(
@@ -98,4 +102,62 @@ func AddRoles(roles []*RoleDB) *response.Error {
 	}
 
 	return nil
+}
+
+var rolesForUserScript = `
+	WITH roles_for_user AS (
+		SELECT id, name 
+		FROM users_roles ur 
+		INNER JOIN roles r ON ur.user_id = $1 AND r.id = ur.role_id
+		)
+	SELECT r.id, r.name, p.id, p.url_regex, p.method
+	FROM roles_for_user r 
+	LEFT OUTER JOIN permissions p ON r.id = p.role_id
+	ORDER BY r.id;
+	`
+
+// RolesForUser returns the roles for a user
+func RolesForUser(userID int) ([]*RoleDB, *response.Error) {
+	rows, err := stmtMap["rolesForUser"].Query(userID)
+	if err != nil {
+		return nil, response.NewErrorf(
+			http.StatusInternalServerError,
+			"error getting roles for user %d: %v",
+			userID,
+			err,
+		)
+	}
+	defer rows.Close()
+
+	roles := make([]*RoleDB, 0)
+	e := response.NewNilError()
+	role := RoleDB{}
+	prevRoleID := 0
+	for rows.Next() {
+		var id int
+		var name string
+		p := PermissionDB{}
+		err = rows.Scan(&id, &name, &p.ID, &p.URLRegex, &p.Method)
+		if err != nil {
+			e.Addf(http.StatusInternalServerError, "error getting row: %v", err)
+		}
+
+		if id != prevRoleID && prevRoleID != 0 {
+			roles = append(roles, &role)
+			role = RoleDB{}
+		}
+
+		role.ID = id
+		role.Name = name
+		role.Permissions = append(role.Permissions, &p)
+		prevRoleID = id
+	}
+
+	if err = rows.Err(); err != nil {
+		e.Addf(http.StatusInternalServerError, "error getting role: %v", err)
+	}
+
+	roles = append(roles, &role)
+
+	return roles, e.GetError()
 }

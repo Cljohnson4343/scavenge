@@ -73,6 +73,7 @@ var scriptMap = map[string]string{
 	"mediaMetaDelete":   mediaMetaDeleteScript,
 	"permissionInsert":  permissionInsertScript,
 	"roleInsert":        roleInsertScript,
+	"rolesForUser":      rolesForUserScript,
 	//	"roleDelete":            roleDeleteScript,
 	"sessionInsert":         sessionInsertScript,
 	"sessionGetForUser":     sessionGetForUserScript,

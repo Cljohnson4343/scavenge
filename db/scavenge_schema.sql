@@ -187,7 +187,6 @@ CREATE TABLE media (
 CREATE TABLE roles (
     id              serial,
     name            varchar(64) NOT NULL,
-    created_at       timestamp DEFAULT NOW(),
     PRIMARY KEY(id)
 );
 CREATE UNIQUE INDEX roles_name_asc_idx ON roles(name ASC);
