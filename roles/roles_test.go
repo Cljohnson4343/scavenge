@@ -471,3 +471,71 @@ func TestGenerateUserRole(t *testing.T) {
 func TestGenerateUserOwnerRole(t *testing.T) {
 	testGenerateRole(t, "user_owner")
 }
+
+func TestRoleDBs(t *testing.T) {
+	cases := []struct {
+		name           string
+		expectedLength int
+		role           string
+	}{
+		{
+			name:           "team owner",
+			role:           "team_owner",
+			expectedLength: 3,
+		},
+		{
+			name:           "team editor",
+			role:           "team_editor",
+			expectedLength: 2,
+		},
+		{
+			name:           "team member",
+			role:           "team_member",
+			expectedLength: 1,
+		},
+		{
+			name:           "hunt owner",
+			role:           "hunt_owner",
+			expectedLength: 3,
+		},
+		{
+			name:           "hunt editor",
+			role:           "hunt_editor",
+			expectedLength: 2,
+		},
+		{
+			name:           "hunt member",
+			role:           "hunt_member",
+			expectedLength: 1,
+		},
+		{
+			name:           "user",
+			role:           "user",
+			expectedLength: 1,
+		},
+		{
+			name:           "user owner",
+			role:           "user_owner",
+			expectedLength: 1,
+		},
+	}
+
+	entityID := 43
+	userID := 1
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			role := roles.New(c.role, entityID)
+
+			roleDBs := role.RoleDBs(userID)
+
+			if len(roleDBs) != c.expectedLength {
+				t.Errorf(
+					"expected %d roles to be returned but got %d",
+					c.expectedLength,
+					len(roleDBs),
+				)
+			}
+		})
+	}
+}

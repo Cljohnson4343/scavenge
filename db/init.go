@@ -8,6 +8,8 @@ import (
 	"github.com/asaskevich/govalidator"
 )
 
+var db *sql.DB
+
 func init() {
 	govalidator.SetFieldsRequiredByDefault(true)
 	govalidator.TagMap["positive"] = govalidator.Validator(func(str string) bool {
@@ -52,15 +54,30 @@ func init() {
 	}))
 }
 
-var ()
-
 var stmtMap = map[string]*sql.Stmt{}
 
 var scriptMap = map[string]string{
-	"itemSelect":            itemSelectScript,
-	"itemDelete":            itemDeleteScript,
-	"itemInsert":            itemInsertScript,
-	"itemsSelect":           itemsSelectScript,
+	"huntSelect":        huntSelectScript,
+	"huntDelete":        huntDeleteScript,
+	"huntInsert":        huntInsertScript,
+	"huntsSelect":       huntsSelectScript,
+	"itemSelect":        itemSelectScript,
+	"itemDelete":        itemDeleteScript,
+	"itemInsert":        itemInsertScript,
+	"itemsSelect":       itemsSelectScript,
+	"locationsForTeam":  locationsForTeamScript,
+	"locationInsert":    locationInsertScript,
+	"locationDelete":    locationDeleteScript,
+	"mediaMetasForTeam": mediaMetasForTeamScript,
+	"mediaMetaInsert":   mediaMetaInsertScript,
+	"mediaMetaDelete":   mediaMetaDeleteScript,
+	"permissionInsert":  permissionInsertScript,
+	"roleInsert":        roleInsertScript,
+	//	"roleDelete":            roleDeleteScript,
+	"sessionInsert":         sessionInsertScript,
+	"sessionGetForUser":     sessionGetForUserScript,
+	"sessionGet":            sessionGetScript,
+	"sessionDelete":         sessionDeleteScript,
 	"teamSelect":            teamSelectScript,
 	"teamDelete":            teamDeleteScript,
 	"teamInsert":            teamInsertScript,
@@ -70,30 +87,18 @@ var scriptMap = map[string]string{
 	"teamAddPlayer":         teamAddPlayerScript,
 	"teamRemovePlayer":      teamRemovePlayerScript,
 	"teamGetPlayers":        teamGetPlayersScript,
-	"huntSelect":            huntSelectScript,
-	"huntDelete":            huntDeleteScript,
-	"huntInsert":            huntInsertScript,
-	"huntsSelect":           huntsSelectScript,
-	"locationsForTeam":      locationsForTeamScript,
-	"locationInsert":        locationInsertScript,
-	"locationDelete":        locationDeleteScript,
-	"mediaMetasForTeam":     mediaMetasForTeamScript,
-	"mediaMetaInsert":       mediaMetaInsertScript,
-	"mediaMetaDelete":       mediaMetaDeleteScript,
-	"sessionInsert":         sessionInsertScript,
-	"sessionGetForUser":     sessionGetForUserScript,
-	"sessionGet":            sessionGetScript,
-	"sessionDelete":         sessionDeleteScript,
 	"userInsert":            userInsertScript,
 	"userGet":               userGetScript,
 	"userDelete":            userDeleteScript,
 }
 
-func initStatements(db *sql.DB) error {
+func initStatements(database *sql.DB) error {
 	var err error
 
+	db = database
+
 	for k, script := range scriptMap {
-		stmtMap[k], err = db.Prepare(script)
+		stmtMap[k], err = database.Prepare(script)
 		if err != nil {
 			return err
 		}

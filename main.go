@@ -5,7 +5,6 @@ import (
 	"flag"
 	"log"
 	"net/http"
-	"os/exec"
 
 	"github.com/cljohnson4343/scavenge/response"
 
@@ -46,12 +45,6 @@ func main() {
 
 	database := db.InitDB("./db/db_info.json")
 	defer db.Shutdown(database)
-
-	cmd := exec.Command("psql", "-d scavengedb_test", "-U chris_johnson_43", "-f ../db/scavenge_schema.sql")
-	output, err := cmd.Output()
-	if err != nil {
-		log.Panicf("error setting up db: %s\n\nthe output was %s", err, string(output))
-	}
 
 	router := Routes(database)
 

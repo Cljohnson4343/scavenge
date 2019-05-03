@@ -5,6 +5,10 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
+
+	"github.com/cljohnson4343/scavenge/response"
+
+	"github.com/cljohnson4343/scavenge/db"
 )
 
 // Role is a structure that maps permissions to users
@@ -25,12 +29,30 @@ func (r *Role) Add(childRole *Role) {
 	r.Child = childRole
 }
 
-/*
 // AddTo adds the role to the given user
-func (r *Role) AddTo(userID int) {
-
+func (r *Role) AddTo(userID int) *response.Error {
+	return db.AddRoles(r.RoleDBs(userID))
 }
-*/
+
+// RoleDBs returns a slice of all the roles (in their RoleDB form)
+// the given role is comprised of
+func (r *Role) RoleDBs(userID int) []*db.RoleDB {
+	roleDB := db.RoleDB{
+		Name:        r.Name,
+		UserID:      userID,
+		Permissions: make([]*db.PermissionDB, 0, len(r.Permissions)),
+	}
+
+	for _, p := range r.Permissions {
+		roleDB.Permissions = append(roleDB.Permissions, &p.PermissionDB)
+	}
+
+	if r.Child == nil {
+		return append(make([]*db.RoleDB, 0), &roleDB)
+	}
+
+	return append(r.Child.RoleDBs(userID), &roleDB)
+}
 
 // Authorized returns whether or not the role contains a permission that is
 // authorized for the given req
@@ -50,8 +72,7 @@ func (r *Role) Authorized(req *http.Request) bool {
 
 // Permission is the primitive that is responsible for an endpoint authorization
 type Permission struct {
-	URLRegex string
-	Method   string
+	db.PermissionDB
 }
 
 // Authorized returns whether or not the permission is authorized for the
@@ -74,8 +95,10 @@ func GeneratePermission(perm string, entityID int) *Permission {
 		regex = permToFormattedRegex[perm]
 	}
 	permission := Permission{
-		Method:   strings.Split(perm, "_")[0],
-		URLRegex: regex,
+		db.PermissionDB{
+			Method:   strings.Split(perm, "_")[0],
+			URLRegex: regex,
+		},
 	}
 
 	return &permission

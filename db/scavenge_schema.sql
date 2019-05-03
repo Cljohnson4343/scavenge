@@ -5,6 +5,9 @@ DROP TABLE IF EXISTS locations CASCADE;
 DROP TABLE IF EXISTS items CASCADE;
 DROP TABLE IF EXISTS teams CASCADE;
 DROP TABLE IF EXISTS hunts CASCADE;
+DROP TABLE IF EXISTS users_roles CASCADE;
+DROP TABLE IF EXISTS permissions CASCADE;
+DROP TABLE IF EXISTS roles CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
 
 /*
@@ -170,6 +173,47 @@ CREATE TABLE media (
     FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE,
     FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE,
     FOREIGN KEY (location_id) REFERENCES locations(id) ON DELETE CASCADE
+);
+
+/*
+    This table is used to store the roles.
+
+    relations:
+        many to many--users can have a relationship with many roles
+        one to many--a role can have a relationship with many permissions
+*/
+CREATE TABLE roles (
+    id              serial,
+    name            varchar(64) NOT NULL,
+    created_at       timestamp DEFAULT NOW(),
+    PRIMARY KEY(id)
+);
+CREATE INDEX roles_name_asc_idx ON roles(name ASC);
+
+/*
+    This table is a junction table for the users and roles
+    tables.
+*/
+CREATE TABLE users_roles (
+    user_id         int NOT NULL,
+    role_id        int NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE
+);
+
+/*
+    This table is used to store the permissions for endpoints.
+
+    relations:
+        many to one--many permissions can have a relationship with a roles
+*/
+CREATE TABLE permissions (
+    id              serial,
+    url_regex       varchar(128) NOT NULL,
+    method          varchar(8) NOT NULL,
+    role_id        int NOT NULL,
+    PRIMARY KEY(id),
+    FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE
 );
 
 CREATE INDEX items_huntid_asc ON items(hunt_id ASC);
