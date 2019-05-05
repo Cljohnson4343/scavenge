@@ -1,3 +1,5 @@
+// +build apiTest
+
 package db_test
 
 import (

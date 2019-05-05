@@ -144,6 +144,7 @@ func RolesForUser(userID int) ([]*RoleDB, *response.Error) {
 		}
 
 		if id != prevRoleID && prevRoleID != 0 {
+			role.UserID = userID
 			roles = append(roles, role)
 			role = new(RoleDB)
 		}

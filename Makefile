@@ -6,7 +6,7 @@ clean-db:
 	@echo "\nCleaning the database...\n"
 	psql -d scavengedb_test -f ./db/scavenge_schema.sql
 
-unit:
+unit: 
 	@echo "Running unit tests...\n"
 	@go test -tags=unit ./...
 
