@@ -50,6 +50,93 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
+func TestRequireAuth(t *testing.T) {
+	validEntityID := 43
+	invalidEntityID := 23
+	requests := append(
+		getRoutes(validEntityID, sessionCookie),
+		getRoutes(invalidEntityID, sessionCookie)...,
+	)
+
+	cases := []struct {
+		role string
+	}{
+		{
+			role: "team_owner",
+		},
+		{
+			role: "team_editor",
+		},
+		{
+			role: "team_member",
+		},
+		{
+			role: "hunt_owner",
+		},
+		{
+			role: "hunt_editor",
+		},
+		{
+			role: "hunt_member",
+		},
+		{
+			role: "user_owner",
+		},
+	}
+
+	for _, c := range cases {
+		role := roles.New(c.role, validEntityID)
+		e := role.AddTo(newUser.ID)
+		if e != nil {
+			t.Fatalf("error adding role %s to user %d", c.role, newUser.ID)
+		}
+
+		for _, req := range requests {
+			t.Run(c.role+req.URL.Path, func(t *testing.T) {
+				rr := httptest.NewRecorder()
+				router.ServeHTTP(rr, req)
+				res := rr.Result()
+
+				expected := expectAuthorized(role.Name, req)
+				var got bool
+				if res.StatusCode == http.StatusUnauthorized {
+					got = false
+				} else {
+					got = true
+				}
+
+				if got != expected {
+					resBody, err := ioutil.ReadAll(res.Body)
+					if err != nil {
+						t.Fatalf("error reading res body: %v", err)
+					}
+
+					t.Fatalf(
+						"\nexpected authorized: %v\ngot authorized: %v\nreturn code: %d\nres body: %s\nreq method: %s\nreq path: %s\n",
+						expected,
+						got,
+						res.StatusCode,
+						resBody,
+						req.Method,
+						req.URL.Path,
+					)
+				}
+			})
+		}
+		roleDBs, e := db.RolesForUser(newUser.ID)
+		if e != nil {
+			t.Fatalf("error getting roles for user: %s", e.JSON())
+		}
+
+		for _, r := range roleDBs {
+			e := roles.RemoveRole(r.ID, newUser.ID)
+			if e != nil {
+				t.Fatalf("error removing role from user: %s", e.JSON())
+			}
+		}
+	}
+}
+
 func getRoutes(entityID int, cookie *http.Cookie) []*http.Request {
 	requests := make([]*http.Request, 0, len(roles.PermToRoutes))
 	for k, v := range roles.PermToRoutes {
@@ -79,7 +166,7 @@ func getRoutes(entityID int, cookie *http.Cookie) []*http.Request {
 
 func expectAuthorized(roleWID string, req *http.Request) bool {
 	roleSplit := strings.Split(roleWID, "_")
-	entityID, err := strconv.Atoi(roleSplit[2])
+	entityID, err := strconv.Atoi(roleSplit[len(roleSplit)-1])
 	if err != nil {
 		panic("unable to convert string to int")
 	}
@@ -153,64 +240,4 @@ func expectAuthorized(roleWID string, req *http.Request) bool {
 	}
 
 	return false
-}
-
-func TestRequireAuth(t *testing.T) {
-	validEntityID := 43
-	invalidEntityID := 23
-	requests := append(
-		getRoutes(validEntityID, sessionCookie),
-		getRoutes(invalidEntityID, sessionCookie)...,
-	)
-
-	cases := []struct {
-		name string
-		role string
-	}{
-		{
-			name: "valid team owner",
-			role: "team_owner",
-		},
-	}
-
-	for _, c := range cases {
-		t.Run(c.name, func(t *testing.T) {
-			role := roles.New(c.role, validEntityID)
-			e := role.AddTo(newUser.ID)
-			if e != nil {
-				t.Fatalf("error adding role %s to user %d", c.role, newUser.ID)
-			}
-
-			for _, req := range requests {
-				rr := httptest.NewRecorder()
-				router.ServeHTTP(rr, req)
-				res := rr.Result()
-
-				expected := expectAuthorized(role.Name, req)
-				var got bool
-				if res.StatusCode == http.StatusUnauthorized {
-					got = false
-				} else {
-					got = true
-				}
-
-				if got != expected {
-					resBody, err := ioutil.ReadAll(res.Body)
-					if err != nil {
-						t.Fatalf("error reading res body: %v", err)
-					}
-
-					t.Fatalf(
-						"\nexpected authorized: %v\ngot authorized: %v\nreturn code: %d\nres body: %s\nreq method: %s\nreq path: %s\n",
-						expected,
-						got,
-						res.StatusCode,
-						resBody,
-						req.Method,
-						req.URL.Path,
-					)
-				}
-			}
-		})
-	}
 }
