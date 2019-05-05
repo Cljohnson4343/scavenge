@@ -74,6 +74,7 @@ var scriptMap = map[string]string{
 	"permissionInsert":   permissionInsertScript,
 	"permissionsForUser": permissionsForUserScript,
 	"roleInsert":         roleInsertScript,
+	"roleRemove":         roleRemoveScript,
 	"rolesForUser":       rolesForUserScript,
 	//	"roleDelete":            roleDeleteScript,
 	"sessionInsert":         sessionInsertScript,

@@ -1,8 +1,7 @@
-// +build apiTest
-
 package db_test
 
 import (
+	"fmt"
 	"net/http"
 	"os"
 	"testing"
@@ -17,7 +16,7 @@ import (
 
 var env *c.Env
 var sessionCookie *http.Cookie
-var newUsers map[string]*users.User = map[string]*users.User{
+var addRolesUsers map[string]*users.User = map[string]*users.User{
 	"team_owner": &users.User{
 		UserDB: db.UserDB{
 			FirstName: "team",
@@ -92,7 +91,7 @@ func TestMain(m *testing.M) {
 	response.SetDevMode(true)
 
 	// Login in user to get a valid user session cookie
-	for _, v := range newUsers {
+	for _, v := range addRolesUsers {
 		apitest.CreateUser(v, env)
 	}
 
@@ -110,50 +109,49 @@ func TestAddRoles(t *testing.T) {
 		{
 			name:     "team owner",
 			role:     "team_owner",
-			userID:   newUsers["team_owner"].ID,
+			userID:   addRolesUsers["team_owner"].ID,
 			numRoles: 3,
 		},
 		{
 			name:     "team editor",
 			role:     "team_editor",
-			userID:   newUsers["team_editor"].ID,
+			userID:   addRolesUsers["team_editor"].ID,
 			numRoles: 2,
-			//
 		},
 		{
 			name:     "team member",
 			role:     "team_member",
-			userID:   newUsers["team_member"].ID,
+			userID:   addRolesUsers["team_member"].ID,
 			numRoles: 1,
 		},
 		{
 			name:     "hunt owner",
 			role:     "hunt_owner",
-			userID:   newUsers["hunt_owner"].ID,
+			userID:   addRolesUsers["hunt_owner"].ID,
 			numRoles: 3,
 		},
 		{
 			name:     "hunt editor",
 			role:     "hunt_editor",
-			userID:   newUsers["hunt_editor"].ID,
+			userID:   addRolesUsers["hunt_editor"].ID,
 			numRoles: 2,
 		},
 		{
 			name:     "hunt member",
 			role:     "hunt_member",
-			userID:   newUsers["hunt_member"].ID,
+			userID:   addRolesUsers["hunt_member"].ID,
 			numRoles: 1,
 		},
 		{
 			name:     "user",
 			role:     "user",
-			userID:   newUsers["user"].ID,
+			userID:   addRolesUsers["user"].ID,
 			numRoles: 1,
 		},
 		{
 			name:     "user owner",
 			role:     "user_owner",
-			userID:   newUsers["user_owner"].ID,
+			userID:   addRolesUsers["user_owner"].ID,
 			numRoles: 1,
 		},
 	}
@@ -194,6 +192,103 @@ func TestAddRoles(t *testing.T) {
 
 			if numPerms != len(perms) {
 				t.Fatalf("expected %d permissions got %d", numPerms, len(perms))
+			}
+		})
+	}
+}
+
+func TestRemoveRole(t *testing.T) {
+	cases := []struct {
+		name     string
+		role     string
+		numRoles int
+	}{
+		{
+			name:     "team owner",
+			role:     "team_owner",
+			numRoles: 3,
+		},
+		{
+			name:     "team editor",
+			role:     "team_editor",
+			numRoles: 2,
+		},
+		{
+			name:     "team member",
+			role:     "team_member",
+			numRoles: 1,
+		},
+		{
+			name:     "hunt owner",
+			role:     "hunt_owner",
+			numRoles: 3,
+		},
+		{
+			name:     "hunt editor",
+			role:     "hunt_editor",
+			numRoles: 2,
+		},
+		{
+			name:     "hunt member",
+			role:     "hunt_member",
+			numRoles: 1,
+		},
+		{
+			name:     "user",
+			role:     "user",
+			numRoles: 1,
+		},
+		{
+			name:     "user owner",
+			role:     "user_owner",
+			numRoles: 1,
+		},
+	}
+
+	user := &users.User{
+		UserDB: db.UserDB{
+			FirstName: "remove",
+			LastName:  "role",
+			Username:  "remove_role",
+			Email:     "remove_role43@gmail.com",
+		},
+	}
+	apitest.CreateUser(user, env)
+
+	entityID := 23
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			role := roles.New(c.role, entityID)
+			e := role.AddTo(user.ID)
+			if e != nil {
+				t.Fatalf("error adding roles to user: %s", e.JSON())
+			}
+
+			roleDBs, e := db.RolesForUser(user.ID)
+			if e != nil {
+				t.Fatalf("error getting roles for user: %s", e.JSON())
+			}
+
+			if len(roleDBs) != c.numRoles {
+				t.Fatalf("expected to get %d roles got %d", c.numRoles, len(roleDBs))
+			}
+
+			for _, r := range roleDBs {
+				fmt.Printf("removing role %d from user %d for case %s\n", r.ID, user.ID, c.name)
+				e = roles.RemoveRole(r.ID, user.ID)
+				if e != nil {
+					t.Fatalf("error removing role %d from user %d: %s", r.ID, user.ID, e.JSON())
+				}
+			}
+
+			roleDBs, e = db.RolesForUser(user.ID)
+			if e != nil {
+				t.Fatalf("error getting roles for user: %s", e.JSON())
+			}
+
+			if len(roleDBs) != 0 {
+				t.Fatalf("expected all roles were removed got %d roles", len(roleDBs))
 			}
 		})
 	}

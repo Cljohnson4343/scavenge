@@ -127,9 +127,12 @@ func RolesForUser(userID int) ([]*RoleDB, *response.Error) {
 	}
 	defer rows.Close()
 
+	// TODO look back over this and think about benchmarking/optimizing
+	// I think alot of efficiency can be gained by reducing the dynamic allocations
+
 	roles := make([]*RoleDB, 0)
 	e := response.NewNilError()
-	role := RoleDB{}
+	role := new(RoleDB)
 	prevRoleID := 0
 	for rows.Next() {
 		var id int
@@ -141,8 +144,8 @@ func RolesForUser(userID int) ([]*RoleDB, *response.Error) {
 		}
 
 		if id != prevRoleID && prevRoleID != 0 {
-			roles = append(roles, &role)
-			role = RoleDB{}
+			roles = append(roles, role)
+			role = new(RoleDB)
 		}
 
 		role.ID = id
@@ -155,7 +158,9 @@ func RolesForUser(userID int) ([]*RoleDB, *response.Error) {
 		e.Addf(http.StatusInternalServerError, "error getting role: %v", err)
 	}
 
-	roles = append(roles, &role)
+	if prevRoleID != 0 {
+		roles = append(roles, role)
+	}
 
 	return roles, e.GetError()
 }
@@ -207,4 +212,46 @@ func PermissionsForUser(userID int) ([]PermissionDB, *response.Error) {
 	}
 
 	return perms, e.GetError()
+}
+
+var roleRemoveScript = `
+	DELETE FROM users_roles
+	WHERE user_id = $1 AND role_id = $2; 
+	`
+
+// RemoveRole removes the given role from the given user
+// without recursively removing children roles
+func RemoveRole(roleID, userID int) *response.Error {
+	res, err := stmtMap["roleRemove"].Exec(userID, roleID)
+	if err != nil {
+		return response.NewErrorf(
+			http.StatusInternalServerError,
+			"error removing role %d from user %d: %v",
+			roleID,
+			userID,
+			err,
+		)
+	}
+
+	numRow, err := res.RowsAffected()
+	if err != nil {
+		return response.NewErrorf(
+			http.StatusInternalServerError,
+			"error removing role %d from user %d: %v",
+			roleID,
+			userID,
+			err,
+		)
+	}
+
+	if numRow < 1 {
+		return response.NewErrorf(
+			http.StatusInternalServerError,
+			"user %d does not have a role %d",
+			userID,
+			roleID,
+		)
+	}
+
+	return nil
 }

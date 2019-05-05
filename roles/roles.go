@@ -34,6 +34,12 @@ func (r *Role) AddTo(userID int) *response.Error {
 	return db.AddRoles(r.RoleDBs(userID))
 }
 
+// RemoveRole removes the role from the user without recursively
+// removing children roles
+func RemoveRole(roleID, userID int) *response.Error {
+	return db.RemoveRole(roleID, userID)
+}
+
 // RoleDBs returns a slice of all the roles (in their RoleDB form)
 // the given role is comprised of
 func (r *Role) RoleDBs(userID int) []*db.RoleDB {

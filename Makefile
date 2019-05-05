@@ -9,3 +9,7 @@ clean-db:
 unit:
 	@echo "Running unit tests...\n"
 	@go test -tags=unit ./...
+
+db: clean-db
+	@echo "Opening test db..."
+	@psql -d scavengedb_test
