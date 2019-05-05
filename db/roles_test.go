@@ -118,6 +118,7 @@ func TestAddRoles(t *testing.T) {
 			role:     "team_editor",
 			userID:   newUsers["team_editor"].ID,
 			numRoles: 2,
+			//
 		},
 		{
 			name:     "team member",
@@ -163,7 +164,8 @@ func TestAddRoles(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			role := roles.New(c.role, entityID)
-			e := db.AddRoles(role.RoleDBs(c.userID))
+			roleDBs := role.RoleDBs(c.userID)
+			e := db.AddRoles(roleDBs)
 			if e != nil {
 				t.Fatalf(
 					"expected no errors for user %d but got: \n%s",
@@ -178,6 +180,20 @@ func TestAddRoles(t *testing.T) {
 			}
 			if len(got) != c.numRoles {
 				t.Fatalf("expected %d roles got %d", c.numRoles, len(got))
+			}
+
+			numPerms := 0
+			for _, r := range roleDBs {
+				numPerms += len(r.Permissions)
+			}
+
+			perms, e := db.PermissionsForUser(c.userID)
+			if e != nil {
+				t.Fatalf("error getting permissions: \n%s", e.JSON())
+			}
+
+			if numPerms != len(perms) {
+				t.Fatalf("expected %d permissions got %d", numPerms, len(perms))
 			}
 		})
 	}

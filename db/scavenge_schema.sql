@@ -96,6 +96,7 @@ CREATE TABLE teams (
     PRIMARY KEY(id),
     FOREIGN KEY (hunt_id) REFERENCES hunts(id) ON DELETE CASCADE
 );
+CREATE INDEX teams_huntid_asc ON teams(hunt_id ASC);
 
 /*
     This is a joining table that represents the many to many relationship between the 
@@ -133,6 +134,7 @@ CREATE TABLE locations (
     PRIMARY KEY(id),
     FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE
 );
+CREATE INDEX loc_teamid_asc ON locations(team_id ASC, time_stamp ASC);
 
 /*
     This table is used to store the items for each hunt. This 
@@ -151,6 +153,7 @@ CREATE TABLE items (
     PRIMARY KEY(id),
     FOREIGN KEY (hunt_id) REFERENCES hunts(id) ON DELETE CASCADE 
 );
+CREATE INDEX items_huntid_asc ON items(hunt_id ASC);
 
 /*
     This table is used to store the team specific media info.
@@ -176,6 +179,7 @@ CREATE TABLE media (
     FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE,
     FOREIGN KEY (location_id) REFERENCES locations(id) ON DELETE CASCADE
 );
+CREATE INDEX media_teams_and_loc_asc ON media(team_id ASC, location_id ASC);
 
 /*
     This table is used to store the roles.
@@ -226,6 +230,8 @@ CREATE TABLE users_roles (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE
 );
+CREATE INDEX users_roles_user_id_idx ON users_roles(user_id ASC);
+CREATE INDEX users_roles_role_id_idx ON users_roles(role_id ASC);
 
 /*
     This table is used to store the permissions for endpoints.
@@ -239,10 +245,28 @@ CREATE TABLE permissions (
     method          varchar(8) NOT NULL,
     role_id        int NOT NULL,
     PRIMARY KEY(id),
+    CONSTRAINT permissions_no_dups UNIQUE(role_id, method, url_regex),
     FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE
 );
+CREATE INDEX permissions_role_id_idx ON permissions(role_id ASC);
 
-CREATE INDEX items_huntid_asc ON items(hunt_id ASC);
-CREATE INDEX teams_huntid_asc ON teams(hunt_id ASC);
-CREATE INDEX media_teams_and_loc_asc ON media(team_id ASC, location_id ASC);
-CREATE INDEX loc_teamid_asc ON locations(team_id ASC, time_stamp ASC);
+CREATE OR REPLACE FUNCTION ins_sel_perm(
+    _role_id int, _url_regex varchar(128), _method varchar(8), OUT _perm_id int) AS
+$func$
+BEGIN
+    SELECT id
+    FROM permissions p
+    WHERE p.role_id = _role_id AND p.url_regex = _url_regex AND p.method = _method
+    INTO _perm_id;
+
+    IF NOT FOUND THEN 
+        INSERT INTO permissions(role_id, url_regex, method)
+        VALUES (_role_id, _url_regex, _method)
+        ON CONFLICT ON CONSTRAINT permissions_no_dups DO NOTHING
+        RETURNING id
+        INTO _perm_id;
+    END IF;
+
+END; $func$
+LANGUAGE plpgsql;
+ 

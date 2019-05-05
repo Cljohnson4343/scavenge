@@ -31,10 +31,8 @@ var roleInsertScript = `
 `
 
 var permissionInsertScript = `
-	INSERT INTO permissions(url_regex, method, role_id)
-	VALUES ($1, $2, $3)
-	RETURNING id;
-`
+	SELECT ins_sel_perm($1, $2, $3);
+	`
 
 // AddRoles stores the given roles in the db
 func AddRoles(roles []*RoleDB) *response.Error {
@@ -73,7 +71,7 @@ func AddRoles(roles []*RoleDB) *response.Error {
 		}
 
 		for _, p := range r.Permissions {
-			err := permInsStmt.QueryRow(p.URLRegex, p.Method, r.ID).Scan(&p.ID)
+			err := permInsStmt.QueryRow(r.ID, p.URLRegex, p.Method).Scan(&p.ID)
 			if err != nil {
 				if rollbackErr := tx.Rollback(); rollbackErr != nil {
 					return response.NewErrorf(
@@ -160,4 +158,53 @@ func RolesForUser(userID int) ([]*RoleDB, *response.Error) {
 	roles = append(roles, &role)
 
 	return roles, e.GetError()
+}
+
+var permissionsForUserScript = `
+	SELECT p.url_regex, p.method, p.id
+	FROM users_roles ur 
+	INNER JOIN permissions p ON ur.user_id = $1 AND ur.role_id = p.role_id; 
+	`
+
+// PermissionsForUser returns an array of user permissions
+func PermissionsForUser(userID int) ([]PermissionDB, *response.Error) {
+	rows, err := stmtMap["permissionsForUser"].Query(userID)
+	if err != nil {
+		return nil, response.NewErrorf(
+			http.StatusInternalServerError,
+			"error getting permissions for user %d: %v",
+			userID,
+			err,
+		)
+	}
+	defer rows.Close()
+
+	perms := make([]PermissionDB, 0, 16)
+	e := response.NewNilError()
+
+	for rows.Next() {
+		p := PermissionDB{}
+		err = rows.Scan(&p.URLRegex, &p.Method, &p.ID)
+		if err != nil {
+			e.Addf(
+				http.StatusInternalServerError,
+				"error getting row for user %d: %v",
+				userID,
+				err,
+			)
+		}
+
+		perms = append(perms, p)
+	}
+
+	if err = rows.Err(); err != nil {
+		e.Addf(
+			http.StatusInternalServerError,
+			"error getting row for user %d: %v",
+			userID,
+			err,
+		)
+	}
+
+	return perms, e.GetError()
 }
