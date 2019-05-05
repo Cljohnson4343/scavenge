@@ -3,7 +3,6 @@
 package db_test
 
 import (
-	"fmt"
 	"net/http"
 	"os"
 	"testing"
@@ -277,7 +276,6 @@ func TestRemoveRole(t *testing.T) {
 			}
 
 			for _, r := range roleDBs {
-				fmt.Printf("removing role %d from user %d for case %s\n", r.ID, user.ID, c.name)
 				e = roles.RemoveRole(r.ID, user.ID)
 				if e != nil {
 					t.Fatalf("error removing role %d from user %d: %s", r.ID, user.ID, e.JSON())

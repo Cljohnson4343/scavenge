@@ -11,46 +11,6 @@ import (
 	"github.com/cljohnson4343/scavenge/roles"
 )
 
-var permToRoutes = map[string]string{
-	// teams routes
-	"get_teams":           `teams/`,
-	"get_team":            `teams/%d`,
-	"get_points":          `teams/%d/points/`,
-	"get_players":         `teams/%d/players/`,
-	"post_player":         `teams/%d/players/`,
-	"delete_player":       `teams/%d/players/43`,
-	"delete_team":         `teams/%d`,
-	"post_team":           `teams/`,
-	"patch_team":          `teams/%d`,
-	"get_locations":       `teams/%d/locations/`,
-	"post_location":       `teams/%d/locations/`,
-	"delete_location":     `teams/%d/locations/43`,
-	"get_media":           `teams/%d/media/`,
-	"post_media":          `teams/%d/media/`,
-	"delete_media":        `teams/%d/media/43`,
-	"post_teams_populate": `teams/populate/`,
-
-	// hunts routes
-	"get_hunts":           `hunts/`,
-	"get_hunt":            `hunts/%d`,
-	"post_hunt":           `hunts/`,
-	"delete_hunt":         `hunts/%d`,
-	"patch_hunt":          `hunts/%d`,
-	"post_hunts_populate": `hunts/populate/`,
-	"get_items":           `hunts/%d/items/`,
-	"delete_item":         `hunts/%d/items/43`,
-	"post_item":           `hunts/%d/items/`,
-	"patch_item":          `hunts/%d/items/43`,
-
-	// users routes
-	"get_user":    `users/%d`,
-	"post_login":  `users/login/`,
-	"post_logout": `users/logout/`,
-	"post_user":   `users/`,
-	"delete_user": `users/%d`,
-	"patch_user":  `users/%d`,
-}
-
 type testCase struct {
 	name     string
 	expected bool
@@ -59,10 +19,10 @@ type testCase struct {
 
 func getReq(id int, key string) *http.Request {
 	var url string
-	if strings.Contains(permToRoutes[key], "%") {
-		url = fmt.Sprintf(permToRoutes[key], id)
+	if strings.Contains(roles.PermToRoutes[key], "%") {
+		url = fmt.Sprintf(roles.PermToRoutes[key], id)
 	} else {
-		url = permToRoutes[key]
+		url = roles.PermToRoutes[key]
 	}
 
 	req, err := http.NewRequest(strings.Split(key, "_")[0], url, nil)
@@ -74,9 +34,9 @@ func getReq(id int, key string) *http.Request {
 }
 
 func generatePermissionCases(perm string, id int) []*testCase {
-	cases := make([]*testCase, 0, len(permToRoutes))
+	cases := make([]*testCase, 0, len(roles.PermToRoutes))
 
-	for k, _ := range permToRoutes {
+	for k, _ := range roles.PermToRoutes {
 		c := testCase{
 			name:     k,
 			expected: false,
@@ -365,9 +325,9 @@ func TestGeneratePatchItem(t *testing.T) {
 //
 
 func generateRoleCases(role string, id int) []*testCase {
-	cases := make([]*testCase, 0, len(permToRoutes))
+	cases := make([]*testCase, 0, len(roles.PermToRoutes))
 
-	for k, _ := range permToRoutes {
+	for k, _ := range roles.PermToRoutes {
 		c := testCase{
 			name:     k,
 			expected: getExpected(role, k),

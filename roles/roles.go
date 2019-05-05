@@ -6,9 +6,9 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/cljohnson4343/scavenge/response"
-
 	"github.com/cljohnson4343/scavenge/db"
+	"github.com/cljohnson4343/scavenge/response"
+	"github.com/cljohnson4343/scavenge/users"
 )
 
 // Role is a structure that maps permissions to users
@@ -58,6 +58,40 @@ func (r *Role) RoleDBs(userID int) []*db.RoleDB {
 	}
 
 	return append(r.Child.RoleDBs(userID), &roleDB)
+}
+
+// RequireAuth checks to make sure the requesting user agent has
+// authorization to make the request
+func RequireAuth(fn http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		userID, e := users.GetUserID(req.Context())
+		if e != nil {
+			e.Handle(w)
+			return
+		}
+
+		perms, e := db.PermissionsForUser(userID)
+		if e != nil {
+			e.Handle(w)
+			return
+		}
+
+		for _, p := range perms {
+			perm := Permission{PermissionDB: p}
+			if perm.Authorized(req) {
+				return
+			}
+		}
+
+		e = response.NewErrorf(
+			http.StatusUnauthorized,
+			"User %d is not authorized to access %s %s",
+			userID,
+			req.Method,
+			req.URL.Path,
+		)
+		e.Handle(w)
+	})
 }
 
 // Authorized returns whether or not the role contains a permission that is
@@ -110,44 +144,46 @@ func GeneratePermission(perm string, entityID int) *Permission {
 	return &permission
 }
 
+// TODO clean this up so that there is only one map from perm to a struct
+// containing the other info
 var permToFormattedRegex = map[string]string{
 	// team endpoints
-	"get_teams":           `^teams/$`,
-	"get_team":            `^teams/%d$`,
-	"get_points":          `^teams/%d/points/$`,
-	"get_players":         `^teams/%d/players/$`,
-	"post_player":         `^teams/%d/players/$`,
-	"delete_player":       `^teams/%d/players/\d+$`,
-	"delete_team":         `^teams/%d$`,
-	"post_team":           `^teams/$`,
-	"patch_team":          `^teams/%d$`,
-	"get_locations":       `^teams/%d/locations/$`,
-	"post_location":       `^teams/%d/locations/$`,
-	"delete_location":     `^teams/%d/locations/\d+$`,
-	"get_media":           `^teams/%d/media/$`,
-	"post_media":          `^teams/%d/media/$`,
-	"delete_media":        `^teams/%d/media/\d+$`,
-	"post_teams_populate": `^teams/populate/$`,
+	"get_teams":           `/teams/$`,
+	"get_team":            `/teams/%d$`,
+	"get_points":          `/teams/%d/points/$`,
+	"get_players":         `/teams/%d/players/$`,
+	"post_player":         `/teams/%d/players/$`,
+	"delete_player":       `/teams/%d/players/\d+$`,
+	"delete_team":         `/teams/%d$`,
+	"post_team":           `/teams/$`,
+	"patch_team":          `/teams/%d$`,
+	"get_locations":       `/teams/%d/locations/$`,
+	"post_location":       `/teams/%d/locations/$`,
+	"delete_location":     `/teams/%d/locations/\d+$`,
+	"get_media":           `/teams/%d/media/$`,
+	"post_media":          `/teams/%d/media/$`,
+	"delete_media":        `/teams/%d/media/\d+$`,
+	"post_teams_populate": `/teams/populate/$`,
 
 	// user endpoints
-	"get_user":    `^users/%d$`,
-	"post_login":  `^users/login/$`,
-	"post_logout": `^users/logout/$`,
-	"post_user":   `^users/$`,
-	"delete_user": `^users/%d$`,
-	"patch_user":  `^users/%d$`,
+	"get_user":    `/users/%d$`,
+	"post_login":  `/users/login/$`,
+	"post_logout": `/users/logout/$`,
+	"post_user":   `/users/$`,
+	"delete_user": `/users/%d$`,
+	"patch_user":  `/users/%d$`,
 
 	// hunt endpoints
-	"get_hunts":           `^hunts/$`,
-	"get_hunt":            `^hunts/%d$`,
-	"post_hunt":           `^hunts/$`,
-	"delete_hunt":         `^hunts/%d$`,
-	"patch_hunt":          `^hunts/%d$`,
-	"post_hunts_populate": `^hunts/populate/$`,
-	"get_items":           `^hunts/%d/items/$`,
-	"delete_item":         `^hunts/%d/items/\d+$`,
-	"post_item":           `^hunts/%d/items/$`,
-	"patch_item":          `^hunts/%d/items/\d+$`,
+	"get_hunts":           `/hunts/$`,
+	"get_hunt":            `/hunts/%d$`,
+	"post_hunt":           `/hunts/$`,
+	"delete_hunt":         `/hunts/%d$`,
+	"patch_hunt":          `/hunts/%d$`,
+	"post_hunts_populate": `/hunts/populate/$`,
+	"get_items":           `/hunts/%d/items/$`,
+	"delete_item":         `/hunts/%d/items/\d+$`,
+	"post_item":           `/hunts/%d/items/$`,
+	"patch_item":          `/hunts/%d/items/\d+$`,
 }
 
 // PermToRole maps a permissions key to a role
@@ -189,6 +225,47 @@ var PermToRole = map[string]string{
 	"delete_item":         `hunt_editor`,
 	"post_item":           `hunt_editor`,
 	"patch_item":          `hunt_editor`,
+}
+
+// PermToRoutes maps permission to the endpoint route
+var PermToRoutes = map[string]string{
+	// teams routes
+	"get_teams":           `/teams/`,
+	"get_team":            `/teams/%d`,
+	"get_points":          `/teams/%d/points/`,
+	"get_players":         `/teams/%d/players/`,
+	"post_player":         `/teams/%d/players/`,
+	"delete_player":       `/teams/%d/players/43`,
+	"delete_team":         `/teams/%d`,
+	"post_team":           `/teams/`,
+	"patch_team":          `/teams/%d`,
+	"get_locations":       `/teams/%d/locations/`,
+	"post_location":       `/teams/%d/locations/`,
+	"delete_location":     `/teams/%d/locations/43`,
+	"get_media":           `/teams/%d/media/`,
+	"post_media":          `/teams/%d/media/`,
+	"delete_media":        `/teams/%d/media/43`,
+	"post_teams_populate": `/teams/populate/`,
+
+	// hunts routes
+	"get_hunts":           `/hunts/`,
+	"get_hunt":            `/hunts/%d`,
+	"post_hunt":           `/hunts/`,
+	"delete_hunt":         `/hunts/%d`,
+	"patch_hunt":          `/hunts/%d`,
+	"post_hunts_populate": `/hunts/populate/`,
+	"get_items":           `/hunts/%d/items/`,
+	"delete_item":         `/hunts/%d/items/43`,
+	"post_item":           `/hunts/%d/items/`,
+	"patch_item":          `/hunts/%d/items/43`,
+
+	// users routes
+	"get_user":    `/users/%d`,
+	"post_login":  `/users/login/`,
+	"post_logout": `/users/logout/`,
+	"post_user":   `/users/`,
+	"delete_user": `/users/%d`,
+	"patch_user":  `/users/%d`,
 }
 
 // the team role relationships look like: Owner -> Editor -> Member -> HuntMember -> User

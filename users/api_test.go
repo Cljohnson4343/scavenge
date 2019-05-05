@@ -91,7 +91,7 @@ func TestRequireUser(t *testing.T) {
 				}
 			})
 
-			handler := users.RequireUser(hasContext)
+			handler := users.WithUser(hasContext)
 			handler.ServeHTTP(rr, req)
 
 			res := rr.Result()

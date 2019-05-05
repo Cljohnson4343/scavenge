@@ -20,12 +20,13 @@
             "name": "Launch test function",
             "type": "go",
             "request": "launch",
-            "mode": "test",
-            "program": "${workspaceFolder}",
+            "mode": "debug",
+            "program": "${workspaceFolder}/roles/authorization_test.go",
+            "buildFlags": "-tags=apiTest",
             "args": [
                 "-test.run",
                 "-test.v",
-                "TestRemoveRole"
+                "TestRequireAuth"
             ]
         }
     ]

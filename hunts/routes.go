@@ -34,7 +34,7 @@ import (
 func Routes(env *c.Env) *chi.Mux {
 	router := chi.NewRouter()
 
-	router.Use(users.RequireUser)
+	router.Use(users.WithUser)
 	// /hunts routes
 	router.Get("/", getHuntsHandler(env))
 	router.Get("/{huntID}", getHuntHandler(env))
