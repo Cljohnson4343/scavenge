@@ -9,19 +9,18 @@ import (
 	"net/http/httptest"
 	"time"
 
+	"github.com/cljohnson4343/scavenge/config"
 	"github.com/cljohnson4343/scavenge/db"
-	"github.com/cljohnson4343/scavenge/routes"
-
-	c "github.com/cljohnson4343/scavenge/config"
 	"github.com/cljohnson4343/scavenge/hunts"
 	"github.com/cljohnson4343/scavenge/hunts/models"
+	"github.com/cljohnson4343/scavenge/routes"
 	"github.com/cljohnson4343/scavenge/sessions"
 	"github.com/cljohnson4343/scavenge/teams"
 	"github.com/cljohnson4343/scavenge/users"
 )
 
 // CreateUser creates the given user. Panics on any errors.
-func CreateUser(u *users.User, env *c.Env) {
+func CreateUser(u *users.User, env *config.Env) {
 	reqBody, err := json.Marshal(u)
 	if err != nil {
 		panic(err)
@@ -54,7 +53,7 @@ func CreateUser(u *users.User, env *c.Env) {
 }
 
 // Login logs the given user in. Panics on all errors
-func Login(u *users.User, env *c.Env) *http.Cookie {
+func Login(u *users.User, env *config.Env) *http.Cookie {
 	// reset fields that shouldn't be included
 	u.LastVisit = time.Time{}
 	u.JoinedAt = time.Time{}
@@ -101,7 +100,7 @@ func Login(u *users.User, env *c.Env) *http.Cookie {
 }
 
 // CreateHunt creates the given hunt. Panics on all errors.
-func CreateHunt(h *hunts.Hunt, env *c.Env, cookie *http.Cookie) {
+func CreateHunt(h *hunts.Hunt, env *config.Env, cookie *http.Cookie) {
 	reqBody, err := json.Marshal(h)
 	if err != nil {
 		panic(fmt.Sprintf("error marshalling hunt data: %v", err))
@@ -139,20 +138,20 @@ func CreateHunt(h *hunts.Hunt, env *c.Env, cookie *http.Cookie) {
 }
 
 // CreateTeam creates a team. panics on any error.
-func CreateTeam(t *teams.Team, env *c.Env, cookie *http.Cookie) {
+func CreateTeam(t *teams.Team, env *config.Env, cookie *http.Cookie) {
 	reqBody, err := json.Marshal(t)
 	if err != nil {
 		panic(fmt.Sprintf("error marshalling team data: %v", err))
 	}
 
-	req, err := http.NewRequest("POST", "/api/v0/teams/", bytes.NewReader(reqBody))
+	req, err := http.NewRequest("POST", config.BaseAPIURL+"teams/", bytes.NewReader(reqBody))
 	if err != nil {
 		panic(fmt.Sprintf("error getting new request: %v", err))
 	}
 	req.AddCookie(cookie)
 
 	rr := httptest.NewRecorder()
-	teamsHandler := routes.Routes(env, false)
+	teamsHandler := routes.Routes(env)
 	teamsHandler.ServeHTTP(rr, req)
 
 	res := rr.Result()
@@ -177,7 +176,7 @@ func CreateTeam(t *teams.Team, env *c.Env, cookie *http.Cookie) {
 }
 
 // CreateItem creates an item. panics on any errors.
-func CreateItem(i *models.Item, env *c.Env, cookie *http.Cookie) {
+func CreateItem(i *models.Item, env *config.Env, cookie *http.Cookie) {
 	reqBody, err := json.Marshal(i)
 	if err != nil {
 		panic(fmt.Sprintf("error marshalling request data: %v", err))
@@ -218,7 +217,7 @@ func CreateItem(i *models.Item, env *c.Env, cookie *http.Cookie) {
 }
 
 // CreateMedia creates the given media. panics on any erors
-func CreateMedia(m *db.MediaMetaDB, env *c.Env, cookie *http.Cookie) {
+func CreateMedia(m *db.MediaMetaDB, env *config.Env, cookie *http.Cookie) {
 	reqBody, err := json.Marshal(m)
 	if err != nil {
 		panic(fmt.Sprintf("error marshalling req body: %v", err))
@@ -261,7 +260,7 @@ func CreateMedia(m *db.MediaMetaDB, env *c.Env, cookie *http.Cookie) {
 }
 
 // CreateLocation creates a location. panics on any errors.
-func CreateLocation(l *db.LocationDB, env *c.Env, cookie *http.Cookie) {
+func CreateLocation(l *db.LocationDB, env *config.Env, cookie *http.Cookie) {
 	reqBody, err := json.Marshal(l)
 	if err != nil {
 		panic(fmt.Sprintf("error marshalling req data: %v", err))
@@ -307,7 +306,7 @@ func CreateLocation(l *db.LocationDB, env *c.Env, cookie *http.Cookie) {
 
 // AddPlayer adds the player with teh given user_id to the given team. Panics
 // on all errors.
-func AddPlayer(playerID, teamID int, env *c.Env, cookie *http.Cookie) {
+func AddPlayer(playerID, teamID int, env *config.Env, cookie *http.Cookie) {
 	reqData := struct {
 		PlayerID int `json:"id"`
 	}{PlayerID: playerID}

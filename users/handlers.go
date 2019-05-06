@@ -3,7 +3,7 @@ package users
 import (
 	"net/http"
 
-	c "github.com/cljohnson4343/scavenge/config"
+	"github.com/cljohnson4343/scavenge/config"
 	"github.com/cljohnson4343/scavenge/db"
 	"github.com/cljohnson4343/scavenge/request"
 	"github.com/cljohnson4343/scavenge/response"
@@ -27,7 +27,7 @@ import (
 // Responses:
 // 	200:
 //  400:
-func GetLogoutHandler(env *c.Env) http.HandlerFunc {
+func GetLogoutHandler(env *config.Env) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cookie := sessions.GetCookie(r)
 		if cookie == nil {
@@ -59,7 +59,7 @@ func GetLogoutHandler(env *c.Env) http.HandlerFunc {
 // Responses:
 // 	200:
 //  400:
-func GetLoginHandler(env *c.Env) http.HandlerFunc {
+func GetLoginHandler(env *config.Env) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		u := User{}
 		e := request.DecodeAndValidate(r, &u)
@@ -121,7 +121,7 @@ func GetLoginHandler(env *c.Env) http.HandlerFunc {
 // Responses:
 // 	200:
 //  400:
-func getSelectUserHandler(env *c.Env) http.HandlerFunc {
+func getSelectUserHandler(env *config.Env) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID, e := request.GetIntURLParam(r, "userID")
 		if e != nil {
@@ -154,7 +154,7 @@ func getSelectUserHandler(env *c.Env) http.HandlerFunc {
 // Responses:
 // 	200:
 //  400:
-func GetDeleteUserHandler(env *c.Env) http.HandlerFunc {
+func GetDeleteUserHandler(env *config.Env) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID, e := request.GetIntURLParam(r, "userID")
 		if e != nil {
@@ -185,7 +185,7 @@ func GetDeleteUserHandler(env *c.Env) http.HandlerFunc {
 // Responses:
 // 	200:
 //  400:
-func getUpdateUserHandler(env *c.Env) http.HandlerFunc {
+func getUpdateUserHandler(env *config.Env) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID, e := request.GetIntURLParam(r, "userID")
 		if e != nil {
@@ -225,7 +225,7 @@ func getUpdateUserHandler(env *c.Env) http.HandlerFunc {
 // Responses:
 // 	200:
 //  400:
-func GetCreateUserHandler(env *c.Env) http.HandlerFunc {
+func GetCreateUserHandler(env *config.Env) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		u := User{}
 		e := request.DecodeAndValidate(r, &u)

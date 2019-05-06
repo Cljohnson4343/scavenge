@@ -15,14 +15,14 @@ import (
 	"time"
 
 	"github.com/cljohnson4343/scavenge/apitest"
-	c "github.com/cljohnson4343/scavenge/config"
+	"github.com/cljohnson4343/scavenge/config"
 	"github.com/cljohnson4343/scavenge/db"
 	"github.com/cljohnson4343/scavenge/response"
 	"github.com/cljohnson4343/scavenge/sessions"
 	"github.com/cljohnson4343/scavenge/users"
 )
 
-var env *c.Env
+var env *config.Env
 var sessionCookie *http.Cookie
 var newUser = users.User{
 	UserDB: db.UserDB{
@@ -37,7 +37,7 @@ func TestMain(m *testing.M) {
 	d := db.InitDB("../db/db_info_test.json")
 	defer db.Shutdown(d)
 
-	env = c.CreateEnv(d)
+	env = config.CreateEnv(d)
 	response.SetDevMode(true)
 
 	// Login in user to get a valid user session cookie

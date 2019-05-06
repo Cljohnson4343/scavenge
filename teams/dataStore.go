@@ -6,7 +6,7 @@ import (
 
 	"github.com/cljohnson4343/scavenge/users"
 
-	c "github.com/cljohnson4343/scavenge/config"
+	"github.com/cljohnson4343/scavenge/config"
 	"github.com/cljohnson4343/scavenge/db"
 	"github.com/cljohnson4343/scavenge/pgsql"
 	"github.com/cljohnson4343/scavenge/response"
@@ -104,7 +104,7 @@ func DeleteTeam(teamID int) *response.Error {
 
 // UpdateTeam executes a partial update of the team with the given id. NOTE:
 // team_id and hunt_id are not eligible to be changed
-func UpdateTeam(env *c.Env, team *Team) *response.Error {
+func UpdateTeam(env *config.Env, team *Team) *response.Error {
 	tblColMap := team.GetTableColumnMap()
 	cmd, e := pgsql.GetUpdateSQLCommand(tblColMap[db.TeamTbl], db.TeamTbl, team.ID)
 	if e != nil {

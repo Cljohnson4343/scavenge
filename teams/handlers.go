@@ -6,12 +6,10 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/cljohnson4343/scavenge/config"
 	"github.com/cljohnson4343/scavenge/db"
-
-	"github.com/cljohnson4343/scavenge/response"
-
-	c "github.com/cljohnson4343/scavenge/config"
 	"github.com/cljohnson4343/scavenge/request"
+	"github.com/cljohnson4343/scavenge/response"
 	"github.com/go-chi/render"
 )
 
@@ -31,7 +29,7 @@ import (
 // 	200:
 // 	400:
 //  500:
-func getTeamsHandler(env *c.Env) http.HandlerFunc {
+func getTeamsHandler(env *config.Env) http.HandlerFunc {
 	return (func(w http.ResponseWriter, r *http.Request) {
 		teams, e := GetTeams()
 		if e != nil {
@@ -59,7 +57,7 @@ func getTeamsHandler(env *c.Env) http.HandlerFunc {
 // 	200:
 // 	400:
 // 	404:
-func getTeamHandler(env *c.Env) http.HandlerFunc {
+func getTeamHandler(env *config.Env) http.HandlerFunc {
 	return (func(w http.ResponseWriter, r *http.Request) {
 		teamID, e := request.GetIntURLParam(r, "teamID")
 		if e != nil {
@@ -93,7 +91,7 @@ func getTeamHandler(env *c.Env) http.HandlerFunc {
 // Responses:
 // 	200:
 //  400:
-func deleteTeamHandler(env *c.Env) http.HandlerFunc {
+func deleteTeamHandler(env *config.Env) http.HandlerFunc {
 	return (func(w http.ResponseWriter, r *http.Request) {
 		teamID, e := request.GetIntURLParam(r, "teamID")
 		if e != nil {
@@ -126,7 +124,7 @@ func deleteTeamHandler(env *c.Env) http.HandlerFunc {
 // 	200:
 //  400:
 //  500:
-func createTeamHandler(env *c.Env) http.HandlerFunc {
+func createTeamHandler(env *config.Env) http.HandlerFunc {
 	return (func(w http.ResponseWriter, r *http.Request) {
 		team := Team{}
 		e := request.DecodeAndValidate(r, &team)
@@ -167,7 +165,7 @@ func createTeamHandler(env *c.Env) http.HandlerFunc {
 // Responses:
 // 	200:
 // 	400:
-func patchTeamHandler(env *c.Env) http.HandlerFunc {
+func patchTeamHandler(env *config.Env) http.HandlerFunc {
 	return (func(w http.ResponseWriter, r *http.Request) {
 		teamID, e := request.GetIntURLParam(r, "teamID")
 		if e != nil {
@@ -208,7 +206,7 @@ func patchTeamHandler(env *c.Env) http.HandlerFunc {
 // 	200:
 // 	400:
 //  500:
-func getLocationsForTeamHandler(env *c.Env) http.HandlerFunc {
+func getLocationsForTeamHandler(env *config.Env) http.HandlerFunc {
 	return (func(w http.ResponseWriter, r *http.Request) {
 		e := response.NewNilError()
 		teamID, e := request.GetIntURLParam(r, "teamID")
@@ -243,7 +241,7 @@ func getLocationsForTeamHandler(env *c.Env) http.HandlerFunc {
 // 	200:
 //  400:
 //  500:
-func createLocationHandler(env *c.Env) http.HandlerFunc {
+func createLocationHandler(env *config.Env) http.HandlerFunc {
 	return (func(w http.ResponseWriter, r *http.Request) {
 		teamID, e := request.GetIntURLParam(r, "teamID")
 		if e != nil {
@@ -285,7 +283,7 @@ func createLocationHandler(env *c.Env) http.HandlerFunc {
 // Responses:
 // 	200:
 //  400:
-func deleteLocationHandler(env *c.Env) http.HandlerFunc {
+func deleteLocationHandler(env *config.Env) http.HandlerFunc {
 	return (func(w http.ResponseWriter, r *http.Request) {
 		teamID, e := request.GetIntURLParam(r, "teamID")
 		if e != nil {
@@ -324,7 +322,7 @@ func deleteLocationHandler(env *c.Env) http.HandlerFunc {
 // 	200:
 // 	400:
 //  500:
-func getMediaForTeamHandler(env *c.Env) http.HandlerFunc {
+func getMediaForTeamHandler(env *config.Env) http.HandlerFunc {
 	return (func(w http.ResponseWriter, r *http.Request) {
 		e := response.NewNilError()
 		teamID, e := request.GetIntURLParam(r, "teamID")
@@ -359,7 +357,7 @@ func getMediaForTeamHandler(env *c.Env) http.HandlerFunc {
 // 	200:
 //  400:
 //  500:
-func createMediaHandler(env *c.Env) http.HandlerFunc {
+func createMediaHandler(env *config.Env) http.HandlerFunc {
 	return (func(w http.ResponseWriter, r *http.Request) {
 		teamID, e := request.GetIntURLParam(r, "teamID")
 		if e != nil {
@@ -401,7 +399,7 @@ func createMediaHandler(env *c.Env) http.HandlerFunc {
 // Responses:
 // 	200:
 //  400:
-func deleteMediaHandler(env *c.Env) http.HandlerFunc {
+func deleteMediaHandler(env *config.Env) http.HandlerFunc {
 	return (func(w http.ResponseWriter, r *http.Request) {
 		teamID, e := request.GetIntURLParam(r, "teamID")
 		if e != nil {
@@ -425,7 +423,7 @@ func deleteMediaHandler(env *c.Env) http.HandlerFunc {
 }
 
 // populateMediaDBHandler fills the db with the media in 'media_data.json'
-func populateMediaDBHandler(env *c.Env) http.HandlerFunc {
+func populateMediaDBHandler(env *config.Env) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		file, err := os.Open("./teams/media_data.json")
 		if err != nil {
@@ -483,7 +481,7 @@ func populateMediaDBHandler(env *c.Env) http.HandlerFunc {
 // 	200:
 // 	400:
 // 	404:
-func getTeamPointsHandler(env *c.Env) http.HandlerFunc {
+func getTeamPointsHandler(env *config.Env) http.HandlerFunc {
 	return (func(w http.ResponseWriter, r *http.Request) {
 		teamID, e := request.GetIntURLParam(r, "teamID")
 		if e != nil {
@@ -523,7 +521,7 @@ func getTeamPointsHandler(env *c.Env) http.HandlerFunc {
 // 	200:
 // 	400:
 // 	404:
-func getTeamPlayersHandler(env *c.Env) http.HandlerFunc {
+func getTeamPlayersHandler(env *config.Env) http.HandlerFunc {
 	return (func(w http.ResponseWriter, r *http.Request) {
 		teamID, e := request.GetIntURLParam(r, "teamID")
 		if e != nil {
@@ -558,7 +556,7 @@ func getTeamPlayersHandler(env *c.Env) http.HandlerFunc {
 // 	200:
 // 	400:
 // 	404:
-func getAddPlayerHandler(env *c.Env) http.HandlerFunc {
+func getAddPlayerHandler(env *config.Env) http.HandlerFunc {
 	return (func(w http.ResponseWriter, r *http.Request) {
 		teamID, e := request.GetIntURLParam(r, "teamID")
 		if e != nil {
@@ -605,7 +603,7 @@ func getAddPlayerHandler(env *c.Env) http.HandlerFunc {
 // 	200:
 // 	400:
 // 	404:
-func getRemovePlayerHandler(env *c.Env) http.HandlerFunc {
+func getRemovePlayerHandler(env *config.Env) http.HandlerFunc {
 	return (func(w http.ResponseWriter, r *http.Request) {
 		teamID, e := request.GetIntURLParam(r, "teamID")
 		if e != nil {

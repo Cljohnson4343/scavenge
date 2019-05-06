@@ -29,7 +29,7 @@ func main() {
 	defer db.Shutdown(database)
 
 	env := config.CreateEnv(database)
-	router := routes.Routes(env, false)
+	router := routes.Routes(env)
 
 	walkFunc := func(method string, route string, handler http.Handler, middlewares ...func(http.Handler) http.Handler) error {
 		log.Printf("%s %s\n", method, route) // walk and print out all routes

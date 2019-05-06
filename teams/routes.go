@@ -25,12 +25,12 @@
 package teams
 
 import (
-	c "github.com/cljohnson4343/scavenge/config"
+	"github.com/cljohnson4343/scavenge/config"
 	"github.com/go-chi/chi"
 )
 
 // Routes returns a router that serves the teams routes
-func Routes(env *c.Env) *chi.Mux {
+func Routes(env *config.Env) *chi.Mux {
 	router := chi.NewRouter()
 
 	// /teams routes

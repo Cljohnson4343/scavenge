@@ -17,3 +17,6 @@ type Env struct {
 func CreateEnv(db *sql.DB) *Env {
 	return &Env{db}
 }
+
+// BaseAPIURL is the base of the api's url.
+const BaseAPIURL = `/api/v0/`

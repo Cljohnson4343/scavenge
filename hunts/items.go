@@ -1,11 +1,10 @@
 package hunts
 
 import (
+	"github.com/cljohnson4343/scavenge/config"
 	"github.com/cljohnson4343/scavenge/db"
-	"github.com/cljohnson4343/scavenge/response"
-
-	c "github.com/cljohnson4343/scavenge/config"
 	"github.com/cljohnson4343/scavenge/hunts/models"
+	"github.com/cljohnson4343/scavenge/response"
 )
 
 // GetItems returns the items for the given hunt
@@ -47,12 +46,12 @@ func InsertItem(item *models.Item) *response.Error {
 }
 
 // DeleteItem deletes the item with the given itemID AND huntID
-func DeleteItem(env *c.Env, huntID, itemID int) *response.Error {
+func DeleteItem(env *config.Env, huntID, itemID int) *response.Error {
 	return db.DeleteItem(itemID, huntID)
 }
 
 // UpdateItem executes a partial update of the item with the given id. NOTE:
 // item_id and hunt_id are not eligible to be changed
-func UpdateItem(env *c.Env, item *models.Item) *response.Error {
+func UpdateItem(env *config.Env, item *models.Item) *response.Error {
 	return item.Update(env)
 }

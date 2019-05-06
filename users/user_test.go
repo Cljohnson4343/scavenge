@@ -22,7 +22,7 @@ import (
 	"github.com/cljohnson4343/scavenge/response"
 )
 
-var env *c.Env
+var env *config.Env
 var sessionCookie *http.Cookie
 
 var newUser = db.UserDB{

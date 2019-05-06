@@ -6,12 +6,10 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/cljohnson4343/scavenge/request"
-
+	"github.com/cljohnson4343/scavenge/config"
 	"github.com/cljohnson4343/scavenge/hunts/models"
+	"github.com/cljohnson4343/scavenge/request"
 	"github.com/cljohnson4343/scavenge/response"
-
-	c "github.com/cljohnson4343/scavenge/config"
 	"github.com/go-chi/render"
 )
 
@@ -32,7 +30,7 @@ import (
 // Responses:
 // 	200:
 //  500:
-func getHuntsHandler(env *c.Env) http.HandlerFunc {
+func getHuntsHandler(env *config.Env) http.HandlerFunc {
 	return (func(w http.ResponseWriter, r *http.Request) {
 		hunts, e := AllHunts()
 		if e != nil {
@@ -60,7 +58,7 @@ func getHuntsHandler(env *c.Env) http.HandlerFunc {
 // 	200:
 // 	404:
 //  400:
-func getHuntHandler(env *c.Env) http.HandlerFunc {
+func getHuntHandler(env *config.Env) http.HandlerFunc {
 	return (func(w http.ResponseWriter, r *http.Request) {
 		huntID, e := request.GetIntURLParam(r, "huntID")
 		if e != nil {
@@ -93,7 +91,7 @@ func getHuntHandler(env *c.Env) http.HandlerFunc {
 // Responses:
 // 	200:
 //  400:
-func createHuntHandler(env *c.Env) http.HandlerFunc {
+func createHuntHandler(env *config.Env) http.HandlerFunc {
 	return (func(w http.ResponseWriter, r *http.Request) {
 		hunt := Hunt{}
 		e := request.DecodeAndValidate(r, &hunt)
@@ -128,7 +126,7 @@ func createHuntHandler(env *c.Env) http.HandlerFunc {
 // Responses:
 // 	200:
 //  400:
-func deleteHuntHandler(env *c.Env) http.HandlerFunc {
+func deleteHuntHandler(env *config.Env) http.HandlerFunc {
 	return (func(w http.ResponseWriter, r *http.Request) {
 		huntID, e := request.GetIntURLParam(r, "huntID")
 		if e != nil {
@@ -167,7 +165,7 @@ func deleteHuntHandler(env *c.Env) http.HandlerFunc {
 // 	400:
 // 	404:
 // 	500:
-func patchHuntHandler(env *c.Env) http.HandlerFunc {
+func patchHuntHandler(env *config.Env) http.HandlerFunc {
 	return (func(w http.ResponseWriter, r *http.Request) {
 		huntID, e := request.GetIntURLParam(r, "huntID")
 		if e != nil {
@@ -215,7 +213,7 @@ func patchHuntHandler(env *c.Env) http.HandlerFunc {
 // 	200:
 // 	400:
 //  500:
-func getItemsHandler(env *c.Env) http.HandlerFunc {
+func getItemsHandler(env *config.Env) http.HandlerFunc {
 	return (func(w http.ResponseWriter, r *http.Request) {
 		huntID, e := request.GetIntURLParam(r, "huntID")
 		if e != nil {
@@ -248,7 +246,7 @@ func getItemsHandler(env *c.Env) http.HandlerFunc {
 // Responses:
 // 	200:
 //  400:
-func deleteItemHandler(env *c.Env) http.HandlerFunc {
+func deleteItemHandler(env *config.Env) http.HandlerFunc {
 	return (func(w http.ResponseWriter, r *http.Request) {
 		huntID, e := request.GetIntURLParam(r, "huntID")
 		if e != nil {
@@ -287,7 +285,7 @@ func deleteItemHandler(env *c.Env) http.HandlerFunc {
 // 	200:
 //  400:
 //  500:
-func createItemHandler(env *c.Env) http.HandlerFunc {
+func createItemHandler(env *config.Env) http.HandlerFunc {
 	return (func(w http.ResponseWriter, r *http.Request) {
 		huntID, e := request.GetIntURLParam(r, "huntID")
 		if e != nil {
@@ -335,7 +333,7 @@ func createItemHandler(env *c.Env) http.HandlerFunc {
 // Responses:
 // 	200:
 // 	400:
-func patchItemHandler(env *c.Env) http.HandlerFunc {
+func patchItemHandler(env *config.Env) http.HandlerFunc {
 	return (func(w http.ResponseWriter, r *http.Request) {
 		huntID, e := request.GetIntURLParam(r, "huntID")
 		if e != nil {
@@ -375,7 +373,7 @@ func patchItemHandler(env *c.Env) http.HandlerFunc {
 }
 
 // populateDBHandler fills the db with the hunts in 'test_data.json'
-func populateDBHandler(env *c.Env) http.HandlerFunc {
+func populateDBHandler(env *config.Env) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		file, err := os.Open("./hunts/test_data.json")
 		if err != nil {

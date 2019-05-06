@@ -4,15 +4,13 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/cljohnson4343/scavenge/config"
 	"github.com/cljohnson4343/scavenge/db"
-	"github.com/cljohnson4343/scavenge/roles"
-	"github.com/cljohnson4343/scavenge/users"
-
-	"github.com/cljohnson4343/scavenge/response"
-
-	c "github.com/cljohnson4343/scavenge/config"
 	"github.com/cljohnson4343/scavenge/pgsql"
+	"github.com/cljohnson4343/scavenge/response"
+	"github.com/cljohnson4343/scavenge/roles"
 	"github.com/cljohnson4343/scavenge/teams"
+	"github.com/cljohnson4343/scavenge/users"
 )
 
 // AllHunts returns all Hunts from the database
@@ -127,7 +125,7 @@ func DeleteHunt(huntID int) *response.Error {
 // UpdateHunt updates the hunt with the given ID using the fields that are not nil in the
 // partial hunt. If the hunt was updated then true will be returned. id field can not be
 // updated.
-func UpdateHunt(env *c.Env, hunt *Hunt) (bool, *response.Error) {
+func UpdateHunt(env *config.Env, hunt *Hunt) (bool, *response.Error) {
 	tx, err := env.Begin()
 	if err != nil {
 		return false, response.NewError(http.StatusInternalServerError, err.Error())

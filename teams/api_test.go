@@ -13,6 +13,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cljohnson4343/scavenge/config"
 	"github.com/cljohnson4343/scavenge/roles"
 	"github.com/cljohnson4343/scavenge/routes"
 
@@ -26,7 +27,7 @@ import (
 	"github.com/cljohnson4343/scavenge/users"
 )
 
-var env *c.Env
+var env *config.Env
 var hunt hunts.Hunt
 var hunt2 hunts.Hunt
 var sessionCookie *http.Cookie
@@ -156,14 +157,14 @@ func TestCreateTeamHandler(t *testing.T) {
 			if err != nil {
 				t.Fatalf("error marshalling req data: %v", err)
 			}
-			req, err := http.NewRequest("POST", "/api/v0/teams/", bytes.NewReader(reqBody))
+			req, err := http.NewRequest("POST", config.BaseAPIURL+"teams/", bytes.NewReader(reqBody))
 			if err != nil {
 				t.Fatalf("error getting new request: %v", err)
 			}
 			req.AddCookie(cookie)
 
 			rr := httptest.NewRecorder()
-			handler := routes.Routes(env, false)
+			handler := routes.Routes(env)
 			handler.ServeHTTP(rr, req)
 
 			res := rr.Result()

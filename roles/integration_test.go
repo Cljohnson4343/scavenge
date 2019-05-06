@@ -16,7 +16,7 @@ import (
 	"github.com/go-chi/chi"
 
 	"github.com/cljohnson4343/scavenge/apitest"
-	c "github.com/cljohnson4343/scavenge/config"
+	"github.com/cljohnson4343/scavenge/config"
 	"github.com/cljohnson4343/scavenge/db"
 	"github.com/cljohnson4343/scavenge/hunts"
 	"github.com/cljohnson4343/scavenge/response"
@@ -25,7 +25,7 @@ import (
 	"github.com/cljohnson4343/scavenge/users"
 )
 
-var env *c.Env
+var env *config.Env
 var sessionCookie *http.Cookie
 var newUser = users.User{
 	UserDB: db.UserDB{
@@ -40,7 +40,7 @@ func TestMain(m *testing.M) {
 	d := db.InitDB("../db/db_info_test.json")
 	defer db.Shutdown(d)
 
-	env = c.CreateEnv(d)
+	env = config.CreateEnv(d)
 	response.SetDevMode(true)
 
 	// Login in user to get a valid user session cookie
@@ -157,7 +157,7 @@ func getRoutes(entityID int, cookie *http.Cookie) []*http.Request {
 
 		req, err := http.NewRequest(
 			strings.ToUpper(strings.Split(k, "_")[0]),
-			"/api/v0"+url,
+			config.BaseAPIURL+url,
 			nil,
 		)
 		if err != nil {
@@ -190,7 +190,7 @@ func expectAuthorized(roleWID string, req *http.Request) bool {
 			route = fmtRoute
 		}
 
-		route = "/api/v0" + route
+		route = config.BaseAPIURL + route
 
 		method := strings.Split(perm, "_")[0]
 
