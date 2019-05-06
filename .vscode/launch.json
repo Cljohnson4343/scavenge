@@ -22,7 +22,7 @@
             "request": "launch",
             "mode": "debug",
             "program": "${workspaceFolder}/roles/authorization_test.go",
-            "buildFlags": "-tags=apiTest",
+            "buildFlags": "-tags=integration",
             "args": [
                 "-test.run",
                 "-test.v",

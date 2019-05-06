@@ -1,4 +1,4 @@
-// +build apiTest
+// +build integration
 
 package db_test
 

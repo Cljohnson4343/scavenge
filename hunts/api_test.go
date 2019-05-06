@@ -1,3 +1,3 @@
-// +build apiTest
+// +build integration
 
 package hunts_test
