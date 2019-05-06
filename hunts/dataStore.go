@@ -114,12 +114,22 @@ func InsertHunt(ctx context.Context, hunt *Hunt) *response.Error {
 
 // DeleteHunt deletes the hunt with the given ID. All associated data will also be deleted.
 func DeleteHunt(huntID int) *response.Error {
-	e := db.DeleteHunt(huntID)
+	teams, e := db.TeamsForHunt(huntID)
 	if e != nil {
 		return e
 	}
 
-	return roles.DeleteRolesForHunt(huntID)
+	e = db.DeleteHunt(huntID)
+	if e != nil {
+		return e
+	}
+
+	e = roles.DeleteRolesForHunt(huntID, teams)
+	if e != nil {
+		return e
+	}
+
+	return nil
 }
 
 // UpdateHunt updates the hunt with the given ID using the fields that are not nil in the

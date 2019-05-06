@@ -420,7 +420,12 @@ func TestDeleteRolesForHunt(t *testing.T) {
 				t.Fatalf("expected %d roles got %d", c.numRoles, len(roleDBs))
 			}
 
-			e = roles.DeleteRolesForHunt(hunt.ID)
+			teams, e := db.TeamsForHunt(hunt.ID)
+			if e != nil {
+				t.Fatalf("error getting teams for hunt: %s", e.JSON())
+			}
+
+			e = roles.DeleteRolesForHunt(hunt.ID, teams)
 			if e != nil {
 				t.Fatalf("error deleting roles for team %d: %s", hunt.ID, e.JSON())
 			}

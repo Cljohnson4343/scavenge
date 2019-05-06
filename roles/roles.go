@@ -49,14 +49,8 @@ func DeleteRolesForTeam(teamID int) *response.Error {
 
 // DeleteRolesForHunt deletes all the roles and permissions for the given hunt
 // this includes all roles and permissions for teams in the hunt
-func DeleteRolesForHunt(huntID int) *response.Error {
+func DeleteRolesForHunt(huntID int, teams []*db.TeamDB) *response.Error {
 	e := response.NewNilError()
-
-	teams, getErr := db.GetTeamsWithHuntID(huntID)
-	if getErr != nil {
-		e.AddError(getErr)
-	}
-
 	for _, t := range teams {
 		teamErr := DeleteRolesForTeam(t.ID)
 		if teamErr != nil {

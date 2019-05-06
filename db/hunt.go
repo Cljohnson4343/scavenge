@@ -252,11 +252,25 @@ var huntSelectScript = `
 func GetHunt(huntID int) (*HuntDB, *response.Error) {
 	h := HuntDB{}
 
-	err := stmtMap["huntSelect"].QueryRow(huntID).Scan(&h.Name, &h.ID, &h.StartTime, &h.EndTime,
-		&h.LocationName, &h.Latitude, &h.Longitude, &h.MaxTeams, &h.CreatedAt, &h.CreatorID)
+	err := stmtMap["huntSelect"].QueryRow(huntID).Scan(
+		&h.Name,
+		&h.ID,
+		&h.StartTime,
+		&h.EndTime,
+		&h.LocationName,
+		&h.Latitude,
+		&h.Longitude,
+		&h.MaxTeams,
+		&h.CreatedAt,
+		&h.CreatorID,
+	)
 	if err != nil {
-		return nil, response.NewErrorf(http.StatusInternalServerError, "error getting the hunt with id %d: %s", huntID, err.Error())
-
+		return nil, response.NewErrorf(
+			http.StatusInternalServerError,
+			"error getting the hunt with id %d: %s",
+			huntID,
+			err.Error(),
+		)
 	}
 
 	return &h, nil
@@ -270,19 +284,31 @@ var huntDeleteScript = `
 func DeleteHunt(id int) *response.Error {
 	res, err := stmtMap["huntDelete"].Exec(id)
 	if err != nil {
-		return response.NewErrorf(http.StatusInternalServerError, "error deleting hunt with id %d: %s", id, err.Error())
-
+		return response.NewErrorf(
+			http.StatusInternalServerError,
+			"error deleting hunt with id %d: %s",
+			id,
+			err.Error(),
+		)
 	}
 
 	numRows, err := res.RowsAffected()
 	if err != nil {
-		return response.NewErrorf(http.StatusInternalServerError, "error deleting hunt with id %d: %s", id, err.Error())
-
+		return response.NewErrorf(
+			http.StatusInternalServerError,
+			"error deleting hunt with id %d: %s",
+			id,
+			err.Error(),
+		)
 	}
 
 	if numRows < 1 {
-		return response.NewErrorf(http.StatusInternalServerError, "error deleting hunt with id %d: %s", id, err.Error())
-
+		return response.NewErrorf(
+			http.StatusInternalServerError,
+			"error deleting hunt with id %d: %s",
+			id,
+			err.Error(),
+		)
 	}
 
 	return nil

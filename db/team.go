@@ -221,11 +221,11 @@ var teamsWithHuntIDSelectScript = `
 	FROM teams
 	WHERE hunt_id = $1;`
 
-// GetTeamsWithHuntID returns a slice of pointers to all the teams with the given hunt id. NOTE
+// TeamsForHunt returns a slice of pointers to all the teams with the given hunt id. NOTE
 // a returned error does not mean that there weren't any teams returned. It is possible to
 // error scanning one of the rows returned from the query, if so, an attempt will be made to
 // retrieve the remaining query results.
-func GetTeamsWithHuntID(id int) ([]*TeamDB, *response.Error) {
+func TeamsForHunt(id int) ([]*TeamDB, *response.Error) {
 	teams := make([]*TeamDB, 0)
 
 	rows, err := stmtMap["teamsWithHuntIDSelect"].Query(id)

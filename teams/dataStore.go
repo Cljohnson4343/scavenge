@@ -37,7 +37,7 @@ func GetTeams() ([]*Team, *response.Error) {
 // still needs to be checked as the error could have occurred while trying
 // to get a single team
 func GetTeamsForHunt(huntID int) ([]*Team, *response.Error) {
-	teamDBs, e := db.GetTeamsWithHuntID(huntID)
+	teamDBs, e := db.TeamsForHunt(huntID)
 	if teamDBs == nil {
 		return nil, e
 	}
