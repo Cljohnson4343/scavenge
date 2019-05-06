@@ -135,7 +135,7 @@ func createTeamHandler(env *c.Env) http.HandlerFunc {
 			return
 		}
 
-		e = InsertTeam(&team)
+		e = InsertTeam(r.Context(), &team)
 		if e != nil {
 			e.Handle(w)
 			return

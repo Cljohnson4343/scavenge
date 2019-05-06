@@ -139,5 +139,6 @@ func GetSession(key uuid.UUID) (*SessionDB, *response.Error) {
 			"GetSession: error getting session %s: %v", key.String(), err)
 	}
 
+	s.Key = key
 	return &s, nil
 }

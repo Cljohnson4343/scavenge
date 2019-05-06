@@ -13,6 +13,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cljohnson4343/scavenge/roles"
+	"github.com/cljohnson4343/scavenge/routes"
+
 	"github.com/cljohnson4343/scavenge/apitest"
 	c "github.com/cljohnson4343/scavenge/config"
 	"github.com/cljohnson4343/scavenge/db"
@@ -58,6 +61,13 @@ func TestMain(m *testing.M) {
 		Longitude:    -86.59481,
 	}
 	apitest.CreateHunt(&hunt, env, sessionCookie)
+	// TODO get rid of these lines when hunt roles get added upon creation of hunt
+	huntOwner := roles.New("hunt_owner", hunt.ID)
+	e := huntOwner.AddTo(newUser.ID)
+	if e != nil {
+		panic("error adding hunt owner role to hunt")
+	}
+	// ENDTODO
 
 	hunt2.HuntDB = db.HuntDB{
 		Name:         "Teams Second Hunt43",
@@ -69,11 +79,35 @@ func TestMain(m *testing.M) {
 		Longitude:    -86.59481,
 	}
 	apitest.CreateHunt(&hunt2, env, sessionCookie)
+	// TODO get rid of these lines when hunt roles get added upon creation of hunt
+	hunt2Owner := roles.New("hunt_owner", hunt2.ID)
+	e = hunt2Owner.AddTo(newUser.ID)
+	if e != nil {
+		panic("error adding hunt owner role to hunt2")
+	}
+	// ENDTODO
 
 	os.Exit(m.Run())
 }
 
 func TestCreateTeamHandler(t *testing.T) {
+	// Login in user to get a valid user session cookie
+	newUser := &users.User{
+		db.UserDB{
+			FirstName: "Test Create Team",
+			LastName:  "Test Create Team",
+			Username:  "test_create_team",
+			Email:     "test_create_team@gmail.com",
+		},
+	}
+	apitest.CreateUser(newUser, env)
+	cookie := apitest.Login(newUser, env)
+	huntEditor := roles.New("hunt_editor", hunt.ID)
+	e := huntEditor.AddTo(newUser.ID)
+	if e != nil {
+		t.Fatalf("error adding hunt editor role to user: %s", e.JSON())
+	}
+
 	cases := []struct {
 		name string
 		team teams.Team
@@ -136,13 +170,14 @@ func TestCreateTeamHandler(t *testing.T) {
 			if err != nil {
 				t.Fatalf("error marshalling req data: %v", err)
 			}
-			req, err := http.NewRequest("POST", "/", bytes.NewReader(reqBody))
+			req, err := http.NewRequest("POST", "/api/v0/teams/", bytes.NewReader(reqBody))
 			if err != nil {
 				t.Fatalf("error getting new request: %v", err)
 			}
+			req.AddCookie(cookie)
 
 			rr := httptest.NewRecorder()
-			handler := teams.Routes(env)
+			handler := routes.Routes(env, false)
 			handler.ServeHTTP(rr, req)
 
 			res := rr.Result()
@@ -164,6 +199,20 @@ func TestCreateTeamHandler(t *testing.T) {
 
 				if c.team.ID == 0 {
 					t.Error("expected id to be returned")
+				}
+
+				rolesForUser, e := db.RolesForUser(newUser.ID)
+				if e != nil {
+					t.Fatalf("error getting user %d's roles: %s", newUser.ID, e.JSON())
+				}
+
+				if len(rolesForUser) != 5 {
+					t.Fatalf("expected 5 roles got %d", len(rolesForUser))
+				}
+
+				e = roles.DeleteRolesForTeam(c.team.ID)
+				if e != nil {
+					t.Fatalf("error deleting roles: %s", e.JSON())
 				}
 			}
 		})

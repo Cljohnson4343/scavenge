@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/cljohnson4343/scavenge/db"
+	"github.com/cljohnson4343/scavenge/roles"
 
 	"github.com/cljohnson4343/scavenge/response"
 
@@ -99,7 +100,12 @@ func InsertHunt(hunt *Hunt) *response.Error {
 
 // DeleteHunt deletes the hunt with the given ID. All associated data will also be deleted.
 func DeleteHunt(huntID int) *response.Error {
-	return db.DeleteHunt(huntID)
+	e := db.DeleteHunt(huntID)
+	if e != nil {
+		return e
+	}
+
+	return roles.DeleteRolesForHunt(huntID)
 }
 
 // UpdateHunt updates the hunt with the given ID using the fields that are not nil in the

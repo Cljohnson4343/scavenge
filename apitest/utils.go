@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/cljohnson4343/scavenge/db"
+	"github.com/cljohnson4343/scavenge/routes"
 
 	c "github.com/cljohnson4343/scavenge/config"
 	"github.com/cljohnson4343/scavenge/hunts"
@@ -144,14 +145,14 @@ func CreateTeam(t *teams.Team, env *c.Env, cookie *http.Cookie) {
 		panic(fmt.Sprintf("error marshalling team data: %v", err))
 	}
 
-	req, err := http.NewRequest("POST", "/", bytes.NewReader(reqBody))
+	req, err := http.NewRequest("POST", "/api/v0/teams/", bytes.NewReader(reqBody))
 	if err != nil {
 		panic(fmt.Sprintf("error getting new request: %v", err))
 	}
 	req.AddCookie(cookie)
 
 	rr := httptest.NewRecorder()
-	teamsHandler := teams.Routes(env)
+	teamsHandler := routes.Routes(env, false)
 	teamsHandler.ServeHTTP(rr, req)
 
 	res := rr.Result()

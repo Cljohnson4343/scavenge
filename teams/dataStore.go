@@ -1,7 +1,10 @@
 package teams
 
 import (
+	"context"
 	"net/http"
+
+	"github.com/cljohnson4343/scavenge/users"
 
 	c "github.com/cljohnson4343/scavenge/config"
 	"github.com/cljohnson4343/scavenge/db"
@@ -60,7 +63,7 @@ func GetTeam(teamID int) (*Team, *response.Error) {
 }
 
 // InsertTeam inserts a Team into the db
-func InsertTeam(team *Team) *response.Error {
+func InsertTeam(ctx context.Context, team *Team) *response.Error {
 	// inserting a team that has a non-zero id is not valid
 	if team.ID != 0 {
 		return response.NewError(
@@ -68,7 +71,19 @@ func InsertTeam(team *Team) *response.Error {
 			"id: can not provide id when creating team",
 		)
 	}
-	return team.Insert()
+
+	e := team.Insert()
+	if e != nil {
+		return e
+	}
+
+	userID, e := users.GetUserID(ctx)
+	if e != nil {
+		return e
+	}
+
+	ownerRole := roles.New("team_owner", team.ID)
+	return ownerRole.AddTo(userID)
 }
 
 // DeleteTeam deletes the team with the given teamID

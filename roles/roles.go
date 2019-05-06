@@ -112,6 +112,7 @@ func RequireAuth(fn http.Handler) http.Handler {
 		for _, p := range perms {
 			perm := Permission{PermissionDB: p}
 			if perm.Authorized(req) {
+				fn.ServeHTTP(w, req)
 				return
 			}
 		}

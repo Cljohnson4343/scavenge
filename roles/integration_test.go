@@ -13,16 +13,16 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-chi/chi"
+
 	"github.com/cljohnson4343/scavenge/apitest"
 	c "github.com/cljohnson4343/scavenge/config"
 	"github.com/cljohnson4343/scavenge/db"
 	"github.com/cljohnson4343/scavenge/hunts"
 	"github.com/cljohnson4343/scavenge/response"
 	"github.com/cljohnson4343/scavenge/roles"
-	"github.com/cljohnson4343/scavenge/routes"
 	"github.com/cljohnson4343/scavenge/teams"
 	"github.com/cljohnson4343/scavenge/users"
-	"github.com/go-chi/chi"
 )
 
 var env *c.Env
@@ -35,7 +35,6 @@ var newUser = users.User{
 		Email:     "cj_4343@gmail.com",
 	},
 }
-var router *chi.Mux
 
 func TestMain(m *testing.M) {
 	d := db.InitDB("../db/db_info_test.json")
@@ -43,8 +42,6 @@ func TestMain(m *testing.M) {
 
 	env = c.CreateEnv(d)
 	response.SetDevMode(true)
-
-	router = routes.Routes(env, false)
 
 	// Login in user to get a valid user session cookie
 	apitest.CreateUser(&newUser, env)
@@ -60,6 +57,14 @@ func TestRequireAuth(t *testing.T) {
 		getRoutes(validEntityID, sessionCookie),
 		getRoutes(invalidEntityID, sessionCookie)...,
 	)
+
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+	router := chi.NewMux()
+	router.Use(users.WithUser)
+	router.Use(roles.RequireAuth)
+	router.Mount("/", handler)
 
 	cases := []struct {
 		role string
@@ -358,43 +363,24 @@ func TestDeleteRolesForHunt(t *testing.T) {
 		},
 	}
 	apitest.CreateUser(&huntEditor, env)
-	var huntMember = users.User{
-		UserDB: db.UserDB{
-			FirstName: "hunt",
-			LastName:  "member",
-			Username:  "delete_roles_hunt_member",
-			Email:     "delete_roles_hunt_member@gmail.com",
-		},
-	}
-	apitest.CreateUser(&huntMember, env)
 
 	cases := []struct {
 		name     string
 		huntRole string
-		teamRole string
 		user     *users.User
 		numRoles int
 	}{
 		{
 			name:     "delete hunt owner's roles",
 			huntRole: "hunt_owner",
-			teamRole: "team_owner",
 			user:     &huntOwner,
 			numRoles: 6,
 		},
 		{
 			name:     "delete hunt editor's roles",
 			huntRole: "hunt_editor",
-			teamRole: "team_editor",
 			user:     &huntEditor,
-			numRoles: 4,
-		},
-		{
-			name:     "delete hunt member's roles",
-			huntRole: "hunt_member",
-			teamRole: "team_member",
-			user:     &huntEditor,
-			numRoles: 2,
+			numRoles: 5,
 		},
 	}
 
@@ -430,12 +416,6 @@ func TestDeleteRolesForHunt(t *testing.T) {
 				},
 			}
 			apitest.CreateTeam(&team, env, sessionCookie)
-
-			teamRole := roles.New(c.teamRole, team.ID)
-			e = teamRole.AddTo(c.user.ID)
-			if e != nil {
-				t.Fatalf("error adding role to user %d: %s", c.user.ID, e.JSON())
-			}
 
 			roleDBs, e := db.RolesForUser(c.user.ID)
 			if len(roleDBs) != c.numRoles {
