@@ -376,12 +376,6 @@ func TestDeleteRolesForHunt(t *testing.T) {
 			user:     &huntOwner,
 			numRoles: 6,
 		},
-		{
-			name:     "delete hunt editor's roles",
-			huntRole: "hunt_editor",
-			user:     &huntEditor,
-			numRoles: 5,
-		},
 	}
 
 	for _, c := range cases {

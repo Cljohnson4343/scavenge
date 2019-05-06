@@ -7,7 +7,6 @@ import (
 	"os"
 
 	"github.com/cljohnson4343/scavenge/request"
-	"github.com/cljohnson4343/scavenge/users"
 
 	"github.com/cljohnson4343/scavenge/hunts/models"
 	"github.com/cljohnson4343/scavenge/response"
@@ -103,15 +102,7 @@ func createHuntHandler(env *c.Env) http.HandlerFunc {
 			return
 		}
 
-		// set the creator field
-		userID, e := users.GetUserID(r.Context())
-		if e != nil {
-			e.Handle(w)
-			return
-		}
-		hunt.CreatorID = userID
-
-		e = InsertHunt(&hunt)
+		e = InsertHunt(r.Context(), &hunt)
 		if e != nil {
 			e.Handle(w)
 			return
@@ -311,7 +302,8 @@ func createItemHandler(env *c.Env) http.HandlerFunc {
 			return
 		}
 
-		e = InsertItem(env, &item, huntID)
+		item.HuntID = huntID
+		e = InsertItem(&item)
 		if e != nil {
 			e.Handle(w)
 			return

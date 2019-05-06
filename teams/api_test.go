@@ -61,13 +61,6 @@ func TestMain(m *testing.M) {
 		Longitude:    -86.59481,
 	}
 	apitest.CreateHunt(&hunt, env, sessionCookie)
-	// TODO get rid of these lines when hunt roles get added upon creation of hunt
-	huntOwner := roles.New("hunt_owner", hunt.ID)
-	e := huntOwner.AddTo(newUser.ID)
-	if e != nil {
-		panic("error adding hunt owner role to hunt")
-	}
-	// ENDTODO
 
 	hunt2.HuntDB = db.HuntDB{
 		Name:         "Teams Second Hunt43",
@@ -79,13 +72,6 @@ func TestMain(m *testing.M) {
 		Longitude:    -86.59481,
 	}
 	apitest.CreateHunt(&hunt2, env, sessionCookie)
-	// TODO get rid of these lines when hunt roles get added upon creation of hunt
-	hunt2Owner := roles.New("hunt_owner", hunt2.ID)
-	e = hunt2Owner.AddTo(newUser.ID)
-	if e != nil {
-		panic("error adding hunt owner role to hunt2")
-	}
-	// ENDTODO
 
 	os.Exit(m.Run())
 }

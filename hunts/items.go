@@ -42,7 +42,7 @@ func GetItemsForHunt(huntID int) ([]*models.Item, *response.Error) {
 }
 
 // InsertItem inserts an Item into the db
-func InsertItem(env *c.Env, item *models.Item, huntID int) *response.Error {
+func InsertItem(item *models.Item) *response.Error {
 	return item.Insert()
 }
 

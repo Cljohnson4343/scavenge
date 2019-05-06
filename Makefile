@@ -13,3 +13,5 @@ unit:
 db: clean-db
 	@echo "Opening test db..."
 	@psql -d scavengedb_test
+
+tests: integration unit
