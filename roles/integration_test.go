@@ -173,10 +173,14 @@ func getRoutes(entityID int, cookie *http.Cookie) []*http.Request {
 }
 
 func expectAuthorized(roleWID string, req *http.Request) bool {
+	entityID := 0
 	roleSplit := strings.Split(roleWID, "_")
-	entityID, err := strconv.Atoi(roleSplit[len(roleSplit)-1])
-	if err != nil {
-		panic("unable to convert string to int")
+	if roleWID != "user" {
+		var err error
+		entityID, err = strconv.Atoi(roleSplit[len(roleSplit)-1])
+		if err != nil {
+			panic("unable to convert string to int")
+		}
 	}
 
 	var permKey string
@@ -184,7 +188,7 @@ func expectAuthorized(roleWID string, req *http.Request) bool {
 
 	for perm, v := range roles.PermToRoleEndpoint {
 		var route string
-		if strings.Contains(v.Route, "%") {
+		if strings.Contains(v.Route, "%") && entityID != 0 {
 			route = fmt.Sprintf(v.Route, entityID)
 		} else {
 			route = v.Route

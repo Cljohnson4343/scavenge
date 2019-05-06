@@ -13,16 +13,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cljohnson4343/scavenge/config"
-	"github.com/cljohnson4343/scavenge/roles"
-	"github.com/cljohnson4343/scavenge/routes"
-
 	"github.com/cljohnson4343/scavenge/apitest"
-	c "github.com/cljohnson4343/scavenge/config"
+	"github.com/cljohnson4343/scavenge/config"
 	"github.com/cljohnson4343/scavenge/db"
 	"github.com/cljohnson4343/scavenge/hunts"
 	"github.com/cljohnson4343/scavenge/hunts/models"
 	"github.com/cljohnson4343/scavenge/response"
+	"github.com/cljohnson4343/scavenge/roles"
+	"github.com/cljohnson4343/scavenge/routes"
 	"github.com/cljohnson4343/scavenge/teams"
 	"github.com/cljohnson4343/scavenge/users"
 )
@@ -36,7 +34,7 @@ var newUser *users.User
 func TestMain(m *testing.M) {
 	d := db.InitDB("../db/db_info_test.json")
 	defer db.Shutdown(d)
-	env = c.CreateEnv(d)
+	env = config.CreateEnv(d)
 	response.SetDevMode(true)
 
 	// Login in user to get a valid user session cookie

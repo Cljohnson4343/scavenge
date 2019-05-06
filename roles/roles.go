@@ -367,8 +367,15 @@ var roleToGenerator = map[string]func(int) *Role{
 }
 
 func genRole(name string, id int) *Role {
+	var roleName string
+	if name == "user" {
+		roleName = "user"
+	} else {
+		roleName = fmt.Sprintf("%s_%d", name, id)
+	}
+
 	role := Role{
-		Name:        fmt.Sprintf("%s_%d", name, id),
+		Name:        roleName,
 		Permissions: make([]*Permission, 0),
 	}
 	// create role specific permissions
