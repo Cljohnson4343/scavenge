@@ -19,10 +19,10 @@ type testCase struct {
 
 func getReq(id int, key string) *http.Request {
 	var url string
-	if strings.Contains(roles.PermToRoutes[key], "%") {
-		url = fmt.Sprintf(roles.PermToRoutes[key], id)
+	if strings.Contains(roles.PermToRoleEndpoint[key].Route, "%") {
+		url = fmt.Sprintf(roles.PermToRoleEndpoint[key].Route, id)
 	} else {
-		url = roles.PermToRoutes[key]
+		url = roles.PermToRoleEndpoint[key].Route
 	}
 
 	req, err := http.NewRequest(strings.Split(key, "_")[0], url, nil)
@@ -34,9 +34,9 @@ func getReq(id int, key string) *http.Request {
 }
 
 func generatePermissionCases(perm string, id int) []*testCase {
-	cases := make([]*testCase, 0, len(roles.PermToRoutes))
+	cases := make([]*testCase, 0, len(roles.PermToRoleEndpoint))
 
-	for k, _ := range roles.PermToRoutes {
+	for k, _ := range roles.PermToRoleEndpoint {
 		c := testCase{
 			name:     k,
 			expected: false,
@@ -325,9 +325,9 @@ func TestGeneratePatchItem(t *testing.T) {
 //
 
 func generateRoleCases(role string, id int) []*testCase {
-	cases := make([]*testCase, 0, len(roles.PermToRoutes))
+	cases := make([]*testCase, 0, len(roles.PermToRoleEndpoint))
 
-	for k, _ := range roles.PermToRoutes {
+	for k, _ := range roles.PermToRoleEndpoint {
 		c := testCase{
 			name:     k,
 			expected: getExpected(role, k),
@@ -343,41 +343,41 @@ func generateRoleCases(role string, id int) []*testCase {
 func getExpected(role, permKey string) bool {
 	switch role {
 	case "team_owner":
-		if roles.PermToRole[permKey] == role ||
-			roles.PermToRole[permKey] == "team_editor" ||
-			roles.PermToRole[permKey] == "team_member" {
+		if roles.PermToRoleEndpoint[permKey].Role == role ||
+			roles.PermToRoleEndpoint[permKey].Role == "team_editor" ||
+			roles.PermToRoleEndpoint[permKey].Role == "team_member" {
 			return true
 		}
 	case "team_editor":
-		if roles.PermToRole[permKey] == role ||
-			roles.PermToRole[permKey] == "team_member" {
+		if roles.PermToRoleEndpoint[permKey].Role == role ||
+			roles.PermToRoleEndpoint[permKey].Role == "team_member" {
 			return true
 		}
 	case "team_member":
-		if roles.PermToRole[permKey] == role {
+		if roles.PermToRoleEndpoint[permKey].Role == role {
 			return true
 		}
 	case "hunt_owner":
-		if roles.PermToRole[permKey] == role ||
-			roles.PermToRole[permKey] == "hunt_editor" ||
-			roles.PermToRole[permKey] == "hunt_member" {
+		if roles.PermToRoleEndpoint[permKey].Role == role ||
+			roles.PermToRoleEndpoint[permKey].Role == "hunt_editor" ||
+			roles.PermToRoleEndpoint[permKey].Role == "hunt_member" {
 			return true
 		}
 	case "hunt_editor":
-		if roles.PermToRole[permKey] == role ||
-			roles.PermToRole[permKey] == "hunt_member" {
+		if roles.PermToRoleEndpoint[permKey].Role == role ||
+			roles.PermToRoleEndpoint[permKey].Role == "hunt_member" {
 			return true
 		}
 	case "hunt_member":
-		if roles.PermToRole[permKey] == role {
+		if roles.PermToRoleEndpoint[permKey].Role == role {
 			return true
 		}
 	case "user":
-		if roles.PermToRole[permKey] == role {
+		if roles.PermToRoleEndpoint[permKey].Role == role {
 			return true
 		}
 	case "user_owner":
-		if roles.PermToRole[permKey] == role {
+		if roles.PermToRoleEndpoint[permKey].Role == role {
 			return true
 		}
 	}

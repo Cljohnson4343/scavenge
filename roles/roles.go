@@ -163,10 +163,10 @@ func (p *Permission) Authorized(r *http.Request) bool {
 // GeneratePermission generates permission for the given route and entity id
 func GeneratePermission(perm string, entityID int) *Permission {
 	var regex string
-	if strings.Contains(permToFormattedRegex[perm], "%") {
-		regex = fmt.Sprintf(permToFormattedRegex[perm], entityID)
+	if strings.Contains(PermToRoleEndpoint[perm].FormattedRegex, "%") {
+		regex = fmt.Sprintf(PermToRoleEndpoint[perm].FormattedRegex, entityID)
 	} else {
-		regex = permToFormattedRegex[perm]
+		regex = PermToRoleEndpoint[perm].FormattedRegex
 	}
 	permission := Permission{
 		db.PermissionDB{
@@ -178,128 +178,179 @@ func GeneratePermission(perm string, entityID int) *Permission {
 	return &permission
 }
 
-// TODO clean this up so that there is only one map from perm to a struct
-// containing the other info
-var permToFormattedRegex = map[string]string{
-	// team endpoints
-	"get_teams":           `/teams/$`,
-	"get_team":            `/teams/%d$`,
-	"get_points":          `/teams/%d/points/$`,
-	"get_players":         `/teams/%d/players/$`,
-	"post_player":         `/teams/%d/players/$`,
-	"delete_player":       `/teams/%d/players/\d+$`,
-	"delete_team":         `/teams/%d$`,
-	"post_team":           `/teams/$`,
-	"patch_team":          `/teams/%d$`,
-	"get_locations":       `/teams/%d/locations/$`,
-	"post_location":       `/teams/%d/locations/$`,
-	"delete_location":     `/teams/%d/locations/\d+$`,
-	"get_media":           `/teams/%d/media/$`,
-	"post_media":          `/teams/%d/media/$`,
-	"delete_media":        `/teams/%d/media/\d+$`,
-	"post_teams_populate": `/teams/populate/$`,
-
-	// user endpoints
-	"get_user":    `/users/%d$`,
-	"post_login":  `/users/login/$`,
-	"post_logout": `/users/logout/$`,
-	"post_user":   `/users/$`,
-	"delete_user": `/users/%d$`,
-	"patch_user":  `/users/%d$`,
-
-	// hunt endpoints
-	"get_hunts":           `/hunts/$`,
-	"get_hunt":            `/hunts/%d$`,
-	"post_hunt":           `/hunts/$`,
-	"delete_hunt":         `/hunts/%d$`,
-	"patch_hunt":          `/hunts/%d$`,
-	"post_hunts_populate": `/hunts/populate/$`,
-	"get_items":           `/hunts/%d/items/$`,
-	"delete_item":         `/hunts/%d/items/\d+$`,
-	"post_item":           `/hunts/%d/items/$`,
-	"patch_item":          `/hunts/%d/items/\d+$`,
+type roleEndPoint struct {
+	FormattedRegex string
+	Route          string
+	Role           string
 }
 
-// PermToRole maps a permissions key to a role
-var PermToRole = map[string]string{
+// PermToRoleEndpoint maps permissions to FormattedRegex, Route, and Role
+var PermToRoleEndpoint = map[string]roleEndPoint{
 	// team endpoints
-	"get_teams":           `admin`,
-	"get_team":            `user`,
-	"get_points":          `hunt_member`,
-	"get_players":         `user`,
-	"post_player":         `team_editor`,
-	"delete_player":       `team_editor`,
-	"delete_team":         `team_owner`,
-	"post_team":           `hunt_editor`,
-	"patch_team":          `team_editor`,
-	"get_locations":       `hunt_member`,
-	"post_location":       `team_member`,
-	"delete_location":     `admin`,
-	"get_media":           `hunt_member`,
-	"post_media":          `team_member`,
-	"delete_media":        `team_member`,
-	"post_teams_populate": `admin`,
+	"get_teams": roleEndPoint{
+		FormattedRegex: `/teams/$`,
+		Route:          `/teams/`,
+		Role:           `admin`,
+	},
+	"get_team": roleEndPoint{
+		FormattedRegex: `/teams/%d$`,
+		Route:          `/teams/%d`,
+		Role:           `user`,
+	},
+	"get_points": roleEndPoint{
+		FormattedRegex: `/teams/%d/points/$`,
+		Route:          `/teams/%d/points/`,
+		Role:           `hunt_member`,
+	},
+	"get_players": roleEndPoint{
+		FormattedRegex: `/teams/%d/players/$`,
+		Route:          `/teams/%d/players/`,
+		Role:           `user`,
+	},
+	"post_player": roleEndPoint{
+		FormattedRegex: `/teams/%d/players/$`,
+		Route:          `/teams/%d/players/`,
+		Role:           `team_editor`,
+	},
+	"delete_player": roleEndPoint{
+		FormattedRegex: `/teams/%d/players/\d+$`,
+		Route:          `/teams/%d/players/43`,
+		Role:           `team_editor`,
+	},
+	"delete_team": roleEndPoint{
+		FormattedRegex: `/teams/%d$`,
+		Route:          `/teams/%d`,
+		Role:           `team_owner`,
+	},
+	"post_team": roleEndPoint{
+		FormattedRegex: `/teams/$`,
+		Route:          `/teams/`,
+		Role:           `hunt_editor`,
+	},
+	"patch_team": roleEndPoint{
+		FormattedRegex: `/teams/%d$`,
+		Route:          `/teams/%d`,
+		Role:           `team_editor`,
+	},
+	"get_locations": roleEndPoint{
+		FormattedRegex: `/teams/%d/locations/$`,
+		Route:          `/teams/%d/locations/`,
+		Role:           `hunt_member`,
+	},
+	"post_location": roleEndPoint{
+		FormattedRegex: `/teams/%d/locations/$`,
+		Route:          `/teams/%d/locations/`,
+		Role:           `team_member`,
+	},
+	"delete_location": roleEndPoint{
+		FormattedRegex: `/teams/%d/locations/\d+$`,
+		Route:          `/teams/%d/locations/43`,
+		Role:           `admin`,
+	},
+	"get_media": roleEndPoint{
+		FormattedRegex: `/teams/%d/media/$`,
+		Route:          `/teams/%d/media/`,
+		Role:           `hunt_member`,
+	},
+	"post_media": roleEndPoint{
+		FormattedRegex: `/teams/%d/media/$`,
+		Route:          `/teams/%d/media/`,
+		Role:           `team_member`,
+	},
+	"delete_media": roleEndPoint{
+		FormattedRegex: `/teams/%d/media/\d+$`,
+		Route:          `/teams/%d/media/43`,
+		Role:           `team_member`,
+	},
+	"post_teams_populate": roleEndPoint{
+		FormattedRegex: `/teams/populate/$`,
+		Route:          `/teams/populate/`,
+		Role:           `admin`,
+	},
 
 	// user endpoints
-	"get_user":    `public`,
-	"post_login":  `user`,
-	"post_logout": `user`,
-	"post_user":   `public`,
-	"delete_user": `user_owner`,
-	"patch_user":  `user_owner`,
+	"get_user": roleEndPoint{
+		FormattedRegex: `/users/%d$`,
+		Route:          `/users/%d`,
+		Role:           `public`,
+	},
+	"post_login": roleEndPoint{
+		FormattedRegex: `/users/login/$`,
+		Route:          `/users/login/`,
+		Role:           `user`,
+	},
+	"post_logout": roleEndPoint{
+		FormattedRegex: `/users/logout/$`,
+		Route:          `/users/logout/`,
+		Role:           `user`,
+	},
+	"post_user": roleEndPoint{
+		FormattedRegex: `/users/$`,
+		Route:          `/users/`,
+		Role:           `public`,
+	},
+	"delete_user": roleEndPoint{
+		FormattedRegex: `/users/%d$`,
+		Route:          `/users/%d`,
+		Role:           `user_owner`,
+	},
+	"patch_user": roleEndPoint{
+		FormattedRegex: `/users/%d$`,
+		Route:          `/users/%d`,
+		Role:           `user_owner`,
+	},
 
 	// hunt endpoints
-	"get_hunts":           `user`,
-	"get_hunt":            `user`,
-	"post_hunt":           `user`,
-	"delete_hunt":         `hunt_owner`,
-	"patch_hunt":          `hunt_editor`,
-	"post_hunts_populate": `admin`,
-	"get_items":           `user`,
-	"delete_item":         `hunt_editor`,
-	"post_item":           `hunt_editor`,
-	"patch_item":          `hunt_editor`,
-}
-
-// PermToRoutes maps permission to the endpoint route
-var PermToRoutes = map[string]string{
-	// teams routes
-	"get_teams":           `/teams/`,
-	"get_team":            `/teams/%d`,
-	"get_points":          `/teams/%d/points/`,
-	"get_players":         `/teams/%d/players/`,
-	"post_player":         `/teams/%d/players/`,
-	"delete_player":       `/teams/%d/players/43`,
-	"delete_team":         `/teams/%d`,
-	"post_team":           `/teams/`,
-	"patch_team":          `/teams/%d`,
-	"get_locations":       `/teams/%d/locations/`,
-	"post_location":       `/teams/%d/locations/`,
-	"delete_location":     `/teams/%d/locations/43`,
-	"get_media":           `/teams/%d/media/`,
-	"post_media":          `/teams/%d/media/`,
-	"delete_media":        `/teams/%d/media/43`,
-	"post_teams_populate": `/teams/populate/`,
-
-	// hunts routes
-	"get_hunts":           `/hunts/`,
-	"get_hunt":            `/hunts/%d`,
-	"post_hunt":           `/hunts/`,
-	"delete_hunt":         `/hunts/%d`,
-	"patch_hunt":          `/hunts/%d`,
-	"post_hunts_populate": `/hunts/populate/`,
-	"get_items":           `/hunts/%d/items/`,
-	"delete_item":         `/hunts/%d/items/43`,
-	"post_item":           `/hunts/%d/items/`,
-	"patch_item":          `/hunts/%d/items/43`,
-
-	// users routes
-	"get_user":    `/users/%d`,
-	"post_login":  `/users/login/`,
-	"post_logout": `/users/logout/`,
-	"post_user":   `/users/`,
-	"delete_user": `/users/%d`,
-	"patch_user":  `/users/%d`,
+	"get_hunts": roleEndPoint{
+		FormattedRegex: `/hunts/$`,
+		Route:          `/hunts/`,
+		Role:           `user`,
+	},
+	"get_hunt": roleEndPoint{
+		FormattedRegex: `/hunts/%d$`,
+		Route:          `/hunts/%d`,
+		Role:           `user`,
+	},
+	"post_hunt": roleEndPoint{
+		FormattedRegex: `/hunts/$`,
+		Route:          `/hunts/`,
+		Role:           `user`,
+	},
+	"delete_hunt": roleEndPoint{
+		FormattedRegex: `/hunts/%d$`,
+		Route:          `/hunts/%d`,
+		Role:           `hunt_owner`,
+	},
+	"patch_hunt": roleEndPoint{
+		FormattedRegex: `/hunts/%d$`,
+		Route:          `/hunts/%d`,
+		Role:           `hunt_editor`,
+	},
+	"post_hunts_populate": roleEndPoint{
+		FormattedRegex: `/hunts/populate/$`,
+		Route:          `/hunts/populate/`,
+		Role:           `admin`,
+	},
+	"get_items": roleEndPoint{
+		FormattedRegex: `/hunts/%d/items/$`,
+		Route:          `/hunts/%d/items/`,
+		Role:           `user`,
+	},
+	"delete_item": roleEndPoint{
+		FormattedRegex: `/hunts/%d/items/\d+$`,
+		Route:          `/hunts/%d/items/43`,
+		Role:           `hunt_editor`,
+	},
+	"post_item": roleEndPoint{
+		FormattedRegex: `/hunts/%d/items/$`,
+		Route:          `/hunts/%d/items/`,
+		Role:           `hunt_editor`,
+	},
+	"patch_item": roleEndPoint{
+		FormattedRegex: `/hunts/%d/items/\d+$`,
+		Route:          `/hunts/%d/items/43`,
+		Role:           `hunt_editor`,
+	},
 }
 
 // the team role relationships look like: Owner -> Editor -> Member -> HuntMember -> User
@@ -321,8 +372,8 @@ func genRole(name string, id int) *Role {
 		Permissions: make([]*Permission, 0),
 	}
 	// create role specific permissions
-	for k, v := range PermToRole {
-		if v == name {
+	for k, v := range PermToRoleEndpoint {
+		if v.Role == name {
 			role.Permissions = append(role.Permissions, GeneratePermission(k, id))
 		}
 	}

@@ -3,6 +3,7 @@ package config
 import (
 	"database/sql"
 
+	// necessary for database/sql package
 	_ "github.com/lib/pq"
 )
 

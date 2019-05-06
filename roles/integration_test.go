@@ -146,13 +146,13 @@ func TestRequireAuth(t *testing.T) {
 }
 
 func getRoutes(entityID int, cookie *http.Cookie) []*http.Request {
-	requests := make([]*http.Request, 0, len(roles.PermToRoutes))
-	for k, v := range roles.PermToRoutes {
+	requests := make([]*http.Request, 0, len(roles.PermToRoleEndpoint))
+	for k, v := range roles.PermToRoleEndpoint {
 		var url string
-		if strings.Contains(v, "%") {
-			url = fmt.Sprintf(v, entityID)
+		if strings.Contains(v.Route, "%") {
+			url = fmt.Sprintf(v.Route, entityID)
 		} else {
-			url = v
+			url = v.Route
 		}
 
 		req, err := http.NewRequest(
@@ -182,12 +182,12 @@ func expectAuthorized(roleWID string, req *http.Request) bool {
 	var permKey string
 	found := false
 
-	for perm, fmtRoute := range roles.PermToRoutes {
+	for perm, v := range roles.PermToRoleEndpoint {
 		var route string
-		if strings.Contains(fmtRoute, "%") {
-			route = fmt.Sprintf(fmtRoute, entityID)
+		if strings.Contains(v.Route, "%") {
+			route = fmt.Sprintf(v.Route, entityID)
 		} else {
-			route = fmtRoute
+			route = v.Route
 		}
 
 		route = config.BaseAPIURL + route
@@ -208,41 +208,41 @@ func expectAuthorized(roleWID string, req *http.Request) bool {
 	roleStr := strings.Join(roleSplit[:len(roleSplit)-1], "_")
 	switch roleStr {
 	case "team_owner":
-		if roles.PermToRole[permKey] == roleStr ||
-			roles.PermToRole[permKey] == "team_editor" ||
-			roles.PermToRole[permKey] == "team_member" {
+		if roles.PermToRoleEndpoint[permKey].Role == roleStr ||
+			roles.PermToRoleEndpoint[permKey].Role == "team_editor" ||
+			roles.PermToRoleEndpoint[permKey].Role == "team_member" {
 			return true
 		}
 	case "team_editor":
-		if roles.PermToRole[permKey] == roleStr ||
-			roles.PermToRole[permKey] == "team_member" {
+		if roles.PermToRoleEndpoint[permKey].Role == roleStr ||
+			roles.PermToRoleEndpoint[permKey].Role == "team_member" {
 			return true
 		}
 	case "team_member":
-		if roles.PermToRole[permKey] == roleStr {
+		if roles.PermToRoleEndpoint[permKey].Role == roleStr {
 			return true
 		}
 	case "hunt_owner":
-		if roles.PermToRole[permKey] == roleStr ||
-			roles.PermToRole[permKey] == "hunt_editor" ||
-			roles.PermToRole[permKey] == "hunt_member" {
+		if roles.PermToRoleEndpoint[permKey].Role == roleStr ||
+			roles.PermToRoleEndpoint[permKey].Role == "hunt_editor" ||
+			roles.PermToRoleEndpoint[permKey].Role == "hunt_member" {
 			return true
 		}
 	case "hunt_editor":
-		if roles.PermToRole[permKey] == roleStr ||
-			roles.PermToRole[permKey] == "hunt_member" {
+		if roles.PermToRoleEndpoint[permKey].Role == roleStr ||
+			roles.PermToRoleEndpoint[permKey].Role == "hunt_member" {
 			return true
 		}
 	case "hunt_member":
-		if roles.PermToRole[permKey] == roleStr {
+		if roles.PermToRoleEndpoint[permKey].Role == roleStr {
 			return true
 		}
 	case "user":
-		if roles.PermToRole[permKey] == roleStr {
+		if roles.PermToRoleEndpoint[permKey].Role == roleStr {
 			return true
 		}
 	case "user_owner":
-		if roles.PermToRole[permKey] == roleStr {
+		if roles.PermToRoleEndpoint[permKey].Role == roleStr {
 			return true
 		}
 	}
