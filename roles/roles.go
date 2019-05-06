@@ -40,6 +40,13 @@ func RemoveRole(roleID, userID int) *response.Error {
 	return db.RemoveRole(roleID, userID)
 }
 
+// DeleteRolesForTeam deletes all the roles and permissions for the given team
+func DeleteRolesForTeam(teamID int) *response.Error {
+	regex := fmt.Sprintf("team_[a-zA-Z]+_%d", teamID)
+
+	return db.DeleteRolesByRegex(regex)
+}
+
 // RoleDBs returns a slice of all the roles (in their RoleDB form)
 // the given role is comprised of
 func (r *Role) RoleDBs(userID int) []*db.RoleDB {

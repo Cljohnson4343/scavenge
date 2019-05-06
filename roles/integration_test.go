@@ -241,3 +241,97 @@ func expectAuthorized(roleWID string, req *http.Request) bool {
 
 	return false
 }
+
+func TestDeleteRolesForTeam(t *testing.T) {
+	var teamOwner = users.User{
+		UserDB: db.UserDB{
+			FirstName: "team",
+			LastName:  "owner",
+			Username:  "delete_roles_team_owner",
+			Email:     "delete_roles_team_owner@gmail.com",
+		},
+	}
+	apitest.CreateUser(&teamOwner, env)
+	var teamEditor = users.User{
+		UserDB: db.UserDB{
+			FirstName: "team",
+			LastName:  "editor",
+			Username:  "delete_roles_team_editor",
+			Email:     "delete_roles_team_editor@gmail.com",
+		},
+	}
+	apitest.CreateUser(&teamEditor, env)
+	var teamMember = users.User{
+		UserDB: db.UserDB{
+			FirstName: "team",
+			LastName:  "member",
+			Username:  "delete_roles_team_member",
+			Email:     "delete_roles_team_member@gmail.com",
+		},
+	}
+	apitest.CreateUser(&teamMember, env)
+
+	cases := []struct {
+		name     string
+		role     string
+		userID   int
+		teamID   int
+		numRoles int
+	}{
+		{
+			name:     "delete team owner's roles",
+			role:     "team_owner",
+			userID:   teamOwner.ID,
+			teamID:   3,
+			numRoles: 3,
+		},
+		{
+			name:     "delete team editor's roles",
+			role:     "team_editor",
+			userID:   teamEditor.ID,
+			teamID:   3,
+			numRoles: 2,
+		},
+		{
+			name:     "delete team member's roles",
+			role:     "team_member",
+			userID:   teamEditor.ID,
+			teamID:   3,
+			numRoles: 1,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			role := roles.New(c.role, c.teamID)
+			e := role.AddTo(c.userID)
+			if e != nil {
+				t.Fatalf("error adding role to user %d: %s", c.userID, e.JSON())
+			}
+
+			roleDBs, e := db.RolesForUser(c.userID)
+			if len(roleDBs) != c.numRoles {
+				t.Fatalf("expected %d roles got %d", c.numRoles, len(roleDBs))
+			}
+
+			e = roles.DeleteRolesForTeam(c.teamID)
+			if e != nil {
+				t.Fatalf("error deleting roles for team %d: %s", c.teamID, e.JSON())
+			}
+
+			roleDBs, e = db.RolesForUser(c.userID)
+			if len(roleDBs) != 0 {
+				t.Fatalf("expected %d roles got %d", 0, len(roleDBs))
+			}
+
+			perms, e := db.PermissionsForUser(c.userID)
+			if e != nil {
+				t.Fatalf("error getting permissions for user %d: %s", c.userID, e.JSON())
+			}
+
+			if len(perms) != 0 {
+				t.Fatalf("expected %d permissions got %d", 0, len(perms))
+			}
+		})
+	}
+}

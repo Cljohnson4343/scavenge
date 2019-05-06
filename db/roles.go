@@ -256,3 +256,33 @@ func RemoveRole(roleID, userID int) *response.Error {
 
 	return nil
 }
+
+var rolesDeleteByRegexScript = `
+	DELETE FROM roles
+	WHERE name ~ $1;
+`
+
+// DeleteRolesByRegex Deletes all roles whose names match the given regex
+func DeleteRolesByRegex(regex string) *response.Error {
+	res, err := stmtMap["rolesDeleteByRegex"].Exec(regex)
+	if err != nil {
+		return response.NewErrorf(
+			http.StatusInternalServerError,
+			"error deleting roles whose names match %s: %v",
+			regex,
+			err,
+		)
+	}
+
+	_, err = res.RowsAffected()
+	if err != nil {
+		return response.NewErrorf(
+			http.StatusInternalServerError,
+			"error deleting roles whose names match %s: %v",
+			regex,
+			err,
+		)
+	}
+
+	return nil
+}

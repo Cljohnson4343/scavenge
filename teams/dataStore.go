@@ -7,6 +7,7 @@ import (
 	"github.com/cljohnson4343/scavenge/db"
 	"github.com/cljohnson4343/scavenge/pgsql"
 	"github.com/cljohnson4343/scavenge/response"
+	"github.com/cljohnson4343/scavenge/roles"
 )
 
 // GetTeams populates the teams slice with all the teams. If an error
@@ -72,7 +73,18 @@ func InsertTeam(team *Team) *response.Error {
 
 // DeleteTeam deletes the team with the given teamID
 func DeleteTeam(teamID int) *response.Error {
-	return db.DeleteTeam(teamID)
+	e := db.DeleteTeam(teamID)
+	if e != nil {
+		return e
+	}
+
+	// team is deleted so delete all roles that deal with team
+	e = roles.DeleteRolesForTeam(teamID)
+	if e != nil {
+		return e
+	}
+
+	return nil
 }
 
 // UpdateTeam executes a partial update of the team with the given id. NOTE:
