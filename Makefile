@@ -1,5 +1,5 @@
-api-test: clean-db
-	@echo "Running api tests...\n"
+integration: clean-db
+	@echo "Running integration tests...\n"
 	@go test -tags=integration -count=1 ./... 
 
 clean-db:
