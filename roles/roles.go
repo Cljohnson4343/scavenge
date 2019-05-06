@@ -47,6 +47,32 @@ func DeleteRolesForTeam(teamID int) *response.Error {
 	return db.DeleteRolesByRegex(regex)
 }
 
+// DeleteRolesForHunt deletes all the roles and permissions for the given hunt
+// this includes all roles and permissions for teams in the hunt
+func DeleteRolesForHunt(huntID int) *response.Error {
+	e := response.NewNilError()
+
+	teams, getErr := db.GetTeamsWithHuntID(huntID)
+	if getErr != nil {
+		e.AddError(getErr)
+	}
+
+	for _, t := range teams {
+		teamErr := DeleteRolesForTeam(t.ID)
+		if teamErr != nil {
+			e.AddError(teamErr)
+		}
+	}
+
+	regex := fmt.Sprintf("hunt_[a-zA-Z]+_%d", huntID)
+	huntErr := db.DeleteRolesByRegex(regex)
+	if huntErr != nil {
+		e.AddError(huntErr)
+	}
+
+	return e.GetError()
+}
+
 // RoleDBs returns a slice of all the roles (in their RoleDB form)
 // the given role is comprised of
 func (r *Role) RoleDBs(userID int) []*db.RoleDB {

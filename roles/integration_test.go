@@ -11,13 +11,16 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/cljohnson4343/scavenge/apitest"
 	c "github.com/cljohnson4343/scavenge/config"
 	"github.com/cljohnson4343/scavenge/db"
+	"github.com/cljohnson4343/scavenge/hunts"
 	"github.com/cljohnson4343/scavenge/response"
 	"github.com/cljohnson4343/scavenge/roles"
 	"github.com/cljohnson4343/scavenge/routes"
+	"github.com/cljohnson4343/scavenge/teams"
 	"github.com/cljohnson4343/scavenge/users"
 	"github.com/go-chi/chi"
 )
@@ -332,6 +335,132 @@ func TestDeleteRolesForTeam(t *testing.T) {
 			if len(perms) != 0 {
 				t.Fatalf("expected %d permissions got %d", 0, len(perms))
 			}
+		})
+	}
+}
+
+func TestDeleteRolesForHunt(t *testing.T) {
+	var huntOwner = users.User{
+		UserDB: db.UserDB{
+			FirstName: "hunt",
+			LastName:  "owner",
+			Username:  "delete_roles_hunt_owner",
+			Email:     "delete_roles_hunt_owner@gmail.com",
+		},
+	}
+	apitest.CreateUser(&huntOwner, env)
+	var huntEditor = users.User{
+		UserDB: db.UserDB{
+			FirstName: "hunt",
+			LastName:  "editor",
+			Username:  "delete_roles_hunt_editor",
+			Email:     "delete_roles_hunt_editor@gmail.com",
+		},
+	}
+	apitest.CreateUser(&huntEditor, env)
+	var huntMember = users.User{
+		UserDB: db.UserDB{
+			FirstName: "hunt",
+			LastName:  "member",
+			Username:  "delete_roles_hunt_member",
+			Email:     "delete_roles_hunt_member@gmail.com",
+		},
+	}
+	apitest.CreateUser(&huntMember, env)
+
+	cases := []struct {
+		name     string
+		huntRole string
+		teamRole string
+		user     *users.User
+		numRoles int
+	}{
+		{
+			name:     "delete hunt owner's roles",
+			huntRole: "hunt_owner",
+			teamRole: "team_owner",
+			user:     &huntOwner,
+			numRoles: 6,
+		},
+		{
+			name:     "delete hunt editor's roles",
+			huntRole: "hunt_editor",
+			teamRole: "team_editor",
+			user:     &huntEditor,
+			numRoles: 4,
+		},
+		{
+			name:     "delete hunt member's roles",
+			huntRole: "hunt_member",
+			teamRole: "team_member",
+			user:     &huntEditor,
+			numRoles: 2,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			sessionCookie := apitest.Login(c.user, env)
+
+			// Create hunt and add hunt role to user
+			hunt := hunts.Hunt{
+				HuntDB: db.HuntDB{
+					Name:         fmt.Sprintf("delete roles for %s", c.huntRole),
+					MaxTeams:     43,
+					StartTime:    time.Now().AddDate(0, 0, 1),
+					EndTime:      time.Now().AddDate(0, 0, 2),
+					LocationName: "Fake Location",
+					Latitude:     34.730705,
+					Longitude:    -86.59481,
+				},
+			}
+			apitest.CreateHunt(&hunt, env, sessionCookie)
+
+			huntRole := roles.New(c.huntRole, hunt.ID)
+			e := huntRole.AddTo(c.user.ID)
+			if e != nil {
+				t.Fatalf("error adding role to user %d: %s", c.user.ID, e.JSON())
+			}
+
+			// Create team and add it to hunt
+			team := teams.Team{
+				TeamDB: db.TeamDB{
+					HuntID: hunt.ID,
+					Name:   c.name,
+				},
+			}
+			apitest.CreateTeam(&team, env, sessionCookie)
+
+			teamRole := roles.New(c.teamRole, team.ID)
+			e = teamRole.AddTo(c.user.ID)
+			if e != nil {
+				t.Fatalf("error adding role to user %d: %s", c.user.ID, e.JSON())
+			}
+
+			roleDBs, e := db.RolesForUser(c.user.ID)
+			if len(roleDBs) != c.numRoles {
+				t.Fatalf("expected %d roles got %d", c.numRoles, len(roleDBs))
+			}
+
+			e = roles.DeleteRolesForHunt(hunt.ID)
+			if e != nil {
+				t.Fatalf("error deleting roles for team %d: %s", hunt.ID, e.JSON())
+			}
+
+			roleDBs, e = db.RolesForUser(c.user.ID)
+			if len(roleDBs) != 0 {
+				t.Fatalf("expected %d roles got %d", 0, len(roleDBs))
+			}
+
+			perms, e := db.PermissionsForUser(c.user.ID)
+			if e != nil {
+				t.Fatalf("error getting permissions for user %d: %s", c.user.ID, e.JSON())
+			}
+
+			if len(perms) != 0 {
+				t.Fatalf("expected %d permissions got %d", 0, len(perms))
+			}
+
 		})
 	}
 }
