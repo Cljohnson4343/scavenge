@@ -35,11 +35,13 @@ func Routes(env *config.Env) *chi.Mux {
 	router := chi.NewRouter()
 
 	router.Use(users.WithUser)
+	router.Use(users.RequireAuth)
+
 	// /hunts routes
 	router.Get("/", getHuntsHandler(env))
 	router.Get("/{huntID}", getHuntHandler(env))
-	router.Post("/", createHuntHandler(env)) // tested
-	router.Delete("/{huntID}", deleteHuntHandler(env))
+	router.Post("/", createHuntHandler(env))           // tested
+	router.Delete("/{huntID}", deleteHuntHandler(env)) // tested
 	router.Patch("/{huntID}", patchHuntHandler(env))
 	router.Post("/populate/", populateDBHandler(env))
 

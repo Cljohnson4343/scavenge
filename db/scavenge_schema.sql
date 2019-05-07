@@ -198,18 +198,22 @@ CREATE UNIQUE INDEX roles_name_asc_idx ON roles(name ASC);
 CREATE OR REPLACE FUNCTION ins_sel_role(_name varchar(64), _user_id int, OUT _role_id int)
 AS $func$
 BEGIN
+LOOP
     SELECT id 
     FROM roles
     WHERE name = _name
     INTO _role_id;
+    
+    EXIT WHEN FOUND;
 
-    IF NOT FOUND THEN 
-        INSERT INTO roles(name)
-        VALUES (_name)
-        ON CONFLICT (name) DO NOTHING
-        RETURNING id
-        INTO _role_id;
-    END IF;
+    INSERT INTO roles(name)
+    VALUES (_name)
+    ON CONFLICT (name) DO NOTHING
+    RETURNING id
+    INTO _role_id;
+    
+    EXIT WHEN FOUND;
+END LOOP;
 
     INSERT INTO users_roles(user_id, role_id)
     VALUES (_user_id, _role_id)
@@ -254,18 +258,22 @@ CREATE OR REPLACE FUNCTION ins_sel_perm(
     _role_id int, _url_regex varchar(128), _method varchar(8), OUT _perm_id int) AS
 $func$
 BEGIN
+LOOP
     SELECT id
     FROM permissions p
     WHERE p.role_id = _role_id AND p.url_regex = _url_regex AND p.method = _method
     INTO _perm_id;
 
-    IF NOT FOUND THEN 
-        INSERT INTO permissions(role_id, url_regex, method)
-        VALUES (_role_id, _url_regex, _method)
-        ON CONFLICT ON CONSTRAINT permissions_no_dups DO NOTHING
-        RETURNING id
-        INTO _perm_id;
-    END IF;
+    EXIT WHEN FOUND;
+
+    INSERT INTO permissions(role_id, url_regex, method)
+    VALUES (_role_id, _url_regex, _method)
+    ON CONFLICT ON CONSTRAINT permissions_no_dups DO NOTHING
+    RETURNING id
+    INTO _perm_id;
+
+    EXIT WHEN FOUND;
+END LOOP;
 
 END; $func$
 LANGUAGE plpgsql;

@@ -63,7 +63,7 @@ func TestRequireAuth(t *testing.T) {
 	})
 	router := chi.NewMux()
 	router.Use(users.WithUser)
-	router.Use(roles.RequireAuth)
+	router.Use(users.RequireAuth)
 	router.Mount("/", handler)
 
 	cases := []struct {
@@ -93,8 +93,20 @@ func TestRequireAuth(t *testing.T) {
 	}
 
 	for _, c := range cases {
+		roleDBs, e := db.RolesForUser(newUser.ID)
+		if e != nil {
+			t.Fatalf("error getting roles for user: %s", e.JSON())
+		}
+
+		for _, r := range roleDBs {
+			e := roles.RemoveRole(r.ID, newUser.ID)
+			if e != nil {
+				t.Fatalf("error removing role from user: %s", e.JSON())
+			}
+		}
+
 		role := roles.New(c.role, validEntityID)
-		e := role.AddTo(newUser.ID)
+		e = role.AddTo(newUser.ID)
 		if e != nil {
 			t.Fatalf("error adding role %s to user %d", c.role, newUser.ID)
 		}
@@ -130,17 +142,6 @@ func TestRequireAuth(t *testing.T) {
 					)
 				}
 			})
-		}
-		roleDBs, e := db.RolesForUser(newUser.ID)
-		if e != nil {
-			t.Fatalf("error getting roles for user: %s", e.JSON())
-		}
-
-		for _, r := range roleDBs {
-			e := roles.RemoveRole(r.ID, newUser.ID)
-			if e != nil {
-				t.Fatalf("error removing role from user: %s", e.JSON())
-			}
 		}
 	}
 }
@@ -294,34 +295,46 @@ func TestDeleteRolesForTeam(t *testing.T) {
 			name:     "delete team owner's roles",
 			role:     "team_owner",
 			userID:   teamOwner.ID,
-			teamID:   3,
+			teamID:   333333,
 			numRoles: 3,
 		},
 		{
 			name:     "delete team editor's roles",
 			role:     "team_editor",
 			userID:   teamEditor.ID,
-			teamID:   3,
+			teamID:   4444444,
 			numRoles: 2,
 		},
 		{
 			name:     "delete team member's roles",
 			role:     "team_member",
-			userID:   teamEditor.ID,
-			teamID:   3,
+			userID:   teamMember.ID,
+			teamID:   555555,
 			numRoles: 1,
 		},
 	}
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
+			roleDBs, e := db.RolesForUser(c.userID)
+			if e != nil {
+				t.Fatalf("error getting roles for user: %s", e.JSON())
+			}
+
+			for _, r := range roleDBs {
+				e := roles.RemoveRole(r.ID, c.userID)
+				if e != nil {
+					t.Fatalf("error removing role from user: %s", e.JSON())
+				}
+			}
+
 			role := roles.New(c.role, c.teamID)
-			e := role.AddTo(c.userID)
+			e = role.AddTo(c.userID)
 			if e != nil {
 				t.Fatalf("error adding role to user %d: %s", c.userID, e.JSON())
 			}
 
-			roleDBs, e := db.RolesForUser(c.userID)
+			roleDBs, e = db.RolesForUser(c.userID)
 			if len(roleDBs) != c.numRoles {
 				t.Fatalf("expected %d roles got %d", c.numRoles, len(roleDBs))
 			}
@@ -378,7 +391,7 @@ func TestDeleteRolesForHunt(t *testing.T) {
 			name:     "delete hunt owner's roles",
 			huntRole: "hunt_owner",
 			user:     &huntOwner,
-			numRoles: 6,
+			numRoles: 8,
 		},
 	}
 
@@ -431,19 +444,9 @@ func TestDeleteRolesForHunt(t *testing.T) {
 			}
 
 			roleDBs, e = db.RolesForUser(c.user.ID)
-			if len(roleDBs) != 0 {
-				t.Fatalf("expected %d roles got %d", 0, len(roleDBs))
+			if len(roleDBs) != 2 {
+				t.Fatalf("expected %d roles got %d", 2, len(roleDBs))
 			}
-
-			perms, e := db.PermissionsForUser(c.user.ID)
-			if e != nil {
-				t.Fatalf("error getting permissions for user %d: %s", c.user.ID, e.JSON())
-			}
-
-			if len(perms) != 0 {
-				t.Fatalf("expected %d permissions got %d", 0, len(perms))
-			}
-
 		})
 	}
 }

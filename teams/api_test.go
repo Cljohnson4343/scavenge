@@ -39,7 +39,7 @@ func TestMain(m *testing.M) {
 
 	// Login in user to get a valid user session cookie
 	newUser = &users.User{
-		db.UserDB{
+		UserDB: db.UserDB{
 			FirstName: "Fernando",
 			LastName:  "Sucre",
 			Username:  "sucre_43",
@@ -78,7 +78,7 @@ func TestMain(m *testing.M) {
 func TestCreateTeamHandler(t *testing.T) {
 	// Login in user to get a valid user session cookie
 	newUser := &users.User{
-		db.UserDB{
+		UserDB: db.UserDB{
 			FirstName: "Test Create Team",
 			LastName:  "Test Create Team",
 			Username:  "test_create_team",
@@ -186,18 +186,17 @@ func TestCreateTeamHandler(t *testing.T) {
 					t.Error("expected id to be returned")
 				}
 
-				rolesForUser, e := db.RolesForUser(newUser.ID)
+				got, e := roles.UserHasRole("team_owner", c.team.ID, newUser.ID)
 				if e != nil {
-					t.Fatalf("error getting user %d's roles: %s", newUser.ID, e.JSON())
+					t.Fatalf(
+						"error determining if user %d has role: %s",
+						newUser.ID,
+						e.JSON(),
+					)
 				}
 
-				if len(rolesForUser) != 5 {
-					t.Fatalf("expected 5 roles got %d", len(rolesForUser))
-				}
-
-				e = roles.DeleteRolesForTeam(c.team.ID)
-				if e != nil {
-					t.Fatalf("error deleting roles: %s", e.JSON())
+				if !got {
+					t.Fatal("expected to have a team_owner role for team.")
 				}
 			}
 		})
@@ -205,6 +204,37 @@ func TestCreateTeamHandler(t *testing.T) {
 }
 
 func TestGetTeamsHandler(t *testing.T) {
+	getTeamsUser := &users.User{
+		UserDB: db.UserDB{
+			FirstName: "GetTeamsHandler",
+			LastName:  "GetTeamsHandler",
+			Username:  "GetTeamsHandler",
+			Email:     "GetTeamsHandler@gmail.com",
+		},
+	}
+	apitest.CreateUser(getTeamsUser, env)
+	sessionCookie := apitest.Login(getTeamsUser, env)
+
+	adminRole := roles.New("admin", 0)
+	e := adminRole.AddTo(getTeamsUser.ID)
+	if e != nil {
+		t.Fatalf("error adding role to user: %s", e.JSON())
+	}
+
+	// Create hunts to use for tests
+	getTeamsHunt := hunts.Hunt{
+		HuntDB: db.HuntDB{
+			Name:         "GetTeamsHunt 1",
+			MaxTeams:     43,
+			StartTime:    time.Now().AddDate(0, 0, 1),
+			EndTime:      time.Now().AddDate(0, 0, 2),
+			LocationName: "Fake Location",
+			Latitude:     34.730705,
+			Longitude:    -86.59481,
+		},
+	}
+	apitest.CreateHunt(&getTeamsHunt, env, sessionCookie)
+
 	cases := []struct {
 		name  string
 		code  int
@@ -217,49 +247,49 @@ func TestGetTeamsHandler(t *testing.T) {
 				teams.Team{
 					TeamDB: db.TeamDB{
 						Name:   "first get teams",
-						HuntID: hunt.ID,
+						HuntID: getTeamsHunt.ID,
 					},
 				},
 				teams.Team{
 					TeamDB: db.TeamDB{
 						Name:   "second get teams",
-						HuntID: hunt.ID,
+						HuntID: getTeamsHunt.ID,
 					},
 				},
 				teams.Team{
 					TeamDB: db.TeamDB{
 						Name:   "third get teams",
-						HuntID: hunt.ID,
+						HuntID: getTeamsHunt.ID,
 					},
 				},
 				teams.Team{
 					TeamDB: db.TeamDB{
 						Name:   "fourth get teams",
-						HuntID: hunt.ID,
+						HuntID: getTeamsHunt.ID,
 					},
 				},
 				teams.Team{
 					TeamDB: db.TeamDB{
 						Name:   "fifth get teams",
-						HuntID: hunt.ID,
+						HuntID: getTeamsHunt.ID,
 					},
 				},
 				teams.Team{
 					TeamDB: db.TeamDB{
 						Name:   "sixth get teams",
-						HuntID: hunt.ID,
+						HuntID: getTeamsHunt.ID,
 					},
 				},
 				teams.Team{
 					TeamDB: db.TeamDB{
 						Name:   "seventh get teams",
-						HuntID: hunt.ID,
+						HuntID: getTeamsHunt.ID,
 					},
 				},
 				teams.Team{
 					TeamDB: db.TeamDB{
 						Name:   "eighth get teams",
-						HuntID: hunt.ID,
+						HuntID: getTeamsHunt.ID,
 					},
 				},
 			},
@@ -273,13 +303,15 @@ func TestGetTeamsHandler(t *testing.T) {
 				apitest.CreateTeam(&t, env, sessionCookie)
 			}
 
-			req, err := http.NewRequest("GET", "/", nil)
+			req, err := http.NewRequest("GET", config.BaseAPIURL+"teams/", nil)
 			if err != nil {
 				t.Fatalf("error getting new request: %v", err)
 			}
+			req.AddCookie(sessionCookie)
+
 			rr := httptest.NewRecorder()
-			handler := teams.Routes(env)
-			handler.ServeHTTP(rr, req)
+			router := routes.Routes(env)
+			router.ServeHTTP(rr, req)
 
 			res := rr.Result()
 
@@ -300,16 +332,38 @@ func TestGetTeamsHandler(t *testing.T) {
 			if len(gotTeams) <= len(c.teams) {
 				t.Fatalf("expected at least %d teams to be returned but got %d", len(c.teams), len(gotTeams))
 			}
-
 		})
 	}
 }
 
 func TestGetTeamHandler(t *testing.T) {
+	getTeamUser := &users.User{
+		UserDB: db.UserDB{
+			FirstName: "GetTeamHandler",
+			LastName:  "GetTeamHandler",
+			Username:  "GetTeamHandler",
+			Email:     "GetTeamHandler@gmail.com",
+		},
+	}
+	apitest.CreateUser(getTeamUser, env)
+	sessionCookie := apitest.Login(getTeamUser, env)
+	// Create hunts to use for tests
+	getTeamHunt := hunts.Hunt{
+		HuntDB: db.HuntDB{
+			Name:         "GetTeamHunt 1",
+			MaxTeams:     43,
+			StartTime:    time.Now().AddDate(0, 0, 1),
+			EndTime:      time.Now().AddDate(0, 0, 2),
+			LocationName: "Fake Location",
+			Latitude:     34.730705,
+			Longitude:    -86.59481,
+		},
+	}
+	apitest.CreateHunt(&getTeamHunt, env, sessionCookie)
 	expected := teams.Team{
 		TeamDB: db.TeamDB{
-			Name:   "Get this team",
-			HuntID: hunt.ID,
+			Name:   "GetTeamHunt",
+			HuntID: getTeamHunt.ID,
 		},
 	}
 	apitest.CreateTeam(&expected, env, sessionCookie)
@@ -324,23 +378,23 @@ func TestGetTeamHandler(t *testing.T) {
 			code:   http.StatusOK,
 			teamID: expected.ID,
 		},
-		{
-			name:   "invalid team",
-			code:   http.StatusBadRequest,
-			teamID: 0,
-		},
 	}
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			req, err := http.NewRequest("GET", fmt.Sprintf("/%d", c.teamID), nil)
+			req, err := http.NewRequest(
+				"GET",
+				config.BaseAPIURL+fmt.Sprintf("teams/%d", c.teamID),
+				nil,
+			)
 			if err != nil {
 				t.Fatalf("error getting new request: %v", err)
 			}
+			req.AddCookie(sessionCookie)
 
 			rr := httptest.NewRecorder()
-			handler := teams.Routes(env)
-			handler.ServeHTTP(rr, req)
+			router := routes.Routes(env)
+			router.ServeHTTP(rr, req)
 			res := rr.Result()
 
 			if res.StatusCode != c.code {
@@ -365,10 +419,41 @@ func TestGetTeamHandler(t *testing.T) {
 }
 
 func TestDeleteTeamHandler(t *testing.T) {
+	deleteTeamUser := &users.User{
+		UserDB: db.UserDB{
+			FirstName: "DeleteTeamHandler",
+			LastName:  "DeleteTeamHandler",
+			Username:  "DeleteTeamHandler",
+			Email:     "DeleteTeamHandler@gmail.com",
+		},
+	}
+	apitest.CreateUser(deleteTeamUser, env)
+	sessionCookie := apitest.Login(deleteTeamUser, env)
+	// Create hunts to use for tests
+	deleteTeamHunt := hunts.Hunt{
+		HuntDB: db.HuntDB{
+			Name:         "DeleteTeamHunt 1",
+			MaxTeams:     43,
+			StartTime:    time.Now().AddDate(0, 0, 1),
+			EndTime:      time.Now().AddDate(0, 0, 2),
+			LocationName: "Fake Location",
+			Latitude:     34.730705,
+			Longitude:    -86.59481,
+		},
+	}
+	apitest.CreateHunt(&deleteTeamHunt, env, sessionCookie)
+	expected := teams.Team{
+		TeamDB: db.TeamDB{
+			Name:   "GetTeamHunt",
+			HuntID: deleteTeamHunt.ID,
+		},
+	}
+	apitest.CreateTeam(&expected, env, sessionCookie)
+
 	team := teams.Team{
 		TeamDB: db.TeamDB{
 			Name:   "fox river eight",
-			HuntID: hunt.ID,
+			HuntID: deleteTeamHunt.ID,
 		},
 	}
 	apitest.CreateTeam(&team, env, sessionCookie)
@@ -383,23 +468,23 @@ func TestDeleteTeamHandler(t *testing.T) {
 			code: http.StatusOK,
 			id:   team.ID,
 		},
-		{
-			name: "invalid team",
-			code: http.StatusBadRequest,
-			id:   0,
-		},
 	}
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			req, err := http.NewRequest("DELETE", fmt.Sprintf("/%d", c.id), nil)
+			req, err := http.NewRequest(
+				"DELETE",
+				config.BaseAPIURL+fmt.Sprintf("teams/%d", c.id),
+				nil,
+			)
 			if err != nil {
 				t.Fatalf("error creating new request: %v", err)
 			}
+			req.AddCookie(sessionCookie)
 
 			rr := httptest.NewRecorder()
-			handler := teams.Routes(env)
-			handler.ServeHTTP(rr, req)
+			router := routes.Routes(env)
+			router.ServeHTTP(rr, req)
 
 			res := rr.Result()
 
@@ -460,12 +545,6 @@ func TestPatchTeamHandler(t *testing.T) {
 					ID: 43,
 				},
 			},
-		},
-		{
-			name:   "update invalid team",
-			id:     0,
-			code:   http.StatusBadRequest,
-			update: teams.Team{},
 		},
 	}
 
@@ -573,36 +652,6 @@ func TestCreateMediaHandler(t *testing.T) {
 			},
 		},
 		{
-			name: "invalid media team id",
-			code: http.StatusBadRequest,
-			media: db.MediaMetaDB{
-				TeamID: 0,
-				ItemID: item.ID,
-				URL:    "amazon.com/cdn/media",
-				Location: db.LocationDB{
-					TimeStamp: time.Now().AddDate(0, 0, -3),
-					Latitude:  34.730705,
-					Longitude: -86.59481,
-					TeamID:    team.ID,
-				},
-			},
-		},
-		{
-			name: "invalid team id for location",
-			code: http.StatusBadRequest,
-			media: db.MediaMetaDB{
-				TeamID: team.ID,
-				ItemID: item.ID,
-				URL:    "amazon.com/cdn/media",
-				Location: db.LocationDB{
-					TimeStamp: time.Now().AddDate(0, 0, -3),
-					Latitude:  34.730705,
-					Longitude: -86.59481,
-					TeamID:    0,
-				},
-			},
-		},
-		{
 			name: "with media id",
 			code: http.StatusBadRequest,
 			media: db.MediaMetaDB{
@@ -646,7 +695,7 @@ func TestCreateMediaHandler(t *testing.T) {
 
 			req, err := http.NewRequest(
 				"POST",
-				fmt.Sprintf("/%d/media/", team.ID),
+				config.BaseAPIURL+fmt.Sprintf("teams/%d/media/", team.ID),
 				bytes.NewReader(reqBody),
 			)
 			if err != nil {
@@ -655,8 +704,8 @@ func TestCreateMediaHandler(t *testing.T) {
 			req.AddCookie(sessionCookie)
 
 			rr := httptest.NewRecorder()
-			handler := teams.Routes(env)
-			handler.ServeHTTP(rr, req)
+			router := routes.Routes(env)
+			router.ServeHTTP(rr, req)
 
 			res := rr.Result()
 			if res.StatusCode != c.code {
@@ -872,19 +921,13 @@ func TestGetMediaForTeamHandler(t *testing.T) {
 			teamID:        team.ID,
 			returnedMedia: len(media),
 		},
-		{
-			name:          "invalid team",
-			code:          http.StatusOK,
-			teamID:        0,
-			returnedMedia: 0,
-		},
 	}
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			req, err := http.NewRequest(
 				"GET",
-				fmt.Sprintf("/%d/media/", c.teamID),
+				config.BaseAPIURL+fmt.Sprintf("teams/%d/media/", c.teamID),
 				nil,
 			)
 			if err != nil {
@@ -893,8 +936,8 @@ func TestGetMediaForTeamHandler(t *testing.T) {
 			req.AddCookie(sessionCookie)
 
 			rr := httptest.NewRecorder()
-			handler := teams.Routes(env)
-			handler.ServeHTTP(rr, req)
+			router := routes.Routes(env)
+			router.ServeHTTP(rr, req)
 
 			res := rr.Result()
 			if res.StatusCode != c.code {
@@ -953,24 +996,6 @@ func TestDeleteMediaHandler(t *testing.T) {
 		teamID  int
 	}{
 		{
-			name:    "invalid team and valid media",
-			code:    http.StatusBadRequest,
-			mediaID: media.ID,
-			teamID:  4343,
-		},
-		{
-			name:    "valid team and invalid media",
-			code:    http.StatusBadRequest,
-			mediaID: 434343,
-			teamID:  team.ID,
-		},
-		{
-			name:    "invalid team and invalid media",
-			code:    http.StatusBadRequest,
-			mediaID: 434343,
-			teamID:  43434343,
-		},
-		{
 			name:    "valid team and media",
 			code:    http.StatusOK,
 			mediaID: media.ID,
@@ -982,7 +1007,7 @@ func TestDeleteMediaHandler(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			req, err := http.NewRequest(
 				"DELETE",
-				fmt.Sprintf("/%d/media/%d", c.teamID, c.mediaID),
+				config.BaseAPIURL+fmt.Sprintf("teams/%d/media/%d", c.teamID, c.mediaID),
 				nil,
 			)
 			if err != nil {
@@ -991,8 +1016,8 @@ func TestDeleteMediaHandler(t *testing.T) {
 			req.AddCookie(sessionCookie)
 
 			rr := httptest.NewRecorder()
-			handler := teams.Routes(env)
-			handler.ServeHTTP(rr, req)
+			router := routes.Routes(env)
+			router.ServeHTTP(rr, req)
 			res := rr.Result()
 
 			if res.StatusCode != c.code {
@@ -1029,15 +1054,6 @@ func TestCreateLocationHandler(t *testing.T) {
 				Latitude:  34.730705,
 				Longitude: -86.59481,
 				TeamID:    team.ID,
-			},
-		},
-		{
-			name: "without team id",
-			code: http.StatusBadRequest,
-			location: db.LocationDB{
-				TimeStamp: time.Now().AddDate(0, 0, -1),
-				Latitude:  34.730705,
-				Longitude: -86.59481,
 			},
 		},
 		{
@@ -1079,7 +1095,7 @@ func TestCreateLocationHandler(t *testing.T) {
 
 			req, err := http.NewRequest(
 				"POST",
-				fmt.Sprintf("/%d/locations/", c.location.TeamID),
+				config.BaseAPIURL+fmt.Sprintf("teams/%d/locations/", c.location.TeamID),
 				bytes.NewReader(reqBody),
 			)
 			if err != nil {
@@ -1088,8 +1104,8 @@ func TestCreateLocationHandler(t *testing.T) {
 			req.AddCookie(sessionCookie)
 
 			rr := httptest.NewRecorder()
-			handler := teams.Routes(env)
-			handler.ServeHTTP(rr, req)
+			router := routes.Routes(env)
+			router.ServeHTTP(rr, req)
 			res := rr.Result()
 
 			if res.StatusCode != c.code {
@@ -1116,10 +1132,40 @@ func TestCreateLocationHandler(t *testing.T) {
 }
 
 func TestDeleteLocationHandler(t *testing.T) {
+	deleteLocationUser := &users.User{
+		UserDB: db.UserDB{
+			FirstName: "DeleteLocationHandler",
+			LastName:  "DeleteLocationHandler",
+			Username:  "DeleteLocationHandler",
+			Email:     "DeleteLocationHandler@gmail.com",
+		},
+	}
+	apitest.CreateUser(deleteLocationUser, env)
+	sessionCookie := apitest.Login(deleteLocationUser, env)
+	adminRole := roles.New("admin", 0)
+	e := adminRole.AddTo(deleteLocationUser.ID)
+	if e != nil {
+		t.Fatalf("error adding admin role to user: %s", e.JSON())
+	}
+
+	// Create hunts to use for tests
+	deleteLocationHunt := hunts.Hunt{
+		HuntDB: db.HuntDB{
+			Name:         "DeleteLocationHunt 1",
+			MaxTeams:     43,
+			StartTime:    time.Now().AddDate(0, 0, 1),
+			EndTime:      time.Now().AddDate(0, 0, 2),
+			LocationName: "Fake Location",
+			Latitude:     34.730705,
+			Longitude:    -86.59481,
+		},
+	}
+	apitest.CreateHunt(&deleteLocationHunt, env, sessionCookie)
+
 	team := teams.Team{
 		TeamDB: db.TeamDB{
 			Name:   "delete location team",
-			HuntID: hunt.ID,
+			HuntID: deleteLocationHunt.ID,
 		},
 	}
 	apitest.CreateTeam(&team, env, sessionCookie)
@@ -1139,24 +1185,6 @@ func TestDeleteLocationHandler(t *testing.T) {
 		locationID int
 	}{
 		{
-			name:       "invalid team and valid location",
-			code:       http.StatusBadRequest,
-			teamID:     4343,
-			locationID: location.ID,
-		},
-		{
-			name:       "invalid team and location",
-			code:       http.StatusBadRequest,
-			teamID:     434343,
-			locationID: 4343,
-		},
-		{
-			name:       "valid team and invalid location",
-			code:       http.StatusBadRequest,
-			teamID:     team.ID,
-			locationID: 4343,
-		},
-		{
 			name:       "valid team and location",
 			code:       http.StatusOK,
 			teamID:     team.ID,
@@ -1168,16 +1196,17 @@ func TestDeleteLocationHandler(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			req, err := http.NewRequest(
 				"DELETE",
-				fmt.Sprintf("/%d/locations/%d", c.teamID, c.locationID),
+				config.BaseAPIURL+fmt.Sprintf("teams/%d/locations/%d", c.teamID, c.locationID),
 				nil,
 			)
 			if err != nil {
 				t.Fatalf("error getting new request: %v", err)
 			}
 			req.AddCookie(sessionCookie)
+
 			rr := httptest.NewRecorder()
-			handler := teams.Routes(env)
-			handler.ServeHTTP(rr, req)
+			router := routes.Routes(env)
+			router.ServeHTTP(rr, req)
 			res := rr.Result()
 
 			if res.StatusCode != c.code {
@@ -1185,7 +1214,7 @@ func TestDeleteLocationHandler(t *testing.T) {
 				if err != nil {
 					t.Errorf("error reading the response body: %v", err)
 				}
-				t.Fatalf("expected code %d got %d: %v", c.code, res.StatusCode, resBody)
+				t.Fatalf("expected code %d got %d: %s", c.code, res.StatusCode, resBody)
 			}
 		})
 	}
@@ -1302,19 +1331,13 @@ func TestGetLocationsForTeamHandler(t *testing.T) {
 			teamID:            team.ID,
 			returnedLocations: len(locations),
 		},
-		{
-			name:              "invalid team",
-			code:              http.StatusOK,
-			teamID:            434343,
-			returnedLocations: 0,
-		},
 	}
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			req, err := http.NewRequest(
 				"GET",
-				fmt.Sprintf("/%d/locations/", c.teamID),
+				config.BaseAPIURL+fmt.Sprintf("teams/%d/locations/", c.teamID),
 				nil,
 			)
 			if err != nil {
@@ -1323,8 +1346,8 @@ func TestGetLocationsForTeamHandler(t *testing.T) {
 			req.AddCookie(sessionCookie)
 
 			rr := httptest.NewRecorder()
-			handler := teams.Routes(env)
-			handler.ServeHTTP(rr, req)
+			router := routes.Routes(env)
+			router.ServeHTTP(rr, req)
 			res := rr.Result()
 
 			if res.StatusCode != c.code {
@@ -1388,30 +1411,6 @@ func TestGetAddPlayerHandler(t *testing.T) {
 		teamID int
 	}{
 		{
-			name:   "invalid user and team",
-			code:   http.StatusBadRequest,
-			teamID: 0,
-			addReq: addPlayerData{
-				PlayerID: 0,
-			},
-		},
-		{
-			name:   "invalid user and valid team",
-			code:   http.StatusBadRequest,
-			teamID: team.ID,
-			addReq: addPlayerData{
-				PlayerID: 0,
-			},
-		},
-		{
-			name:   "valid user and invalid team",
-			code:   http.StatusBadRequest,
-			teamID: 0,
-			addReq: addPlayerData{
-				PlayerID: newUser.ID,
-			},
-		},
-		{
 			name:   "valid user and team",
 			code:   http.StatusOK,
 			teamID: team.ID,
@@ -1446,7 +1445,7 @@ func TestGetAddPlayerHandler(t *testing.T) {
 
 			req, err := http.NewRequest(
 				"POST",
-				fmt.Sprintf("/%d/players/", c.teamID),
+				config.BaseAPIURL+fmt.Sprintf("teams/%d/players/", c.teamID),
 				bytes.NewReader(reqBody),
 			)
 			if err != nil {
@@ -1455,8 +1454,8 @@ func TestGetAddPlayerHandler(t *testing.T) {
 			req.AddCookie(sessionCookie)
 
 			rr := httptest.NewRecorder()
-			handler := teams.Routes(env)
-			handler.ServeHTTP(rr, req)
+			router := routes.Routes(env)
+			router.ServeHTTP(rr, req)
 			res := rr.Result()
 
 			if res.StatusCode != c.code {
@@ -1476,6 +1475,21 @@ func TestGetAddPlayerHandler(t *testing.T) {
 }
 
 func TestGetRemovePlayerHandler(t *testing.T) {
+	removePlayerUser := &users.User{
+		UserDB: db.UserDB{
+			FirstName: "RemovePlayerHandler",
+			LastName:  "RemovePlayerHandler",
+			Username:  "RemovePlayerHandler",
+			Email:     "RemovePlayerHandler@gmail.com",
+		},
+	}
+	apitest.CreateUser(removePlayerUser, env)
+	sessionCookie := apitest.Login(removePlayerUser, env)
+	adminRole := roles.New("admin", 0)
+	e := adminRole.AddTo(removePlayerUser.ID)
+	if e != nil {
+		t.Fatalf("error adding admin role to user: %s", e.JSON())
+	}
 	removePlayerHunt := hunts.Hunt{
 		HuntDB: db.HuntDB{
 			Name:         "Remove players Hunt 43",
@@ -1507,24 +1521,6 @@ func TestGetRemovePlayerHandler(t *testing.T) {
 		teamID   int
 	}{
 		{
-			name:     "invalid team and player",
-			code:     http.StatusBadRequest,
-			playerID: 0,
-			teamID:   0,
-		},
-		{
-			name:     "invalid team and valid player",
-			code:     http.StatusBadRequest,
-			playerID: playerID,
-			teamID:   0,
-		},
-		{
-			name:     "valid team and invalid player",
-			code:     http.StatusBadRequest,
-			playerID: 0,
-			teamID:   team.ID,
-		},
-		{
 			name:     "valid team and player",
 			code:     http.StatusOK,
 			playerID: playerID,
@@ -1536,7 +1532,7 @@ func TestGetRemovePlayerHandler(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			req, err := http.NewRequest(
 				"DELETE",
-				fmt.Sprintf("/%d/players/%d", c.teamID, c.playerID),
+				config.BaseAPIURL+fmt.Sprintf("teams/%d/players/%d", c.teamID, c.playerID),
 				nil,
 			)
 			if err != nil {
@@ -1545,8 +1541,8 @@ func TestGetRemovePlayerHandler(t *testing.T) {
 			req.AddCookie(sessionCookie)
 
 			rr := httptest.NewRecorder()
-			handler := teams.Routes(env)
-			handler.ServeHTTP(rr, req)
+			router := routes.Routes(env)
+			router.ServeHTTP(rr, req)
 			res := rr.Result()
 
 			if res.StatusCode != c.code {
@@ -1583,7 +1579,7 @@ func TestGetTeamPlayersHandler(t *testing.T) {
 	apitest.CreateTeam(&team, env, sessionCookie)
 
 	secondUser := &users.User{
-		db.UserDB{
+		UserDB: db.UserDB{
 			FirstName: "Michael",
 			LastName:  "Jordan",
 			Username:  "theGreatest23",
@@ -1606,19 +1602,13 @@ func TestGetTeamPlayersHandler(t *testing.T) {
 			teamID:          team.ID,
 			returnedPlayers: 2,
 		},
-		{
-			name:            "invalid team",
-			code:            http.StatusOK,
-			teamID:          0,
-			returnedPlayers: 0,
-		},
 	}
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			req, err := http.NewRequest(
 				"GET",
-				fmt.Sprintf("/%d/players/", c.teamID),
+				config.BaseAPIURL+fmt.Sprintf("teams/%d/players/", c.teamID),
 				nil,
 			)
 			if err != nil {
@@ -1627,8 +1617,8 @@ func TestGetTeamPlayersHandler(t *testing.T) {
 			req.AddCookie(sessionCookie)
 
 			rr := httptest.NewRecorder()
-			handler := teams.Routes(env)
-			handler.ServeHTTP(rr, req)
+			router := routes.Routes(env)
+			router.ServeHTTP(rr, req)
 			res := rr.Result()
 
 			if res.StatusCode != c.code {
@@ -1800,19 +1790,13 @@ func TestGetTeamPointsHandler(t *testing.T) {
 			teamID:   team.ID,
 			expected: 130,
 		},
-		{
-			name:     "invalid team",
-			code:     http.StatusOK,
-			teamID:   0,
-			expected: 0,
-		},
 	}
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			req, err := http.NewRequest(
 				"GET",
-				fmt.Sprintf("/%d/points/", c.teamID),
+				config.BaseAPIURL+fmt.Sprintf("teams/%d/points/", c.teamID),
 				nil,
 			)
 			if err != nil {
@@ -1820,8 +1804,8 @@ func TestGetTeamPointsHandler(t *testing.T) {
 			}
 			req.AddCookie(sessionCookie)
 			rr := httptest.NewRecorder()
-			handler := teams.Routes(env)
-			handler.ServeHTTP(rr, req)
+			router := routes.Routes(env)
+			router.ServeHTTP(rr, req)
 			res := rr.Result()
 
 			if res.StatusCode != c.code {

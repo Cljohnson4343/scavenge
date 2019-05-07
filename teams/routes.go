@@ -26,12 +26,16 @@ package teams
 
 import (
 	"github.com/cljohnson4343/scavenge/config"
+	"github.com/cljohnson4343/scavenge/users"
 	"github.com/go-chi/chi"
 )
 
 // Routes returns a router that serves the teams routes
 func Routes(env *config.Env) *chi.Mux {
 	router := chi.NewRouter()
+
+	router.Use(users.WithUser)
+	router.Use(users.RequireAuth)
 
 	// /teams routes
 	router.Get("/", getTeamsHandler(env))                                      // tested

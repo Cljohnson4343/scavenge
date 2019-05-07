@@ -26,13 +26,17 @@ func CreateUser(u *users.User, env *config.Env) {
 		panic(err)
 	}
 
-	req, err := http.NewRequest("POST", "/", bytes.NewReader(reqBody))
+	req, err := http.NewRequest(
+		"POST",
+		config.BaseAPIURL+"users/",
+		bytes.NewReader(reqBody),
+	)
 	if err != nil {
 		panic(err)
 	}
 	rr := httptest.NewRecorder()
-	handler := users.Routes(env)
-	handler.ServeHTTP(rr, req)
+	router := routes.Routes(env)
+	router.ServeHTTP(rr, req)
 	res := rr.Result()
 	if res.StatusCode != http.StatusOK {
 		resBody, err := ioutil.ReadAll(res.Body)
@@ -106,15 +110,15 @@ func CreateHunt(h *hunts.Hunt, env *config.Env, cookie *http.Cookie) {
 		panic(fmt.Sprintf("error marshalling hunt data: %v", err))
 	}
 
-	req, err := http.NewRequest("POST", "/", bytes.NewReader(reqBody))
+	req, err := http.NewRequest("POST", config.BaseAPIURL+"hunts/", bytes.NewReader(reqBody))
 	if err != nil {
 		panic(fmt.Sprintf("error getting new request: %v", err))
 	}
 	req.AddCookie(cookie)
 
 	rr := httptest.NewRecorder()
-	huntHandler := hunts.Routes(env)
-	huntHandler.ServeHTTP(rr, req)
+	router := routes.Routes(env)
+	router.ServeHTTP(rr, req)
 
 	res := rr.Result()
 
@@ -151,8 +155,8 @@ func CreateTeam(t *teams.Team, env *config.Env, cookie *http.Cookie) {
 	req.AddCookie(cookie)
 
 	rr := httptest.NewRecorder()
-	teamsHandler := routes.Routes(env)
-	teamsHandler.ServeHTTP(rr, req)
+	router := routes.Routes(env)
+	router.ServeHTTP(rr, req)
 
 	res := rr.Result()
 
@@ -184,7 +188,7 @@ func CreateItem(i *models.Item, env *config.Env, cookie *http.Cookie) {
 
 	req, err := http.NewRequest(
 		"POST",
-		fmt.Sprintf("/%d/items/", i.HuntID),
+		config.BaseAPIURL+fmt.Sprintf("hunts/%d/items/", i.HuntID),
 		bytes.NewReader(reqBody),
 	)
 	if err != nil {
@@ -193,8 +197,8 @@ func CreateItem(i *models.Item, env *config.Env, cookie *http.Cookie) {
 	req.AddCookie(cookie)
 
 	rr := httptest.NewRecorder()
-	handler := hunts.Routes(env)
-	handler.ServeHTTP(rr, req)
+	router := routes.Routes(env)
+	router.ServeHTTP(rr, req)
 
 	res := rr.Result()
 	if res.StatusCode != http.StatusOK {
@@ -225,7 +229,7 @@ func CreateMedia(m *db.MediaMetaDB, env *config.Env, cookie *http.Cookie) {
 
 	req, err := http.NewRequest(
 		"POST",
-		fmt.Sprintf("/%d/media/", m.TeamID),
+		config.BaseAPIURL+fmt.Sprintf("teams/%d/media/", m.TeamID),
 		bytes.NewReader(reqBody),
 	)
 	if err != nil {
@@ -234,8 +238,8 @@ func CreateMedia(m *db.MediaMetaDB, env *config.Env, cookie *http.Cookie) {
 	req.AddCookie(cookie)
 
 	rr := httptest.NewRecorder()
-	handler := teams.Routes(env)
-	handler.ServeHTTP(rr, req)
+	router := routes.Routes(env)
+	router.ServeHTTP(rr, req)
 
 	res := rr.Result()
 
@@ -268,7 +272,7 @@ func CreateLocation(l *db.LocationDB, env *config.Env, cookie *http.Cookie) {
 
 	req, err := http.NewRequest(
 		"POST",
-		fmt.Sprintf("/%d/locations/", l.TeamID),
+		config.BaseAPIURL+fmt.Sprintf("teams/%d/locations/", l.TeamID),
 		bytes.NewReader(reqBody),
 	)
 	if err != nil {
@@ -277,8 +281,8 @@ func CreateLocation(l *db.LocationDB, env *config.Env, cookie *http.Cookie) {
 	req.AddCookie(cookie)
 
 	rr := httptest.NewRecorder()
-	handler := teams.Routes(env)
-	handler.ServeHTTP(rr, req)
+	router := routes.Routes(env)
+	router.ServeHTTP(rr, req)
 	res := rr.Result()
 
 	if res.StatusCode != http.StatusOK {
@@ -318,16 +322,17 @@ func AddPlayer(playerID, teamID int, env *config.Env, cookie *http.Cookie) {
 
 	req, err := http.NewRequest(
 		"POST",
-		fmt.Sprintf("/%d/players/", teamID),
+		config.BaseAPIURL+fmt.Sprintf("teams/%d/players/", teamID),
 		bytes.NewReader(reqBody),
 	)
 	if err != nil {
 		panic(fmt.Sprintf("error getting new request: %v", err))
 	}
+	req.AddCookie(cookie)
 
 	rr := httptest.NewRecorder()
-	handler := teams.Routes(env)
-	handler.ServeHTTP(rr, req)
+	router := routes.Routes(env)
+	router.ServeHTTP(rr, req)
 
 	res := rr.Result()
 

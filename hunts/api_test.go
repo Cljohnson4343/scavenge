@@ -211,7 +211,7 @@ func TestDeleteHuntHandler(t *testing.T) {
 					t.Fatalf("error getting roles for user: %s", e.JSON())
 				}
 
-				if len(userRoles) != 1 {
+				if len(userRoles) != 2 {
 					t.Fatalf(
 						"expected hunt roles to be deleted with the hunt got %d",
 						len(userRoles),

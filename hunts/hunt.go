@@ -3,12 +3,10 @@ package hunts
 import (
 	"net/http"
 
-	"github.com/cljohnson4343/scavenge/pgsql"
-
 	"github.com/cljohnson4343/scavenge/db"
-	"github.com/cljohnson4343/scavenge/response"
-
 	"github.com/cljohnson4343/scavenge/hunts/models"
+	"github.com/cljohnson4343/scavenge/pgsql"
+	"github.com/cljohnson4343/scavenge/response"
 	"github.com/cljohnson4343/scavenge/teams"
 )
 

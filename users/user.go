@@ -4,9 +4,10 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/cljohnson4343/scavenge/roles"
+
 	"github.com/cljohnson4343/scavenge/db"
 	"github.com/cljohnson4343/scavenge/response"
-	"github.com/cljohnson4343/scavenge/sessions"
 )
 
 type userIDKeyType string
@@ -26,32 +27,44 @@ func GetUserID(ctx context.Context) (int, *response.Error) {
 	return id, nil
 }
 
+// ContextWithUser returns a context with the userID stored as a value
+func ContextWithUser(ctx context.Context, userID int) context.Context {
+	return context.WithValue(ctx, userIDKey, userID)
+}
+
 // User represents a user
 type User struct {
 	db.UserDB
 }
 
-// WithUser is middleware that checks to see if the user agent is using a valid
-// session. If so, the userID is stored in the context that is passed to the
-// next handler.
-func WithUser(fn http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		cookie := sessions.GetCookie(r)
-		if cookie == nil {
-			fn.ServeHTTP(w, r)
-			return
-		}
+// InsertUser inserts the given user into the db and assigns user roles
+func InsertUser(u *User) *response.Error {
+	e := u.Insert()
+	if e != nil {
+		return e
+	}
 
-		// TODO think about changing this so that a db lookup is not required. i.e.
-		// jwt or a cache for sessions. As it stands each request starts with a
-		// sessions db lookup and then an roles.authorization lookup
-		s, e := sessions.GetCurrent(cookie)
-		if e != nil {
-			e.Handle(w)
-			return
-		}
+	userRole := roles.New("user", 0)
+	e = userRole.AddTo(u.ID)
+	if e != nil {
+		return e
+	}
 
-		ctx := context.WithValue(r.Context(), userIDKey, s.UserID)
-		fn.ServeHTTP(w, r.WithContext(ctx))
-	})
+	userOwnerRole := roles.New("user_owner", u.ID)
+	e = userOwnerRole.AddTo(u.ID)
+	if e != nil {
+		return e
+	}
+
+	return nil
+}
+
+// DeleteUser deletes the given user from the db as well as all associated roles
+func DeleteUser(userID int) *response.Error {
+	e := db.DeleteUser(userID)
+	if e != nil {
+		return nil
+	}
+
+	return roles.DeleteRolesForUser(userID)
 }

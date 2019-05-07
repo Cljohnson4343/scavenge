@@ -8,7 +8,6 @@ import (
 
 	"github.com/cljohnson4343/scavenge/db"
 	"github.com/cljohnson4343/scavenge/response"
-	"github.com/cljohnson4343/scavenge/users"
 )
 
 // Role is a structure that maps permissions to users
@@ -67,6 +66,13 @@ func DeleteRolesForHunt(huntID int, teams []*db.TeamDB) *response.Error {
 	return e.GetError()
 }
 
+// DeleteRolesForUser deletes all the roles and permissions associated with the given user
+func DeleteRolesForUser(userID int) *response.Error {
+	regex := fmt.Sprintf("user_[a-zA-Z]+_%d", userID)
+
+	return db.DeleteRolesByRegex(regex)
+}
+
 // RoleDBs returns a slice of all the roles (in their RoleDB form)
 // the given role is comprised of
 func (r *Role) RoleDBs(userID int) []*db.RoleDB {
@@ -85,41 +91,6 @@ func (r *Role) RoleDBs(userID int) []*db.RoleDB {
 	}
 
 	return append(r.Child.RoleDBs(userID), &roleDB)
-}
-
-// RequireAuth checks to make sure the requesting user agent has
-// authorization to make the request
-func RequireAuth(fn http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		userID, e := users.GetUserID(req.Context())
-		if e != nil {
-			e.Handle(w)
-			return
-		}
-
-		perms, e := db.PermissionsForUser(userID)
-		if e != nil {
-			e.Handle(w)
-			return
-		}
-
-		for _, p := range perms {
-			perm := Permission{PermissionDB: p}
-			if perm.Authorized(req) {
-				fn.ServeHTTP(w, req)
-				return
-			}
-		}
-
-		e = response.NewErrorf(
-			http.StatusUnauthorized,
-			"User %d is not authorized to access %s %s",
-			userID,
-			req.Method,
-			req.URL.Path,
-		)
-		e.Handle(w)
-	})
 }
 
 // Authorized returns whether or not the role contains a permission that is
@@ -187,17 +158,17 @@ var PermToRoleEndpoint = map[string]roleEndPoint{
 		Role:           `admin`,
 	},
 	"get_team": roleEndPoint{
-		FormattedRegex: `/teams/%d$`,
+		FormattedRegex: `/teams/\d+$`,
 		Route:          `/teams/%d`,
 		Role:           `user`,
 	},
 	"get_points": roleEndPoint{
-		FormattedRegex: `/teams/%d/points/$`,
+		FormattedRegex: `/teams/\d+/points/$`,
 		Route:          `/teams/%d/points/`,
-		Role:           `hunt_member`,
+		Role:           `user`,
 	},
 	"get_players": roleEndPoint{
-		FormattedRegex: `/teams/%d/players/$`,
+		FormattedRegex: `/teams/\d+/players/$`,
 		Route:          `/teams/%d/players/`,
 		Role:           `user`,
 	},
@@ -227,9 +198,9 @@ var PermToRoleEndpoint = map[string]roleEndPoint{
 		Role:           `team_editor`,
 	},
 	"get_locations": roleEndPoint{
-		FormattedRegex: `/teams/%d/locations/$`,
+		FormattedRegex: `/teams/\d+/locations/$`,
 		Route:          `/teams/%d/locations/`,
-		Role:           `hunt_member`,
+		Role:           `user`,
 	},
 	"post_location": roleEndPoint{
 		FormattedRegex: `/teams/%d/locations/$`,
@@ -237,14 +208,14 @@ var PermToRoleEndpoint = map[string]roleEndPoint{
 		Role:           `team_member`,
 	},
 	"delete_location": roleEndPoint{
-		FormattedRegex: `/teams/%d/locations/\d+$`,
+		FormattedRegex: `/teams/\d+/locations/\d+$`,
 		Route:          `/teams/%d/locations/43`,
 		Role:           `admin`,
 	},
 	"get_media": roleEndPoint{
-		FormattedRegex: `/teams/%d/media/$`,
+		FormattedRegex: `/teams/\d+/media/$`,
 		Route:          `/teams/%d/media/`,
-		Role:           `hunt_member`,
+		Role:           `user`,
 	},
 	"post_media": roleEndPoint{
 		FormattedRegex: `/teams/%d/media/$`,
@@ -264,9 +235,9 @@ var PermToRoleEndpoint = map[string]roleEndPoint{
 
 	// user endpoints
 	"get_user": roleEndPoint{
-		FormattedRegex: `/users/%d$`,
+		FormattedRegex: `/users/\d+$`,
 		Route:          `/users/%d`,
-		Role:           `public`,
+		Role:           `user`,
 	},
 	"post_login": roleEndPoint{
 		FormattedRegex: `/users/login/$`,
@@ -301,7 +272,7 @@ var PermToRoleEndpoint = map[string]roleEndPoint{
 		Role:           `user`,
 	},
 	"get_hunt": roleEndPoint{
-		FormattedRegex: `/hunts/%d$`,
+		FormattedRegex: `/hunts/\d+$`,
 		Route:          `/hunts/%d`,
 		Role:           `user`,
 	},
@@ -326,7 +297,7 @@ var PermToRoleEndpoint = map[string]roleEndPoint{
 		Role:           `admin`,
 	},
 	"get_items": roleEndPoint{
-		FormattedRegex: `/hunts/%d/items/$`,
+		FormattedRegex: `/hunts/\d+/items/$`,
 		Route:          `/hunts/%d/items/`,
 		Role:           `user`,
 	},
@@ -358,18 +329,23 @@ var roleToGenerator = map[string]func(int) *Role{
 	"team_member": genTeamMemberRole,
 	"user":        genUserRole,
 	"user_owner":  genUserOwnerRole,
+	"admin":       genAdminRole,
+}
+
+func getRoleName(role string, entityID int) string {
+	if role == "user" {
+		return "user"
+	}
+
+	if role == "admin" {
+		return "admin"
+	}
+	return fmt.Sprintf("%s_%d", role, entityID)
 }
 
 func genRole(name string, id int) *Role {
-	var roleName string
-	if name == "user" {
-		roleName = "user"
-	} else {
-		roleName = fmt.Sprintf("%s_%d", name, id)
-	}
-
 	role := Role{
-		Name:        roleName,
+		Name:        getRoleName(name, id),
 		Permissions: make([]*Permission, 0),
 	}
 	// create role specific permissions
@@ -425,4 +401,25 @@ func genUserRole(id int) *Role {
 
 func genUserOwnerRole(id int) *Role {
 	return genRole("user_owner", id)
+}
+
+func genAdminRole(id int) *Role {
+	return genRole("admin", id)
+}
+
+// UserHasRole returns whether or not the given user has a particular role
+func UserHasRole(role string, entityID int, userID int) (bool, *response.Error) {
+	userRoles, e := db.RolesForUser(userID)
+	if e != nil {
+		return false, e
+	}
+
+	roleName := getRoleName(role, entityID)
+	for _, r := range userRoles {
+		if r.Name == roleName {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }

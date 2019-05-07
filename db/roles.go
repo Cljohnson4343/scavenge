@@ -108,7 +108,7 @@ var rolesForUserScript = `
 		FROM users_roles ur 
 		INNER JOIN roles r ON ur.user_id = $1 AND r.id = ur.role_id
 		)
-	SELECT r.id, r.name, p.id, p.url_regex, p.method
+	SELECT r.id, r.name, COALESCE(p.id, 0), COALESCE(p.url_regex, ''), COALESCE(p.method, '')
 	FROM roles_for_user r 
 	LEFT OUTER JOIN permissions p ON r.id = p.role_id
 	ORDER BY r.id;

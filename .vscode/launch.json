@@ -21,12 +21,12 @@
             "type": "go",
             "request": "launch",
             "mode": "debug",
-            "program": "${workspaceFolder}/roles/authorization_test.go",
+            "program": "${workspaceFolder}team/api_test.go",
             "buildFlags": "-tags=integration",
             "args": [
                 "-test.run",
                 "-test.v",
-                "TestRequireAuth"
+                "TestGetTeamHandler"
             ]
         }
     ]

@@ -111,49 +111,49 @@ func TestAddRoles(t *testing.T) {
 			name:     "team owner",
 			role:     "team_owner",
 			userID:   addRolesUsers["team_owner"].ID,
-			numRoles: 3,
+			numRoles: 5,
 		},
 		{
 			name:     "team editor",
 			role:     "team_editor",
 			userID:   addRolesUsers["team_editor"].ID,
-			numRoles: 2,
+			numRoles: 4,
 		},
 		{
 			name:     "team member",
 			role:     "team_member",
 			userID:   addRolesUsers["team_member"].ID,
-			numRoles: 1,
+			numRoles: 3,
 		},
 		{
 			name:     "hunt owner",
 			role:     "hunt_owner",
 			userID:   addRolesUsers["hunt_owner"].ID,
-			numRoles: 3,
+			numRoles: 5,
 		},
 		{
 			name:     "hunt editor",
 			role:     "hunt_editor",
 			userID:   addRolesUsers["hunt_editor"].ID,
-			numRoles: 2,
+			numRoles: 4,
 		},
 		{
 			name:     "hunt member",
 			role:     "hunt_member",
 			userID:   addRolesUsers["hunt_member"].ID,
-			numRoles: 1,
+			numRoles: 3,
 		},
 		{
 			name:     "user",
 			role:     "user",
 			userID:   addRolesUsers["user"].ID,
-			numRoles: 1,
+			numRoles: 2,
 		},
 		{
 			name:     "user owner",
 			role:     "user_owner",
 			userID:   addRolesUsers["user_owner"].ID,
-			numRoles: 1,
+			numRoles: 3,
 		},
 	}
 
@@ -175,24 +175,10 @@ func TestAddRoles(t *testing.T) {
 
 			got, e := db.RolesForUser(c.userID)
 			if e != nil {
-				t.Fatalf("error getting roles: \n%s", e.JSON())
+				t.Fatalf("error getting roles for user %d: \n%s", c.userID, e.JSON())
 			}
 			if len(got) != c.numRoles {
 				t.Fatalf("expected %d roles got %d", c.numRoles, len(got))
-			}
-
-			numPerms := 0
-			for _, r := range roleDBs {
-				numPerms += len(r.Permissions)
-			}
-
-			perms, e := db.PermissionsForUser(c.userID)
-			if e != nil {
-				t.Fatalf("error getting permissions: \n%s", e.JSON())
-			}
-
-			if numPerms != len(perms) {
-				t.Fatalf("expected %d permissions got %d", numPerms, len(perms))
 			}
 		})
 	}
@@ -256,7 +242,18 @@ func TestRemoveRole(t *testing.T) {
 	}
 	apitest.CreateUser(user, env)
 
-	entityID := 23
+	userRoles, e := db.RolesForUser(user.ID)
+	if e != nil {
+		t.Fatalf("error getting roles for user: %s", e.JSON())
+	}
+	for _, r := range userRoles {
+		e = db.RemoveRole(r.ID, user.ID)
+		if e != nil {
+			t.Fatalf("error removing role from user: %s", e.JSON())
+		}
+	}
+
+	entityID := 2323
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {

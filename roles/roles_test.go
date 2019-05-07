@@ -64,7 +64,7 @@ func testGeneratePermission(t *testing.T, perm string, optionalCase *testCase) {
 			got := permission.Authorized(c.req)
 			if got != c.expected {
 				t.Errorf(
-					"epected %v got %v\n\tregex: %s\n\turl: %s\n",
+					"expected %v got %v\n\tregex: %s\n\turl: %s\n",
 					c.expected,
 					got,
 					permission.URLRegex,
@@ -80,59 +80,27 @@ func TestGenerateGetTeams(t *testing.T) {
 }
 
 func TestGenerateGetTeam(t *testing.T) {
-	optional := &testCase{
-		name:     "wrong_id_get_team",
-		req:      getReq(43, "get_team"),
-		expected: false,
-	}
-	testGeneratePermission(t, "get_team", optional)
+	testGeneratePermission(t, "get_team", nil)
 }
 
 func TestGenerateGetPoints(t *testing.T) {
-	optional := &testCase{
-		name:     "wrong_id_get_points",
-		req:      getReq(43, "get_points"),
-		expected: false,
-	}
-
-	testGeneratePermission(t, "get_points", optional)
+	testGeneratePermission(t, "get_points", nil)
 }
 
 func TestGenerateGetPlayers(t *testing.T) {
-	optional := &testCase{
-		name:     "wrong_id_get_players",
-		req:      getReq(43, "get_players"),
-		expected: false,
-	}
-	testGeneratePermission(t, "get_players", optional)
+	testGeneratePermission(t, "get_players", nil)
 }
 
 func TestGeneratePostPlayer(t *testing.T) {
-	optional := &testCase{
-		name:     "wrong_id_post_player",
-		req:      getReq(43, "post_player"),
-		expected: false,
-	}
-	testGeneratePermission(t, "post_player", optional)
+	testGeneratePermission(t, "post_player", nil)
 }
 
 func TestGenerateDeletePlayer(t *testing.T) {
-	optional := &testCase{
-		name:     "wrong_id_delete_player",
-		req:      getReq(43, "delete_player"),
-		expected: false,
-	}
-
-	testGeneratePermission(t, "delete_player", optional)
+	testGeneratePermission(t, "delete_player", nil)
 }
 
 func TestGenerateDeleteTeam(t *testing.T) {
-	optional := &testCase{
-		name:     "wrong_id_delete_team",
-		req:      getReq(43, "delete_team"),
-		expected: false,
-	}
-	testGeneratePermission(t, "delete_team", optional)
+	testGeneratePermission(t, "delete_team", nil)
 }
 
 func TestGeneratePostTeam(t *testing.T) {
@@ -140,66 +108,31 @@ func TestGeneratePostTeam(t *testing.T) {
 }
 
 func TestGeneratePatchTeam(t *testing.T) {
-	optional := &testCase{
-		name:     "wrong_id_patch_team",
-		req:      getReq(43, "patch_team"),
-		expected: false,
-	}
-	testGeneratePermission(t, "patch_team", optional)
+	testGeneratePermission(t, "patch_team", nil)
 }
 
 func TestGenerateGetLocations(t *testing.T) {
-	optional := &testCase{
-		name:     "wrong_id_get_locations",
-		req:      getReq(43, "get_locations"),
-		expected: false,
-	}
-	testGeneratePermission(t, "get_locations", optional)
+	testGeneratePermission(t, "get_locations", nil)
 }
 
 func TestGeneratePostLocation(t *testing.T) {
-	optional := &testCase{
-		name:     "wrong_id_post_location",
-		req:      getReq(43, "post_location"),
-		expected: false,
-	}
-	testGeneratePermission(t, "post_location", optional)
+	testGeneratePermission(t, "post_location", nil)
 }
 
 func TestGenerateDeleteLocation(t *testing.T) {
-	optional := &testCase{
-		name:     "wrong_id_delete_location",
-		req:      getReq(43, "delete_location"),
-		expected: false,
-	}
-	testGeneratePermission(t, "delete_location", optional)
+	testGeneratePermission(t, "delete_location", nil)
 }
 
 func TestGenerateGetMedia(t *testing.T) {
-	optional := &testCase{
-		name:     "wrong_id_get_media",
-		req:      getReq(43, "get_media"),
-		expected: false,
-	}
-	testGeneratePermission(t, "get_media", optional)
+	testGeneratePermission(t, "get_media", nil)
 }
 
 func TestGeneratePostMedia(t *testing.T) {
-	optional := &testCase{
-		name:     "wrong_id_post_media",
-		req:      getReq(43, "post_media"),
-		expected: false,
-	}
-	testGeneratePermission(t, "post_media", optional)
+	testGeneratePermission(t, "post_media", nil)
 }
 
 func TestGenerateDeleteMedia(t *testing.T) {
-	optional := &testCase{
-		name:     "wrong_id_delete_media",
-		req:      getReq(43, "delete_media"),
-		expected: false,
-	}
-	testGeneratePermission(t, "delete_media", optional)
+	testGeneratePermission(t, "delete_media", nil)
 }
 
 func TestGeneratePostTeamsPopulate(t *testing.T) {
@@ -207,12 +140,7 @@ func TestGeneratePostTeamsPopulate(t *testing.T) {
 }
 
 func TestGenerateGetUser(t *testing.T) {
-	optional := &testCase{
-		name:     "wrong_id_get_user",
-		req:      getReq(43, "get_user"),
-		expected: false,
-	}
-	testGeneratePermission(t, "get_user", optional)
+	testGeneratePermission(t, "get_user", nil)
 }
 
 func TestGeneratePostLogin(t *testing.T) {
@@ -228,21 +156,11 @@ func TestGeneratePostUser(t *testing.T) {
 }
 
 func TestGenerateDeleteUser(t *testing.T) {
-	optional := &testCase{
-		name:     "wrong_id_delete_user",
-		req:      getReq(43, "delete_user"),
-		expected: false,
-	}
-	testGeneratePermission(t, "delete_user", optional)
+	testGeneratePermission(t, "delete_user", nil)
 }
 
 func TestGeneratePatchUser(t *testing.T) {
-	optional := &testCase{
-		name:     "wrong_id_patch_user",
-		req:      getReq(43, "patch_user"),
-		expected: false,
-	}
-	testGeneratePermission(t, "patch_user", optional)
+	testGeneratePermission(t, "patch_user", nil)
 }
 
 func TestGenerateGetHunts(t *testing.T) {
@@ -250,12 +168,7 @@ func TestGenerateGetHunts(t *testing.T) {
 }
 
 func TestGenerateGetHunt(t *testing.T) {
-	optional := &testCase{
-		name:     "wrong_id_get_hunt",
-		req:      getReq(43, "get_hunt"),
-		expected: false,
-	}
-	testGeneratePermission(t, "get_hunt", optional)
+	testGeneratePermission(t, "get_hunt", nil)
 }
 
 func TestGeneratePostHunt(t *testing.T) {
@@ -263,21 +176,11 @@ func TestGeneratePostHunt(t *testing.T) {
 }
 
 func TestGenerateDeleteHunt(t *testing.T) {
-	optional := &testCase{
-		name:     "wrong_id_delete_hunt",
-		req:      getReq(43, "delete_hunt"),
-		expected: false,
-	}
-	testGeneratePermission(t, "delete_hunt", optional)
+	testGeneratePermission(t, "delete_hunt", nil)
 }
 
 func TestGeneratePatchHunt(t *testing.T) {
-	optional := &testCase{
-		name:     "wrong_id_patch_hunt",
-		req:      getReq(43, "patch_hunt"),
-		expected: false,
-	}
-	testGeneratePermission(t, "patch_hunt", optional)
+	testGeneratePermission(t, "patch_hunt", nil)
 }
 
 func TestGeneratePostHuntsPopulate(t *testing.T) {
@@ -285,39 +188,19 @@ func TestGeneratePostHuntsPopulate(t *testing.T) {
 }
 
 func TestGenerateGetItems(t *testing.T) {
-	optional := &testCase{
-		name:     "wrong_id_get_items",
-		req:      getReq(43, "get_items"),
-		expected: false,
-	}
-	testGeneratePermission(t, "get_items", optional)
+	testGeneratePermission(t, "get_items", nil)
 }
 
 func TestGenerateDeleteItem(t *testing.T) {
-	optional := &testCase{
-		name:     "wrong_id_delete_item",
-		req:      getReq(43, "delete_item"),
-		expected: false,
-	}
-	testGeneratePermission(t, "delete_item", optional)
+	testGeneratePermission(t, "delete_item", nil)
 }
 
 func TestGeneratePostItem(t *testing.T) {
-	optional := &testCase{
-		name:     "wrong_id_post_item",
-		req:      getReq(43, "post_item"),
-		expected: false,
-	}
-	testGeneratePermission(t, "post_item", optional)
+	testGeneratePermission(t, "post_item", nil)
 }
 
 func TestGeneratePatchItem(t *testing.T) {
-	optional := &testCase{
-		name:     "wrong_id_patch_item",
-		req:      getReq(43, "patch_item"),
-		expected: false,
-	}
-	testGeneratePermission(t, "patch_item", optional)
+	testGeneratePermission(t, "patch_item", nil)
 }
 
 //
@@ -377,6 +260,10 @@ func getExpected(role, permKey string) bool {
 			return true
 		}
 	case "user_owner":
+		if roles.PermToRoleEndpoint[permKey].Role == role {
+			return true
+		}
+	case "admin":
 		if roles.PermToRoleEndpoint[permKey].Role == role {
 			return true
 		}

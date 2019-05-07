@@ -84,7 +84,7 @@ func GetLoginHandler(env *config.Env) http.HandlerFunc {
 
 		} else {
 			// create new user
-			e = u.Insert()
+			e = InsertUser(&u)
 			if e != nil {
 				e.Handle(w)
 				return
@@ -162,7 +162,7 @@ func GetDeleteUserHandler(env *config.Env) http.HandlerFunc {
 			return
 		}
 
-		e = db.DeleteUser(userID)
+		e = DeleteUser(userID)
 		if e != nil {
 			e.Handle(w)
 			return
@@ -235,7 +235,7 @@ func GetCreateUserHandler(env *config.Env) http.HandlerFunc {
 		}
 
 		// create new user
-		e = u.Insert()
+		e = InsertUser(&u)
 		if e != nil {
 			e.Handle(w)
 			return

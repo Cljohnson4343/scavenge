@@ -14,10 +14,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cljohnson4343/scavenge/roles"
+
 	"github.com/cljohnson4343/scavenge/apitest"
 	"github.com/cljohnson4343/scavenge/config"
 	"github.com/cljohnson4343/scavenge/db"
 	"github.com/cljohnson4343/scavenge/response"
+	"github.com/cljohnson4343/scavenge/routes"
 	"github.com/cljohnson4343/scavenge/sessions"
 	"github.com/cljohnson4343/scavenge/users"
 )
@@ -215,12 +218,12 @@ func TestLoginHandler(t *testing.T) {
 			}
 
 			bodyReader := bytes.NewReader(bodyJSON)
-			req, err := http.NewRequest("POST", "/", bodyReader)
+			req, err := http.NewRequest("POST", config.BaseAPIURL+"users/login/", bodyReader)
 			if err != nil {
 				t.Errorf("failed to create request: %v", err)
 			}
 
-			res := serveAndReturnResponse(users.GetLoginHandler(env), req)
+			res := serveAndReturnResponse(routes.Routes(env), req)
 
 			resBody := getBody(t, res)
 
@@ -282,7 +285,7 @@ func TestLogoutHandler(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			req, err := http.NewRequest("POST", "/logout/", nil)
+			req, err := http.NewRequest("POST", config.BaseAPIURL+"users/logout/", nil)
 			if err != nil {
 				t.Errorf("error getting a logout request: %v", err)
 			}
@@ -291,7 +294,7 @@ func TestLogoutHandler(t *testing.T) {
 				req.AddCookie(cookie)
 			}
 
-			res := serveAndReturnResponse(users.Routes(env), req)
+			res := serveAndReturnResponse(routes.Routes(env), req)
 			resBody, err := ioutil.ReadAll(res.Body)
 			if err != nil {
 				t.Errorf("error reading response body: %v", err)
@@ -427,12 +430,16 @@ func TestCreateUserHandler(t *testing.T) {
 				t.FailNow()
 			}
 
-			req, err := http.NewRequest("POST", "/", bytes.NewReader(bodyBuf))
+			req, err := http.NewRequest(
+				"POST",
+				config.BaseAPIURL+"users/",
+				bytes.NewReader(bodyBuf),
+			)
 			if err != nil {
 				t.Errorf("error getting a new request: %v", err)
 			}
 
-			res := serveAndReturnResponse(users.Routes(env), req)
+			res := serveAndReturnResponse(routes.Routes(env), req)
 			resBody := getBody(t, res)
 
 			if c.statusCode != res.StatusCode {
@@ -485,29 +492,36 @@ func TestDeleteUserHandler(t *testing.T) {
 			statusCode:  http.StatusOK,
 			withNewUser: true,
 		},
-		{
-			name:        `non-existing user`,
-			user:        users.User{},
-			statusCode:  http.StatusBadRequest,
-			withNewUser: false,
-		},
 	}
 
+	var sessionCookie *http.Cookie
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			userID := 0
 
 			if c.withNewUser {
 				apitest.CreateUser(&c.user, env)
+				sessionCookie = apitest.Login(&c.user, env)
+				adminRole := roles.New("admin", 0)
+				e := adminRole.AddTo(c.user.ID)
+				if e != nil {
+					t.Fatalf("error adding admin role to user: %s", e.JSON())
+				}
 				userID = c.user.ID
 			}
 
-			req, err := http.NewRequest("DELETE", fmt.Sprintf("/%d", userID), nil)
+			req, err := http.NewRequest(
+				"DELETE",
+				config.BaseAPIURL+fmt.Sprintf("users/%d", userID),
+				nil,
+			)
 			if err != nil {
 				t.Errorf("error getting new request: %v", err)
 				t.FailNow()
 			}
-			res := serveAndReturnResponse(users.Routes(env), req)
+			req.AddCookie(sessionCookie)
+
+			res := serveAndReturnResponse(routes.Routes(env), req)
 			resBody := getBody(t, res)
 
 			if res.StatusCode != c.statusCode {
@@ -555,16 +569,22 @@ func TestSelectUserHandler(t *testing.T) {
 				userID = c.user.ID
 			}
 
-			req, err := http.NewRequest("GET", fmt.Sprintf("/%d", userID), nil)
+			req, err := http.NewRequest(
+				"GET",
+				config.BaseAPIURL+fmt.Sprintf("users/%d", userID),
+				nil,
+			)
 			if err != nil {
 				t.Errorf("error getting new request: %v", err)
 				t.FailNow()
 			}
-			res := serveAndReturnResponse(users.Routes(env), req)
+			req.AddCookie(sessionCookie)
+
+			res := serveAndReturnResponse(routes.Routes(env), req)
 			resBody := getBody(t, res)
 
 			if res.StatusCode != c.statusCode {
-				t.Errorf("expected status code %d got %d: %s", c.statusCode, res.StatusCode, resBody)
+				t.Fatalf("expected status code %d got %d: %s", c.statusCode, res.StatusCode, resBody)
 			}
 
 			if c.statusCode == http.StatusOK {
@@ -647,13 +667,15 @@ func TestUpdateUserHandler(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			req, err := http.NewRequest(
 				"PATCH",
-				fmt.Sprintf("/%d", c.userID),
-				strings.NewReader(c.updateUserJSON))
+				config.BaseAPIURL+fmt.Sprintf("users/%d", c.userID),
+				strings.NewReader(c.updateUserJSON),
+			)
 			if err != nil {
 				t.Errorf("error getting new request: %v", err)
 				t.FailNow()
 			}
-			res := serveAndReturnResponse(users.Routes(env), req)
+			req.AddCookie(sessionCookie)
+			res := serveAndReturnResponse(routes.Routes(env), req)
 			resBody := getBody(t, res)
 
 			if res.StatusCode != c.statusCode {
