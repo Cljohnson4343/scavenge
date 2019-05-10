@@ -61,6 +61,8 @@ func GetLogoutHandler(env *config.Env) http.HandlerFunc {
 //  400:
 func GetLoginHandler(env *config.Env) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		response.Setup(&w, r)
+
 		u := User{}
 		e := request.DecodeAndValidate(r, &u)
 		if e != nil {
@@ -97,11 +99,11 @@ func GetLoginHandler(env *config.Env) http.HandlerFunc {
 			e.Handle(w)
 			return
 		}
-
+		response.EnableCORS(&w)
 		cookie := sess.Cookie()
 		http.SetCookie(w, cookie)
-
 		render.JSON(w, r, &u)
+
 		return
 	}
 }

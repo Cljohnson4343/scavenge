@@ -4,10 +4,9 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/cljohnson4343/scavenge/roles"
-
 	"github.com/cljohnson4343/scavenge/db"
 	"github.com/cljohnson4343/scavenge/response"
+	"github.com/cljohnson4343/scavenge/roles"
 )
 
 type userIDKeyType string

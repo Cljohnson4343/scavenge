@@ -1,4 +1,4 @@
-integration: clean-db
+integration: clean-db-test
 	@echo "Running integration tests...\n"
 	@go test -tags=integration -count=1 ./... 
 

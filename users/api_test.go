@@ -14,12 +14,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cljohnson4343/scavenge/roles"
-
 	"github.com/cljohnson4343/scavenge/apitest"
 	"github.com/cljohnson4343/scavenge/config"
 	"github.com/cljohnson4343/scavenge/db"
 	"github.com/cljohnson4343/scavenge/response"
+	"github.com/cljohnson4343/scavenge/roles"
 	"github.com/cljohnson4343/scavenge/routes"
 	"github.com/cljohnson4343/scavenge/sessions"
 	"github.com/cljohnson4343/scavenge/users"
@@ -265,7 +264,7 @@ func TestLogoutHandler(t *testing.T) {
 		},
 		{
 			name:       "logged out user",
-			statusCode: http.StatusBadRequest,
+			statusCode: http.StatusUnauthorized,
 			withCookie: false,
 		},
 	}
