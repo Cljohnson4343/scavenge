@@ -26,14 +26,14 @@ type UserDB struct {
 	// required: true
 	// maximum length: 64
 	// minimum length: 1
-	FirstName string `json:"first_name" valid:"stringlength(1|64)"`
+	FirstName string `json:"firstName" valid:"stringlength(1|64)"`
 
 	// LastName is the user's last name
 	//
 	// required: true
 	// maximum length: 64
 	// minimum length: 1
-	LastName string `json:"last_name" valid:"stringlength(1|64)"`
+	LastName string `json:"lastName" valid:"stringlength(1|64)"`
 
 	// Username is the user's unique username
 	//
@@ -45,17 +45,17 @@ type UserDB struct {
 	// JoinedAt is the time stamp for the user's join date
 	//
 	// required: true
-	JoinedAt time.Time `json:"joined_at" valid:"isZeroTime~joined_at: should not be included,optional"`
+	JoinedAt time.Time `json:"joinedAt" valid:"isZeroTime~joined_at: should not be included,optional"`
 
 	// LastVisit is the time of the user's last visit
 	//
 	// required: true
-	LastVisit time.Time `json:"last_visit" valid:"isZeroTime~last_visit: should not be included,optional"`
+	LastVisit time.Time `json:"lastVisit" valid:"isZeroTime~last_visit: should not be included,optional"`
 
 	// ImageURL is the url of the user's profile pic
 	//
 	// required: false
-	ImageURL string `json:"image_url" valid:"url,optional"`
+	ImageURL string `json:"imageUrl" valid:"url,optional"`
 
 	// Email is the email for the user
 	//

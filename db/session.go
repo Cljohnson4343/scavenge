@@ -15,7 +15,7 @@ type SessionDB struct {
 	// Key is the UUID that identifies a session
 	//
 	// required: true
-	Key uuid.UUID `json:"session_key" valid:"uuid"`
+	Key uuid.UUID `json:"sessionKey" valid:"uuid"`
 
 	// Expires is the expiration date for the session. If
 	// this date has already past, then the session is not
@@ -27,13 +27,13 @@ type SessionDB struct {
 	// CreatedAt is the time stamp for the session creation
 	//
 	// required: true
-	CreatedAt time.Time `json:"created_at" valid:"-"`
+	CreatedAt time.Time `json:"createdAt" valid:"-"`
 
 	// UserID is the id of the user associated with this
 	// session.
 	//
 	// required: true
-	UserID int `json:"user_id" valid:"int"`
+	UserID int `json:"userId" valid:"int"`
 }
 
 // Validate validates the given session

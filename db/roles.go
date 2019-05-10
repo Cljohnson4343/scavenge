@@ -14,7 +14,7 @@ import (
 // PermissionDB is a representation of a permissions table row
 type PermissionDB struct {
 	ID       int    `json:"id"`
-	URLRegex string `json:"url_regex"`
+	URLRegex string `json:"urlRegex"`
 	Method   string `json:"method"`
 }
 
@@ -22,7 +22,7 @@ type PermissionDB struct {
 type RoleDB struct {
 	ID          int             `json:"id"`
 	Name        string          `json:"name"`
-	UserID      int             `json:"user_id"`
+	UserID      int             `json:"userId"`
 	Permissions []*PermissionDB `json:"permissions"`
 }
 

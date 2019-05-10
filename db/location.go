@@ -17,7 +17,7 @@ type LocationDB struct {
 	// The id of the team
 	//
 	// required: true
-	TeamID int `json:"team_id" valid:"int"`
+	TeamID int `json:"teamId" valid:"int"`
 
 	// The id of the location
 	//
@@ -38,7 +38,7 @@ type LocationDB struct {
 	//
 	// required: true
 	// swagger:strfmt date
-	TimeStamp time.Time `json:"time_stamp" valid:"timePast"`
+	TimeStamp time.Time `json:"timeStamp" valid:"timePast"`
 }
 
 // Validate validates a locationDB struct

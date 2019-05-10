@@ -30,7 +30,7 @@ type HuntDB struct {
 	//
 	// minimum: 1
 	// required: true
-	MaxTeams int `json:"max_teams" valid:"positive"`
+	MaxTeams int `json:"maxTeams" valid:"positive"`
 
 	// The id of the Hunt
 	//
@@ -41,30 +41,30 @@ type HuntDB struct {
 	//
 	// required: true
 	// swagger:strfmt date
-	StartTime time.Time `json:"start_time" valid:"timeNotPast"`
+	StartTime time.Time `json:"startTime" valid:"timeNotPast"`
 
 	// The end time for the Hunt
 	//
 	// required: true
 	// swagger:strfmt date
-	EndTime time.Time `json:"end_time" valid:"timeNotPast,startTimeBeforeEndTime"`
+	EndTime time.Time `json:"endTime" valid:"timeNotPast,startTimeBeforeEndTime"`
 
 	// The creation time for the Hunt
 	//
 	// required: true
 	// swagger:strfmt date
-	CreatedAt time.Time `json:"created_at" valid:"-"`
+	CreatedAt time.Time `json:"createdAt" valid:"-"`
 
 	// The creator of the hunt
 	//
 	// required: true
-	CreatorID int `json:"creator_id" valid:"-"`
+	CreatorID int `json:"creatorId" valid:"-"`
 
 	// The name of the location of the Hunt
 	//
 	// required: true
 	// maximum length: 80
-	LocationName string `json:"location_name" valid:"stringlength(1|80)"`
+	LocationName string `json:"locationName" valid:"stringlength(1|80)"`
 
 	// The latitude for the Hunt
 	//
