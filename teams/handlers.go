@@ -565,7 +565,7 @@ func getAddPlayerHandler(env *config.Env) http.HandlerFunc {
 		}
 
 		reqBody := struct {
-			PlayerID int `json:"id"`
+			PlayerID int `json:"userID"`
 		}{}
 
 		err := json.NewDecoder(r.Body).Decode(&reqBody)

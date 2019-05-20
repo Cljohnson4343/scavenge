@@ -1401,7 +1401,7 @@ func TestGetAddPlayerHandler(t *testing.T) {
 	apitest.CreateTeam(&diffHuntTeam, env, sessionCookie)
 
 	type addPlayerData struct {
-		PlayerID int `json:"id"`
+		PlayerID int `json:"userID"`
 	}
 
 	cases := []struct {

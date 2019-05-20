@@ -312,7 +312,7 @@ func CreateLocation(l *db.LocationDB, env *config.Env, cookie *http.Cookie) {
 // on all errors.
 func AddPlayer(playerID, teamID int, env *config.Env, cookie *http.Cookie) {
 	reqData := struct {
-		PlayerID int `json:"id"`
+		PlayerID int `json:"userID"`
 	}{PlayerID: playerID}
 
 	reqBody, err := json.Marshal(&reqData)
