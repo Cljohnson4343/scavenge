@@ -20,7 +20,7 @@ func TestValidateTeamDB(t *testing.T) {
 		t.Errorf("%s: expected nil", caseStr)
 	}
 
-	caseStr = "name"
+	caseStr = "teamName"
 	team = &db.TeamDB{ID: 43, HuntID: 43}
 	err = team.Validate(req)
 	errMap := err.ErrorsByKey()

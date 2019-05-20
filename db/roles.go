@@ -13,16 +13,16 @@ import (
 
 // PermissionDB is a representation of a permissions table row
 type PermissionDB struct {
-	ID       int    `json:"id"`
+	ID       int    `json:"permissionID"`
 	URLRegex string `json:"urlRegex"`
 	Method   string `json:"method"`
 }
 
 // RoleDB is a representation of a roles table row
 type RoleDB struct {
-	ID          int             `json:"id"`
-	Name        string          `json:"name"`
-	UserID      int             `json:"userId"`
+	ID          int             `json:"roleID"`
+	Name        string          `json:"roleName"`
+	UserID      int             `json:"userID"`
 	Permissions []*PermissionDB `json:"permissions"`
 }
 

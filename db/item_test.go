@@ -30,7 +30,7 @@ func TestValidate(t *testing.T) {
 
 	errMap := err.ErrorsByKey()
 
-	if _, ok := errMap["name"]; !ok {
+	if _, ok := errMap["itemName"]; !ok {
 		t.Errorf("%s: expecting a name error but go nil", caseStr)
 	}
 

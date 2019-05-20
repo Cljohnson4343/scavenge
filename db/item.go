@@ -31,7 +31,7 @@ type ItemDB struct {
 	//
 	// maximum length: 255
 	// required: true
-	Name string `json:"name" valid:"stringlength(1|255)"`
+	Name string `json:"itemName" valid:"stringlength(1|255)"`
 
 	// the amount of points this item is worth
 	//

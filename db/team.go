@@ -28,13 +28,13 @@ type TeamDB struct {
 	// The id of the team
 	//
 	// required: true
-	ID int `json:"id" valid:"int,optional"`
+	ID int `json:"teamID" valid:"int,optional"`
 
 	// the name of the team
 	//
 	// maximum length: 255
 	// required: true
-	Name string `json:"name" valid:"stringlength(1|255)"`
+	Name string `json:"teamName" valid:"stringlength(1|255)"`
 }
 
 // Validate validates a TeamDB struct

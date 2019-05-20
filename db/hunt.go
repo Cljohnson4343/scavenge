@@ -24,7 +24,7 @@ type HuntDB struct {
 	//
 	// required: true
 	// maximum length: 255
-	Name string `json:"name" valid:"stringlength(1|255)"`
+	Name string `json:"huntName" valid:"stringlength(1|255)"`
 
 	// The maximum number of teams that can participate in the Hunt.
 	//
