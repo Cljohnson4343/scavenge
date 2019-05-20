@@ -14,15 +14,15 @@ type MediaMetaDB struct {
 	// The id of the media row
 	//
 	// required: true
-	ID int `json:"id" valid:"int,optional"`
+	ID int `json:"mediaID" valid:"int,optional"`
 
 	// The id of the item, if available, for the media file described by this object
-	ItemID int `json:"itemId" valid:"int,optional"`
+	ItemID int `json:"itemID" valid:"int,optional"`
 
 	// The id of the team associated with the media file described by this object
 	//
 	// required: true
-	TeamID int `json:"teamId" valid:"int"`
+	TeamID int `json:"teamID" valid:"int"`
 
 	// The location associated with the media file described by this object
 	//

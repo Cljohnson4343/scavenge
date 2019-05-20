@@ -33,7 +33,7 @@ type SessionDB struct {
 	// session.
 	//
 	// required: true
-	UserID int `json:"userId" valid:"int"`
+	UserID int `json:"userID" valid:"int"`
 }
 
 // Validate validates the given session

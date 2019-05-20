@@ -20,12 +20,12 @@ type ItemDB struct {
 	// The id of the Hunt
 	//
 	// required: true
-	HuntID int `json:"huntId" valid:"int,optional"`
+	HuntID int `json:"huntID" valid:"int,optional"`
 
 	// The id of the item
 	//
 	// required: true
-	ID int `json:"id" valid:"int,optional"`
+	ID int `json:"itemID" valid:"int,optional"`
 
 	// the name of the item
 	//

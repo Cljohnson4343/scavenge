@@ -19,7 +19,7 @@ type UserDB struct {
 	// ID is the user id
 	//
 	// required: true
-	ID int `json:"id" valid:"int,optional"`
+	ID int `json:"userID" valid:"int,optional"`
 
 	// FirstName is the user's first name
 	//

@@ -58,7 +58,7 @@ type HuntDB struct {
 	// The creator of the hunt
 	//
 	// required: true
-	CreatorID int `json:"creatorId" valid:"-"`
+	CreatorID int `json:"creatorID" valid:"-"`
 
 	// The name of the location of the Hunt
 	//
