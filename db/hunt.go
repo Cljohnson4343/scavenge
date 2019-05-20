@@ -35,7 +35,7 @@ type HuntDB struct {
 	// The id of the Hunt
 	//
 	// required: true
-	ID int `json:"id" valid:"int,optional"`
+	ID int `json:"huntID" valid:"int,optional"`
 
 	// The start time for the Hunt
 	//
@@ -64,17 +64,17 @@ type HuntDB struct {
 	//
 	// required: true
 	// maximum length: 80
-	LocationName string `json:"locationName" valid:"stringlength(1|80)"`
+	LocationName string `json:"locationName" valid:"stringlength(1|80),optional"`
 
 	// The latitude for the Hunt
 	//
 	// required: true
-	Latitude float32 `json:"latitude" valid:"latitude"`
+	Latitude float32 `json:"latitude" valid:"latitude,optional"`
 
 	// The longitude for the Hunt
 	//
 	// required: true
-	Longitude float32 `json:"longitude" valid:"longitude"`
+	Longitude float32 `json:"longitude" valid:"longitude,optional"`
 }
 
 // Update updates the non-zero value fields in the HuntDB struct
