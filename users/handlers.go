@@ -99,7 +99,7 @@ func GetLoginHandler(env *config.Env) http.HandlerFunc {
 			e.Handle(w)
 			return
 		}
-		response.EnableCORS(&w)
+
 		cookie := sess.Cookie()
 		http.SetCookie(w, cookie)
 		render.JSON(w, r, &u)
