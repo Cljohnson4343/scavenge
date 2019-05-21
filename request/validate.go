@@ -23,7 +23,7 @@ type PatchValidater interface {
 // It decodes the json-encoded body of the request and stores it into the value pointed to
 // by v. v is then validated.
 func DecodeAndValidate(r *http.Request, v Validater) *response.Error {
-	e := decode(r, v)
+	e := Decode(r, v)
 	if e != nil {
 		return e
 	}
@@ -31,7 +31,7 @@ func DecodeAndValidate(r *http.Request, v Validater) *response.Error {
 	return v.Validate(r)
 }
 
-func decode(r *http.Request, v interface{}) *response.Error {
+func Decode(r *http.Request, v interface{}) *response.Error {
 	err := json.NewDecoder(r.Body).Decode(v)
 	if err != nil {
 		return response.NewError(http.StatusBadRequest, err.Error())
@@ -45,7 +45,7 @@ func decode(r *http.Request, v interface{}) *response.Error {
 // It decodes the json-encoded body of the request and stores it into the value pointed to
 // by v. v then has only its non-zero value fields validated.
 func DecodeAndPatchValidate(r *http.Request, v PatchValidater, entityID int) *response.Error {
-	e := decode(r, v)
+	e := Decode(r, v)
 	if e != nil {
 		return e
 	}

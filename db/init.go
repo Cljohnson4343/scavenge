@@ -93,6 +93,7 @@ var scriptMap = map[string]string{
 	"teamGetPlayers":        teamGetPlayersScript,
 	"userInsert":            userInsertScript,
 	"userGet":               userGetScript,
+	"userGetByUsername":     userGetByUsernameScript,
 	"userDelete":            userDeleteScript,
 }
 

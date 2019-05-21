@@ -201,6 +201,40 @@ func GetUser(userID int) (*UserDB, *response.Error) {
 	return &u, nil
 }
 
+var userGetByUsernameScript = `
+	SELECT 
+		id, 
+		first_name, 
+		last_name, 
+		username, 
+		joined_at, 
+		last_visit, 
+		COALESCE(image_url, ''), 
+		email
+	FROM users
+	WHERE username = $1;`
+
+// GetUserByUsername returns the user with the given username
+func GetUserByUsername(username string) (*UserDB, *response.Error) {
+	u := UserDB{}
+	err := stmtMap["userGetByUsername"].QueryRow(username).Scan(&u.ID, &u.FirstName, &u.LastName,
+		&u.Username, &u.JoinedAt, &u.LastVisit, &u.ImageURL, &u.Email)
+	if err != nil {
+		// check to see if user doesn't exist
+		if err == sql.ErrNoRows {
+			return nil, response.NewErrorf(
+				http.StatusBadRequest,
+				"Get user: there is no user with username %s",
+				username,
+			)
+		}
+
+		return nil, response.NewErrorf(http.StatusInternalServerError, "Get user: %v", err)
+	}
+
+	return &u, nil
+}
+
 var userDeleteScript = `
 	DELETE FROM users
 	WHERE id = $1;`

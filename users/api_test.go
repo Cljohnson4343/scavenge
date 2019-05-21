@@ -116,19 +116,6 @@ func TestLoginHandler(t *testing.T) {
 		statusCode int
 	}{
 		{
-			testName: `new user`,
-			user: users.User{
-				UserDB: db.UserDB{
-					FirstName: "cj",
-					LastName:  "johnson",
-					Username:  "cj43",
-					Email:     "cj43@gmail.com",
-					ImageURL:  "amazon.cdn.com",
-				},
-			},
-			statusCode: http.StatusOK,
-		},
-		{
 			testName: `existing user`,
 			user: users.User{
 				UserDB: db.UserDB{
@@ -146,63 +133,18 @@ func TestLoginHandler(t *testing.T) {
 			testName: `existing user without providing user_id`,
 			user: users.User{
 				UserDB: db.UserDB{
-					FirstName: "cj",
-					LastName:  "johnson",
-					Username:  "cj43",
-					Email:     "cj43@gmail.com",
-					ImageURL:  "amazon.cdn.com",
+					Username: newUser.Username,
 				},
 			},
-			statusCode: http.StatusBadRequest,
+			statusCode: http.StatusOK,
 		},
 		{
-			testName: `request missing first name`,
+			testName: `request missing both username and id`,
 			user: users.User{
 				UserDB: db.UserDB{
 					LastName: "johnson",
-					Username: "cj43",
 					Email:    "cj43@gmail.com",
 					ImageURL: "amazon.cdn.com",
-					ID:       1,
-				},
-			},
-			statusCode: http.StatusBadRequest,
-		},
-		{
-			testName: `request missing last name`,
-			user: users.User{
-				UserDB: db.UserDB{
-					FirstName: "cj",
-					Username:  "cj43",
-					Email:     "cj43@gmail.com",
-					ImageURL:  "amazon.cdn.com",
-					ID:        1,
-				},
-			},
-			statusCode: http.StatusBadRequest,
-		},
-		{
-			testName: `request missing username`,
-			user: users.User{
-				UserDB: db.UserDB{
-					FirstName: "cj",
-					LastName:  "johnson",
-					Email:     "cj43@gmail.com",
-					ImageURL:  "amazon.cdn.com",
-					ID:        1,
-				},
-			},
-			statusCode: http.StatusBadRequest,
-		},
-		{
-			testName: `request missing email`,
-			user: users.User{
-				UserDB: db.UserDB{
-					FirstName: "cj",
-					LastName:  "johnson",
-					Username:  "cj43",
-					ImageURL:  "amazon.cdn.com",
-					ID:        1,
 				},
 			},
 			statusCode: http.StatusBadRequest,
@@ -343,7 +285,7 @@ func TestCreateUserHandler(t *testing.T) {
 					ID:        1,
 				},
 			},
-			statusCode: http.StatusBadRequest,
+			statusCode: http.StatusOK,
 		},
 		{
 			name: `duplicate username`,

@@ -61,10 +61,8 @@ func GetLogoutHandler(env *config.Env) http.HandlerFunc {
 //  400:
 func GetLoginHandler(env *config.Env) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		response.Setup(&w, r)
-
 		u := User{}
-		e := request.DecodeAndValidate(r, &u)
+		e := request.Decode(r, &u)
 		if e != nil {
 			e.Handle(w)
 			return
@@ -75,6 +73,7 @@ func GetLoginHandler(env *config.Env) http.HandlerFunc {
 			existing, e := db.GetUser(u.ID)
 			if e != nil {
 				e.Handle(w)
+				return
 			}
 
 			if existing == nil {
@@ -83,14 +82,26 @@ func GetLoginHandler(env *config.Env) http.HandlerFunc {
 				e.Handle(w)
 				return
 			}
-
-		} else {
-			// create new user
-			e = InsertUser(&u)
+		} else if u.Username != "" {
+			existing, e := db.GetUserByUsername(u.Username)
 			if e != nil {
 				e.Handle(w)
 				return
 			}
+
+			if existing == nil {
+				e := response.NewErrorf(http.StatusBadRequest,
+					"getLoginHandler: unable to login user %s", u.Username)
+				e.Handle(w)
+				return
+			}
+
+			u.ID = existing.ID
+		} else {
+			e := response.NewErrorf(http.StatusBadRequest,
+				"getLoginHandler: must provide either userID or username")
+			e.Handle(w)
+			return
 		}
 
 		// create session and add a session cookie to user agent
@@ -243,6 +254,15 @@ func GetCreateUserHandler(env *config.Env) http.HandlerFunc {
 			return
 		}
 
+		// create session and add a session cookie to user agent
+		sess, e := sessions.New(u.ID)
+		if e != nil {
+			e.Handle(w)
+			return
+		}
+
+		cookie := sess.Cookie()
+		http.SetCookie(w, cookie)
 		render.JSON(w, r, &u)
 	}
 }
