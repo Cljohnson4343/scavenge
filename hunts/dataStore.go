@@ -67,6 +67,38 @@ func GetHunt(huntID int) (*Hunt, *response.Error) {
 	return &Hunt{HuntDB: *huntDB, Teams: teams, Items: items}, e.GetError()
 }
 
+// GetHuntsForUser returns all Hunts for the given user
+func GetHuntsByUserID(userID int) ([]*Hunt, *response.Error) {
+	huntDBs, e := db.GetHuntsByUserID(userID)
+	if huntDBs == nil {
+		return nil, e
+	}
+
+	if e == nil {
+		e = response.NewNilError()
+	}
+
+	hunts := make([]*Hunt, 0, len(huntDBs))
+
+	for _, h := range huntDBs {
+		ts, teamErr := teams.GetTeamsForHunt(h.ID)
+		if teamErr != nil {
+			e.AddError(teamErr)
+		}
+
+		items, itemErr := GetItemsForHunt(h.ID)
+		if itemErr != nil {
+			e.AddError(itemErr)
+		}
+
+		hunt := Hunt{HuntDB: *h, Teams: ts, Items: items}
+
+		hunts = append(hunts, &hunt)
+	}
+
+	return hunts, e.GetError()
+}
+
 // InsertHunt inserts the given hunt into the database and updates the hunt
 // with the new id and created_at timestamp
 func InsertHunt(ctx context.Context, hunt *Hunt) *response.Error {

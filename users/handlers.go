@@ -119,6 +119,39 @@ func GetLoginHandler(env *config.Env) http.HandlerFunc {
 	}
 }
 
+// swagger:route GET /users/ get current user getCurrentUserHandler
+//
+// Gets the user that is using this session.
+//
+// Consumes:
+// 	- application/json
+//
+// Produces:
+//	- application/json
+//
+// Schemes: http, https
+//
+// Responses:
+// 	200:
+//  400:
+func getCurrentUserHandler(env *config.Env) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		sess, e := sessions.GetCurrent(sessions.GetCookie(r))
+		if e != nil {
+			e.Handle(w)
+			return
+		}
+
+		u, e := db.GetUser(sess.UserID)
+		if e != nil {
+			e.Handle(w)
+			return
+		}
+
+		render.JSON(w, r, &u)
+	}
+}
+
 // swagger:route GET /users/{userID} get user getSelectUserHandler
 //
 // Gets the user with the given id.

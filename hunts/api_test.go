@@ -221,3 +221,7 @@ func TestDeleteHuntHandler(t *testing.T) {
 		})
 	}
 }
+
+func TestGetHuntsHandler(t *testing.T) {
+
+}

@@ -35,6 +35,7 @@ func Routes(env *config.Env) *chi.Mux {
 
 	router.Post("/login/", GetLoginHandler(env)) // tested
 	router.Post("/", GetCreateUserHandler(env))  // tested
+	router.Get("/", getCurrentUserHandler(env))
 
 	router.Group(func(r chi.Router) {
 		r.Use(WithUser)

@@ -233,6 +233,59 @@ func GetHunts() ([]*HuntDB, *response.Error) {
 	return hunts, e.GetError()
 }
 
+var huntsByUserIDSelectScript = `
+	WITH teams_for_user AS (
+		SELECT t.hunt_id 
+		FROM teams t 
+		INNER JOIN users_teams ut 
+		ON ut.user_id = $1 AND t.id = ut.team_id
+	)
+	SELECT 
+		name, 
+		id, 
+		start_time, 
+		end_time, 
+		location_name, 
+		latitude, 
+		longitude, 
+		max_teams, 
+		created_at,
+		creator_id
+	FROM teams_for_user tfs 
+	INNER JOIN hunts h 
+	ON tfs.hunt_id = h.id;
+	`
+
+// GetHuntsByUserID returns all the huntDBs in the db. NOTE that it is possible to have returned hunts and
+// an error, check both
+func GetHuntsByUserID(userID int) ([]*HuntDB, *response.Error) {
+	rows, err := stmtMap["huntsByUserIDSelect"].Query(userID)
+	if err != nil {
+		return nil, response.NewErrorf(http.StatusInternalServerError, "error getting hunts for user: %s", err.Error())
+	}
+	defer rows.Close()
+
+	hunts := make([]*HuntDB, 0)
+	e := response.NewNilError()
+	for rows.Next() {
+		hunt := HuntDB{}
+		huntErr := rows.Scan(&hunt.Name, &hunt.ID, &hunt.StartTime, &hunt.EndTime, &hunt.LocationName,
+			&hunt.Latitude, &hunt.Longitude, &hunt.MaxTeams, &hunt.CreatedAt, &hunt.CreatorID)
+		if huntErr != nil {
+			e.Addf(http.StatusInternalServerError, "error getting hunts for user: %s", huntErr.Error())
+			break
+		}
+		hunts = append(hunts, &hunt)
+	}
+
+	err = rows.Err()
+	if err != nil {
+		e.Addf(http.StatusInternalServerError, "error getting hunts for user: %s", err.Error())
+	}
+
+	return hunts, e.GetError()
+}
+
 var huntSelectScript = `
 	SELECT 
 		name, 

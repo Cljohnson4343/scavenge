@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"os"
+	"strconv"
 
 	"github.com/cljohnson4343/scavenge/config"
 	"github.com/cljohnson4343/scavenge/hunts/models"
@@ -32,6 +33,26 @@ import (
 //  500:
 func getHuntsHandler(env *config.Env) http.HandlerFunc {
 	return (func(w http.ResponseWriter, r *http.Request) {
+		values := r.URL.Query()
+		strUserID := values.Get("userID")
+		if strUserID != "" {
+			userID, err := strconv.Atoi(strUserID)
+			if err != nil {
+				e := response.NewErrorf(http.StatusBadRequest, "atoi: error parsing userID query.")
+				e.Handle(w)
+				return
+			}
+
+			hunts, e := GetHuntsByUserID(userID)
+			if e != nil {
+				e.Handle(w)
+				return
+			}
+
+			render.JSON(w, r, hunts)
+			return
+		}
+
 		hunts, e := AllHunts()
 		if e != nil {
 			e.Handle(w)

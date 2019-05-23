@@ -58,7 +58,7 @@ func (s *Session) Cookie() *http.Cookie {
 	return &c
 }
 
-// GetCookie returns the session cookie for the user agents
+// GetCookie returns the session cookie for the user agent
 func GetCookie(r *http.Request) *http.Cookie {
 	cookies := r.Cookies()
 	var cookie *http.Cookie
