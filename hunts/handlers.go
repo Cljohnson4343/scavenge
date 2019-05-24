@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"github.com/cljohnson4343/scavenge/db"
+	"github.com/cljohnson4343/scavenge/users"
 
 	"github.com/cljohnson4343/scavenge/config"
 	"github.com/cljohnson4343/scavenge/hunts/models"
@@ -474,7 +475,14 @@ func createHuntInvitationHandler() http.HandlerFunc {
 			return
 		}
 
+		inviterID, e := users.GetUserID(r.Context())
+		if e != nil {
+			e.Handle(w)
+			return
+		}
+
 		invitation.HuntID = huntID
+		invitation.InviterID = inviterID
 		e = invitation.Insert()
 		if e != nil {
 			e.Handle(w)

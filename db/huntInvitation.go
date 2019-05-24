@@ -25,12 +25,12 @@ type HuntInvitationDB struct {
 	// The id of the hunt
 	//
 	// required: true
-	HuntID int `json:"huntID" valid:"int"`
+	HuntID int `json:"huntID" valid:"int,optional"`
 
 	// The id of the user that sent the invite
 	//
 	// required: true
-	InviterID int `json:"inviterID" valid:"int"`
+	InviterID int `json:"inviterID" valid:"int,optional"`
 
 	// The time the invitation was sent
 	//
@@ -62,7 +62,7 @@ var huntInvitationsByUserIDScript = `
 // GetHuntInvitationsByUserID returns all hunt invitations for the user with the
 // given id. A result with both media meta objects and an error is possible
 func GetHuntInvitationsByUserID(userID int) ([]*HuntInvitationDB, *response.Error) {
-	rows, err := stmtMap["huntInvitationByUserID"].Query(userID)
+	rows, err := stmtMap["huntInvitationsByUserID"].Query(userID)
 	if err != nil {
 		return nil, response.NewErrorf(
 			http.StatusInternalServerError,

@@ -225,3 +225,94 @@ func TestDeleteHuntHandler(t *testing.T) {
 func TestGetHuntsHandler(t *testing.T) {
 
 }
+
+func TestCreateHuntInvitationHandler(t *testing.T) {
+	cases := []struct {
+		name       string
+		code       int
+		hunt       hunts.Hunt
+		user       *users.User
+		invitation db.HuntInvitationDB
+	}{
+		{
+			name: "valid case",
+			code: http.StatusOK,
+			hunt: hunts.Hunt{
+				HuntDB: db.HuntDB{
+					Name:         "CreateHuntInvitationHandler 1 hunt",
+					MaxTeams:     43,
+					StartTime:    time.Now().AddDate(0, 0, 1),
+					EndTime:      time.Now().AddDate(0, 0, 2),
+					LocationName: "Fake Location",
+					Latitude:     34.730705,
+					Longitude:    -86.59481,
+				},
+			},
+			user: newUser,
+			invitation: db.HuntInvitationDB{
+				Email: newUser.Email,
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			reqBody, err := json.Marshal(&c.invitation)
+			if err != nil {
+				t.Fatalf("error marshalling invitation: %v", err)
+			}
+
+			apitest.CreateHunt(&c.hunt, env, sessionCookie)
+
+			req, err := http.NewRequest(
+				"POST",
+				config.BaseAPIURL+fmt.Sprintf("hunts/%d/invitations/", c.hunt.ID),
+				bytes.NewReader(reqBody),
+			)
+			if err != err {
+				t.Fatalf("error getting new request: %v", err)
+			}
+			req.AddCookie(sessionCookie)
+
+			rr := httptest.NewRecorder()
+			router := routes.Routes(env)
+			router.ServeHTTP(rr, req)
+			res := rr.Result()
+
+			if res.StatusCode != c.code {
+				resBody, err := ioutil.ReadAll(res.Body)
+				if err != nil {
+					t.Fatalf("error reading res body: %v", err)
+				}
+				t.Fatalf("expected code %d got %d: %s", c.code, res.StatusCode, resBody)
+			}
+
+			if c.code == http.StatusOK {
+
+				invitations, e := db.GetHuntInvitationsByUserID(c.user.ID)
+				if e != nil {
+					t.Fatalf("error getting invitations for user: %s", e.JSON())
+				}
+
+				if len(invitations) == 0 {
+					t.Fatalf("expected user to have invitations")
+				}
+
+				e = db.DeleteHuntInvitation(invitations[0].ID, c.user.ID)
+				if e != nil {
+					t.Fatalf("error deleting newly created invitation: %s", e.JSON())
+				}
+
+				teams, e := db.TeamsForHunt(c.hunt.ID)
+				if e != nil {
+					t.Fatalf("error getting teams for hunt: %s", e.JSON())
+				}
+
+				e = roles.DeleteRolesForHunt(c.hunt.ID, teams)
+				if e != nil {
+					t.Fatalf("error deleting roles for newly created hunt: %s", e.JSON())
+				}
+			}
+		})
+	}
+}

@@ -67,7 +67,7 @@ func GetHunt(huntID int) (*Hunt, *response.Error) {
 	return &Hunt{HuntDB: *huntDB, Teams: teams, Items: items}, e.GetError()
 }
 
-// GetHuntsForUser returns all Hunts for the given user
+// GetHuntsByUserID returns all Hunts for the given user
 func GetHuntsByUserID(userID int) ([]*Hunt, *response.Error) {
 	huntDBs, e := db.GetHuntsByUserID(userID)
 	if huntDBs == nil {
