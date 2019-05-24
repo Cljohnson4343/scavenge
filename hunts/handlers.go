@@ -56,6 +56,28 @@ func getHuntsHandler() http.HandlerFunc {
 			return
 		}
 
+		nameParam := values.Get("name")
+		if nameParam != "" {
+			creatorParam := values.Get("creator")
+			if creatorParam == "" {
+				e := response.NewError(
+					http.StatusBadRequest,
+					"creator parameter must be used in conjuction with name parameter",
+				)
+				e.Handle(w)
+				return
+			}
+
+			hunt, e := GetHuntByCreatorAndName(creatorParam, nameParam)
+			if e != nil {
+				e.Handle(w)
+				return
+			}
+
+			render.JSON(w, r, hunt)
+			return
+		}
+
 		hunts, e := AllHunts()
 		if e != nil {
 			e.Handle(w)

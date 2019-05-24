@@ -366,6 +366,53 @@ func GetHunt(huntID int) (*HuntDB, *response.Error) {
 	return &h, nil
 }
 
+var huntGetByCreatorAndNameScript = `
+	SELECT 
+		h.name, 
+		h.id, 
+		h.start_time, 
+		h.end_time, 
+		h.location_name, 
+		h.latitude, 
+		h.longitude, 
+		h.max_teams, 
+		h.created_at,
+		h.creator_id,
+		u.username
+	FROM hunts h 
+	INNER JOIN users u
+	ON h.name = $1 AND u.username = $2 AND h.creator_id = u.id; 
+	`
+
+// GetHuntByCreatorAndName returns the huntDB with the given id
+func GetHuntByCreatorAndName(creator, name string) (*HuntDB, *response.Error) {
+	h := HuntDB{}
+
+	err := stmtMap["huntGetByCreatorAndName"].QueryRow(name, creator).Scan(
+		&h.Name,
+		&h.ID,
+		&h.StartTime,
+		&h.EndTime,
+		&h.LocationName,
+		&h.Latitude,
+		&h.Longitude,
+		&h.MaxTeams,
+		&h.CreatedAt,
+		&h.CreatorID,
+		&h.CreatorUsername,
+	)
+	if err != nil {
+		return nil, response.NewErrorf(
+			http.StatusInternalServerError,
+			"error getting the hunt %s: %s",
+			name,
+			err.Error(),
+		)
+	}
+
+	return &h, nil
+}
+
 var huntDeleteScript = `
 	DELETE FROM hunts
 	WHERE id = $1;`

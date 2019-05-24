@@ -67,6 +67,29 @@ func GetHunt(huntID int) (*Hunt, *response.Error) {
 	return &Hunt{HuntDB: *huntDB, Teams: teams, Items: items}, e.GetError()
 }
 
+// GetHuntByCreatorAndName returns a pointer to the hunt with the given
+// creator username and hunt name.
+func GetHuntByCreatorAndName(creator, name string) (*Hunt, *response.Error) {
+	huntDB, e := db.GetHuntByCreatorAndName(creator, name)
+	if e != nil {
+		return nil, e
+	}
+
+	e = response.NewNilError()
+
+	teams, teamErr := teams.GetTeamsForHunt(huntDB.ID)
+	if teamErr != nil {
+		e.AddError(teamErr)
+	}
+
+	items, itemErr := GetItems(huntDB.ID)
+	if itemErr != nil {
+		e.AddError(itemErr)
+	}
+
+	return &Hunt{HuntDB: *huntDB, Teams: teams, Items: items}, e.GetError()
+}
+
 // GetHuntsByUserID returns all Hunts for the given user
 func GetHuntsByUserID(userID int) ([]*Hunt, *response.Error) {
 	huntDBs, e := db.GetHuntsByUserID(userID)

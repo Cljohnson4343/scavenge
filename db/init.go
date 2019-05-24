@@ -60,6 +60,7 @@ var scriptMap = map[string]string{
 	"huntInvitationsByUserID": huntInvitationsByUserIDScript,
 	"huntInvitationDelete":    huntInvitationDeleteScript,
 	"huntInvitationInsert":    huntInvitationInsertScript,
+	"huntGetByCreatorAndName": huntGetByCreatorAndNameScript,
 	"huntSelect":              huntSelectScript,
 	"huntDelete":              huntDeleteScript,
 	"huntInsert":              huntInsertScript,
