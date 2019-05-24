@@ -60,6 +60,11 @@ type HuntDB struct {
 	// required: true
 	CreatorID int `json:"creatorID" valid:"-"`
 
+	// The creator of the hunt
+	//
+	// required: true
+	CreatorUsername string `json:"creatorUsername" valid:"-"`
+
 	// The name of the location of the Hunt
 	//
 	// required: true
@@ -191,17 +196,20 @@ func (h *HuntDB) PatchValidate(r *http.Request, huntID int) *response.Error {
 
 var huntsSelectScript = `
 	SELECT 
-		name, 
-		id, 
-		start_time, 
-		end_time, 
-		location_name, 
-		latitude, 
-		longitude, 
-		max_teams, 
-		created_at,
-		creator_id
-	FROM hunts;`
+		h.name, 
+		h.id, 
+		h.start_time, 
+		h.end_time, 
+		h.location_name, 
+		h.latitude, 
+		h.longitude, 
+		h.max_teams, 
+		h.created_at,
+		h.creator_id,
+		u.username
+	FROM hunts h 
+	INNER JOIN users u 
+	ON h.creator_id = u.id;`
 
 // GetHunts returns all the huntDBs in the db. NOTE that it is possible to have returned hunts and
 // an error, check both
@@ -216,8 +224,19 @@ func GetHunts() ([]*HuntDB, *response.Error) {
 	e := response.NewNilError()
 	for rows.Next() {
 		hunt := HuntDB{}
-		huntErr := rows.Scan(&hunt.Name, &hunt.ID, &hunt.StartTime, &hunt.EndTime, &hunt.LocationName,
-			&hunt.Latitude, &hunt.Longitude, &hunt.MaxTeams, &hunt.CreatedAt, &hunt.CreatorID)
+		huntErr := rows.Scan(
+			&hunt.Name,
+			&hunt.ID,
+			&hunt.StartTime,
+			&hunt.EndTime,
+			&hunt.LocationName,
+			&hunt.Latitude,
+			&hunt.Longitude,
+			&hunt.MaxTeams,
+			&hunt.CreatedAt,
+			&hunt.CreatorID,
+			&hunt.CreatorUsername,
+		)
 		if huntErr != nil {
 			e.Addf(http.StatusInternalServerError, "error getting hunt: %s", huntErr.Error())
 			break
@@ -241,19 +260,22 @@ var huntsByUserIDSelectScript = `
 		ON ut.user_id = $1 AND t.id = ut.team_id
 	)
 	SELECT 
-		name, 
-		id, 
-		start_time, 
-		end_time, 
-		location_name, 
-		latitude, 
-		longitude, 
-		max_teams, 
-		created_at,
-		creator_id
+		h.name, 
+		h.id, 
+		h.start_time, 
+		h.end_time, 
+		h.location_name, 
+		h.latitude, 
+		h.longitude, 
+		h.max_teams, 
+		h.created_at,
+		h.creator_id,
+		u.username
 	FROM teams_for_user tfs 
 	INNER JOIN hunts h 
-	ON tfs.hunt_id = h.id;
+	ON tfs.hunt_id = h.id 
+	INNER JOIN users u
+	ON u.id = h.creator_id;
 	`
 
 // GetHuntsByUserID returns all the huntDBs in the db. NOTE that it is possible to have returned hunts and
@@ -269,8 +291,19 @@ func GetHuntsByUserID(userID int) ([]*HuntDB, *response.Error) {
 	e := response.NewNilError()
 	for rows.Next() {
 		hunt := HuntDB{}
-		huntErr := rows.Scan(&hunt.Name, &hunt.ID, &hunt.StartTime, &hunt.EndTime, &hunt.LocationName,
-			&hunt.Latitude, &hunt.Longitude, &hunt.MaxTeams, &hunt.CreatedAt, &hunt.CreatorID)
+		huntErr := rows.Scan(
+			&hunt.Name,
+			&hunt.ID,
+			&hunt.StartTime,
+			&hunt.EndTime,
+			&hunt.LocationName,
+			&hunt.Latitude,
+			&hunt.Longitude,
+			&hunt.MaxTeams,
+			&hunt.CreatedAt,
+			&hunt.CreatorID,
+			&hunt.CreatorUsername,
+		)
 		if huntErr != nil {
 			e.Addf(http.StatusInternalServerError, "error getting hunts for user: %s", huntErr.Error())
 			break
@@ -288,18 +321,21 @@ func GetHuntsByUserID(userID int) ([]*HuntDB, *response.Error) {
 
 var huntSelectScript = `
 	SELECT 
-		name, 
-		id, 
-		start_time, 
-		end_time, 
-		location_name, 
-		latitude, 
-		longitude, 
-		max_teams, 
-		created_at,
-		creator_id
-	FROM hunts
-	WHERE id = $1;`
+		h.name, 
+		h.id, 
+		h.start_time, 
+		h.end_time, 
+		h.location_name, 
+		h.latitude, 
+		h.longitude, 
+		h.max_teams, 
+		h.created_at,
+		h.creator_id,
+		u.username
+	FROM hunts h 
+	INNER JOIN users u
+	ON h.id = $1 AND h.creator_id = u.id; 
+	`
 
 // GetHunt returns the huntDB with the given id
 func GetHunt(huntID int) (*HuntDB, *response.Error) {
@@ -316,6 +352,7 @@ func GetHunt(huntID int) (*HuntDB, *response.Error) {
 		&h.MaxTeams,
 		&h.CreatedAt,
 		&h.CreatorID,
+		&h.CreatorUsername,
 	)
 	if err != nil {
 		return nil, response.NewErrorf(
