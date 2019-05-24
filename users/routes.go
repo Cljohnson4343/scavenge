@@ -46,6 +46,12 @@ func Routes(env *config.Env) *chi.Mux {
 		r.Get("/{userID}", getSelectUserHandler(env))    // tested
 		r.Delete("/{userID}", GetDeleteUserHandler(env)) // tested
 		r.Patch("/{userID}", getUpdateUserHandler(env))
+
+		r.Get("/{userID}/notifications/", getNotificationsHandler())
+		r.Delete(
+			"/{userID}/notifications/{notificationID}",
+			DeleteNotificationHandler(),
+		)
 	})
 
 	return router

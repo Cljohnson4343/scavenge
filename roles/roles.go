@@ -264,6 +264,16 @@ var PermToRoleEndpoint = map[string]roleEndPoint{
 		Route:          `/users/%d`,
 		Role:           `user_owner`,
 	},
+	"delete_notification": roleEndPoint{
+		FormattedRegex: `/users/%d/notifications/\d+$`,
+		Route:          `/users/%d/notifications/43`,
+		Role:           `user_owner`,
+	},
+	"get_notifications": roleEndPoint{
+		FormattedRegex: `/users/%d/notifications/$`,
+		Route:          `/users/%d/notifications/`,
+		Role:           `user_owner`,
+	},
 
 	// hunt endpoints
 	"get_hunts": roleEndPoint{
@@ -315,6 +325,11 @@ var PermToRoleEndpoint = map[string]roleEndPoint{
 		FormattedRegex: `/hunts/%d/items/\d+$`,
 		Route:          `/hunts/%d/items/43`,
 		Role:           `hunt_editor`,
+	},
+	"post_invitation": roleEndPoint{
+		FormattedRegex: `/hunts/%d/invitations/$`,
+		Route:          `/hunts/%d/invitations/`,
+		Role:           `hunt_member`,
 	},
 }
 
@@ -377,6 +392,7 @@ func genHuntMemberRole(id int) *Role {
 
 	return editor
 }
+
 func genTeamOwnerRole(id int) *Role {
 	owner := genRole("team_owner", id)
 	owner.Add(genTeamEditorRole(id))

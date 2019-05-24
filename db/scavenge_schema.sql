@@ -1,3 +1,4 @@
+DROP TABLE IF EXISTS hunt_invitations CASCADE;
 DROP TABLE IF EXISTS users_sessions CASCADE;
 DROP TABLE IF EXISTS users_teams CASCADE;
 DROP TABLE IF EXISTS media CASCADE;
@@ -278,3 +279,22 @@ END LOOP;
 END; $func$
 LANGUAGE plpgsql;
  
+ 
+/*
+    This table is used to store hunt invites for email addresses.
+
+    relations:
+        many to one--There can be many notifications associated with a user.
+*/
+CREATE TABLE hunt_invitations (
+    id                  serial,
+    email               varchar(128) NOT NULL,
+    hunt_id             int NOT NULL,
+    inviter_id          int NOT NULL,
+    invited_at          timestamp DEFAULT NOW(),
+
+    PRIMARY KEY(id),
+    FOREIGN KEY (inviter_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (hunt_id) REFERENCES hunts(id) ON DELETE CASCADE
+);
+CREATE INDEX hunt_invitations_email_idx ON hunt_invitations(email ASC);

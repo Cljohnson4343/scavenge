@@ -7,6 +7,8 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/cljohnson4343/scavenge/db"
+
 	"github.com/cljohnson4343/scavenge/config"
 	"github.com/cljohnson4343/scavenge/hunts/models"
 	"github.com/cljohnson4343/scavenge/request"
@@ -31,7 +33,7 @@ import (
 // Responses:
 // 	200:
 //  500:
-func getHuntsHandler(env *config.Env) http.HandlerFunc {
+func getHuntsHandler() http.HandlerFunc {
 	return (func(w http.ResponseWriter, r *http.Request) {
 		values := r.URL.Query()
 		strUserID := values.Get("userID")
@@ -438,4 +440,48 @@ func populateDBHandler(env *config.Env) http.HandlerFunc {
 
 		w.Write([]byte("Success!!!"))
 	}
+}
+
+// swagger:route POST /hunts/{huntID}/invitations/ invitations create
+//
+// Creates the hunt invitation described in the request body for
+// the given hunt.
+//
+// Consumes:
+// 	- application/json
+//
+// Produces:
+//	- application/json
+//
+// Schemes: http, https
+//
+// Responses:
+// 	200:
+//  400:
+//  500:
+func createHuntInvitationHandler() http.HandlerFunc {
+	return (func(w http.ResponseWriter, r *http.Request) {
+		huntID, e := request.GetIntURLParam(r, "huntID")
+		if e != nil {
+			e.Handle(w)
+			return
+		}
+
+		invitation := db.HuntInvitationDB{}
+		e = request.DecodeAndValidate(r, &invitation)
+		if e != nil {
+			e.Handle(w)
+			return
+		}
+
+		invitation.HuntID = huntID
+		e = invitation.Insert()
+		if e != nil {
+			e.Handle(w)
+			return
+		}
+
+		render.JSON(w, r, &invitation)
+		return
+	})
 }

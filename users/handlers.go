@@ -299,3 +299,75 @@ func GetCreateUserHandler(env *config.Env) http.HandlerFunc {
 		render.JSON(w, r, &u)
 	}
 }
+
+// swagger:route GET /users/{userID}/notifications/ get user notifications
+//
+// Gets the notifications for the user with the given id.
+//
+// Consumes:
+// 	- application/json
+//
+// Produces:
+//	- application/json
+//
+// Schemes: http, https
+//
+// Responses:
+// 	200:
+//  400:
+func getNotificationsHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		userID, e := request.GetIntURLParam(r, "userID")
+		if e != nil {
+			e.Handle(w)
+			return
+		}
+
+		invitations, e := db.GetHuntInvitationsByUserID(userID)
+		if e != nil {
+			e.Handle(w)
+			return
+		}
+
+		render.JSON(w, r, &invitations)
+	}
+}
+
+// DeleteNotificationHandler deletes the notification with the given id
+//
+// swagger:route DELETE /users/{userID}/notifications/{notificationID}
+//
+// Consumes:
+// 	- application/json
+//
+// Produces:
+//	- application/json
+//
+// Schemes: http, https
+//
+// Responses:
+// 	200:
+//  400:
+func DeleteNotificationHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		userID, e := request.GetIntURLParam(r, "userID")
+		if e != nil {
+			e.Handle(w)
+			return
+		}
+
+		notificationID, e := request.GetIntURLParam(r, "notificationID")
+		if e != nil {
+			e.Handle(w)
+			return
+		}
+
+		e = db.DeleteHuntInvitation(notificationID, userID)
+		if e != nil {
+			e.Handle(w)
+			return
+		}
+
+		return
+	}
+}

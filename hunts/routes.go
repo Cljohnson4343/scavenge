@@ -38,7 +38,7 @@ func Routes(env *config.Env) *chi.Mux {
 	router.Use(users.RequireAuth)
 
 	// /hunts routes
-	router.Get("/", getHuntsHandler(env))
+	router.Get("/", getHuntsHandler())
 	router.Get("/{huntID}", getHuntHandler(env))
 	router.Post("/", createHuntHandler(env))           // tested
 	router.Delete("/{huntID}", deleteHuntHandler(env)) // tested
@@ -50,6 +50,8 @@ func Routes(env *config.Env) *chi.Mux {
 	router.Delete("/{huntID}/items/{itemID}", deleteItemHandler(env))
 	router.Post("/{huntID}/items/", createItemHandler(env))
 	router.Patch("/{huntID}/items/{itemID}", patchItemHandler(env))
+
+	router.Post("/{huntID}/invitations/", createHuntInvitationHandler())
 
 	return router
 }
