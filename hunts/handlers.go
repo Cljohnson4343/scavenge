@@ -515,3 +515,37 @@ func createHuntInvitationHandler() http.HandlerFunc {
 		return
 	})
 }
+
+// swagger:route GET /hunts/{huntID}/players/ hunt players
+//
+// Gets the players for the given hunt.
+//
+// Consumes:
+// 	- application/json
+//
+// Produces:
+//	- application/json
+//
+// Schemes: http, https
+//
+// Responses:
+// 	200:
+// 	404:
+//  400:
+func getHuntPlayersHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		huntID, e := request.GetIntURLParam(r, "huntID")
+		if e != nil {
+			e.Handle(w)
+			return
+		}
+
+		players, e := db.GetPlayersForHunt(huntID)
+		if e != nil {
+			e.Handle(w)
+			return
+		}
+
+		render.JSON(w, r, players)
+	}
+}

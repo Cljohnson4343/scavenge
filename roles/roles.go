@@ -331,6 +331,11 @@ var PermToRoleEndpoint = map[string]roleEndPoint{
 		Route:          `/hunts/%d/invitations/`,
 		Role:           `hunt_member`,
 	},
+	"get_hunt_players": roleEndPoint{
+		FormattedRegex: `/hunts/%d/players/$`,
+		Route:          `/hunts/%d/players/`,
+		Role:           `user`,
+	},
 }
 
 // the team role relationships look like: Owner -> Editor -> Member -> HuntMember -> User

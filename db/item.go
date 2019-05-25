@@ -93,7 +93,12 @@ func GetItemsWithHuntID(huntID int) ([]*ItemDB, *response.Error) {
 		item := ItemDB{}
 		err := rows.Scan(&item.HuntID, &item.ID, &item.Name, &item.Points)
 		if err != nil {
-			e.Addf(http.StatusInternalServerError, "error getting item with hunt id %d: %s", huntID, err.Error())
+			e.Addf(
+				http.StatusInternalServerError,
+				"error getting item with hunt id %d: %s",
+				huntID,
+				err.Error(),
+			)
 			break
 		}
 		items = append(items, &item)
@@ -101,7 +106,12 @@ func GetItemsWithHuntID(huntID int) ([]*ItemDB, *response.Error) {
 
 	err = rows.Err()
 	if err != nil {
-		e.Addf(http.StatusInternalServerError, "error getting item with hunt id %d: %s", huntID, err.Error())
+		e.Addf(
+			http.StatusInternalServerError,
+			"error getting item with hunt id %d: %s",
+			huntID,
+			err.Error(),
+		)
 	}
 
 	return items, e.GetError()

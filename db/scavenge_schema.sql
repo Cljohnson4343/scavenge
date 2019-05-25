@@ -1,3 +1,4 @@
+DROP TABLE IF EXISTS hunts_users CASCADE;
 DROP TABLE IF EXISTS hunt_invitations CASCADE;
 DROP TABLE IF EXISTS users_sessions CASCADE;
 DROP TABLE IF EXISTS users_teams CASCADE;
@@ -75,6 +76,7 @@ CREATE TABLE hunts (
     location_name   varchar(80),
     created_at      timestamp DEFAULT NOW(),
     creator_id      int NOT NULL,
+
     CONSTRAINT hunt_with_same_name UNIQUE(name),
     PRIMARY KEY(id),
     FOREIGN KEY (creator_id) REFERENCES users(id) ON DELETE CASCADE
@@ -298,3 +300,19 @@ CREATE TABLE hunt_invitations (
     FOREIGN KEY (hunt_id) REFERENCES hunts(id) ON DELETE CASCADE
 );
 CREATE INDEX hunt_invitations_email_idx ON hunt_invitations(email ASC);
+
+/* 
+    This table associates users that have joined a hunt with the hunt
+    they joined.
+
+    relations;
+        many to many--Hunts can be associated w/ many users and users
+            can be associated w/ many hunts
+*/
+CREATE TABLE hunts_users (
+    hunt_id         int NOT NULL,
+    user_id         int NOT NULL,
+
+    FOREIGN KEY (hunt_id) REFERENCES hunts(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+)

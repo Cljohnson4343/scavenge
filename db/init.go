@@ -77,6 +77,7 @@ var scriptMap = map[string]string{
 	"mediaMetaDelete":         mediaMetaDeleteScript,
 	"permissionInsert":        permissionInsertScript,
 	"permissionsForUser":      permissionsForUserScript,
+	"playersGetForHunt":       playersGetForHuntScript,
 	"roleInsert":              roleInsertScript,
 	"roleRemove":              roleRemoveScript,
 	"rolesDeleteByRegex":      rolesDeleteByRegexScript,

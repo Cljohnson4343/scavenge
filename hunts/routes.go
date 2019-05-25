@@ -51,6 +51,8 @@ func Routes(env *config.Env) *chi.Mux {
 	router.Post("/{huntID}/items/", createItemHandler(env))
 	router.Patch("/{huntID}/items/{itemID}", patchItemHandler(env))
 
+	router.Get("/{huntID}/players/", getHuntPlayersHandler())
+
 	router.Post("/{huntID}/invitations/", createHuntInvitationHandler())
 
 	return router
