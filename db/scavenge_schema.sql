@@ -1,4 +1,4 @@
-DROP TABLE IF EXISTS hunts_users CASCADE;
+DROP TABLE IF EXISTS users_hunts CASCADE;
 DROP TABLE IF EXISTS hunt_invitations CASCADE;
 DROP TABLE IF EXISTS users_sessions CASCADE;
 DROP TABLE IF EXISTS users_teams CASCADE;
@@ -100,24 +100,6 @@ CREATE TABLE teams (
     FOREIGN KEY (hunt_id) REFERENCES hunts(id) ON DELETE CASCADE
 );
 CREATE INDEX teams_huntid_asc ON teams(hunt_id ASC);
-
-/*
-    This is a joining table that represents the many to many relationship between the 
-    users and teams tables.
-
-    relations:
-        many to many--many players can have relationships with many teams
-
-*/
-CREATE TABLE users_teams (
-    team_id         int NOT NULL,
-    user_id         int NOT NULL,
-    CONSTRAINT users_on_same_team UNIQUE(team_id, user_id),
-    FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-);
-CREATE INDEX team_users_idx ON users_teams(team_id ASC);
-CREATE INDEX user_teams_idx ON users_teams(user_id ASC);
 
 /*
     This table contains the route info for a team during a
@@ -310,16 +292,23 @@ CREATE INDEX hunt_invitations_email_idx ON hunt_invitations(email ASC);
         many to many--Hunts can be associated w/ many users and users
             can be associated w/ many hunts
 */
-CREATE TABLE hunts_users (
+CREATE TABLE users_hunts (
+    id              serial,
     hunt_id         int NOT NULL,
     user_id         int NOT NULL,
 
+    PRIMARY KEY(id),
     CONSTRAINT user_in_same_hunt UNIQUE(hunt_id, user_id),
     FOREIGN KEY (hunt_id) REFERENCES hunts(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
-CREATE OR REPLACE FUNCTION ins_team_player(_hunt_id int, _user_id int, _team_id int, out _team_id_out int)
+CREATE OR REPLACE FUNCTION ins_team_player(
+    _hunt_id int, 
+    _user_id int, 
+    _team_id int, 
+    _users_hunts_id int,
+    out _team_id_out int)
 AS $func$
 BEGIN
     WITH teams_for_hunt AS (
@@ -339,8 +328,8 @@ BEGIN
 
         END IF;
 
-        INSERT INTO users_teams(user_id, team_id) 
-        VALUES (_user_id, _team_id)
+        INSERT INTO users_teams(user_id, team_id, users_hunts_id) 
+        VALUES (_user_id, _team_id, _users_hunts_id)
         ON CONFLICT DO NOTHING
         RETURNING _team_id
         INTO _team_id_out;
@@ -357,14 +346,46 @@ CREATE OR REPLACE FUNCTION ins_hunt_player(
     out _team_id_out int)
 
 AS $func$
+DECLARE _users_hunts_id int;
 BEGIN
 
-    INSERT INTO hunts_users(hunt_id, user_id)
+    INSERT INTO users_hunts(hunt_id, user_id)
     VALUES (_hunt_id, _user_id)
-    ON CONFLICT DO NOTHING;
+    ON CONFLICT DO NOTHING
+    RETURNING id
+    INTO _users_hunts_id;
 
-    SELECT ins_team_player(_hunt_id, _user_id, _team_id)
+    IF _users_hunts_id IS NULL THEN
+        SELECT id 
+        FROM users_hunts 
+        WHERE hunt_id = _hunt_id AND user_id = _user_id
+        INTO _users_hunts_id;
+    END IF;
+
+    SELECT ins_team_player(_hunt_id, _user_id, _team_id, _users_hunts_id)
     INTO _team_id_out;
 
 END; $func$
 LANGUAGE plpgsql;
+
+/*
+    This is a joining table that represents the many to many relationship between the 
+    users and teams tables.
+
+    relations:
+        many to many--many players can have relationships with many teams
+
+*/
+CREATE TABLE users_teams (
+    team_id         int NOT NULL,
+    user_id         int NOT NULL,
+    users_hunts_id  int NOT NULL,
+    
+    CONSTRAINT users_on_same_team UNIQUE(team_id, user_id),
+    FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (users_hunts_id) REFERENCES users_hunts(id) ON DELETE CASCADE
+);
+CREATE INDEX team_users_idx ON users_teams(team_id ASC);
+CREATE INDEX user_teams_idx ON users_teams(user_id ASC);
+

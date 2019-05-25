@@ -309,24 +309,9 @@ func GetUsersForTeam(teamID int) ([]*UserDB, *response.Error) {
 	return users, e.GetError()
 }
 
-// TODO revisit this command. It is probably inefficient.
 var teamAddPlayerScript = `
-	WITH hunt_for_team AS (
-		SELECT hunt_id h_id FROM teams WHERE id = $1
-	), teams_for_user AS (
-		SELECT team_id FROM users_teams WHERE user_id = $2
-	), is_in_hunt AS (
-		SELECT * 
-		FROM teams t 
-		INNER JOIN teams_for_user tfu 
-		ON t.id = tfu.team_id AND t.hunt_id = (SELECT h_id FROM hunt_for_team)
-	)
-	INSERT INTO users_teams(team_id, user_id)
-	SELECT $1, $2
-	WHERE NOT EXISTS (
-		SELECT * FROM is_in_hunt
-	);
-	`
+SELECT ins_hunt_player(COALESCE((SELECT t.hunt_id FROM teams t WHERE t.id = $1), 0), $2, $1);
+`
 
 // TeamAddPlayer adds the user with the given id to the team with the given id
 func TeamAddPlayer(teamID, userID int) *response.Error {

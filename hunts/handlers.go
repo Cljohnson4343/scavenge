@@ -566,7 +566,7 @@ func getHuntPlayersHandler() http.HandlerFunc {
 // 	200:
 // 	404:
 //  400:
-func addHuntPlayersHandler() http.HandlerFunc {
+func addHuntPlayerHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		huntID, e := request.GetIntURLParam(r, "huntID")
 		if e != nil {
@@ -592,5 +592,52 @@ func addHuntPlayersHandler() http.HandlerFunc {
 			e.Handle(w)
 			return
 		}
+	}
+}
+
+// swagger:route DELETE /hunts/{huntID}/players/{playerID} hunt players remove
+//
+// Removes the player from the given hunt.
+//
+// Consumes:
+// 	- application/json
+//
+// Produces:
+//	- application/json
+//
+// Schemes: http, https
+//
+// Responses:
+// 	200:
+// 	404:
+//  400:
+func removeHuntPlayerHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		huntID, e := request.GetIntURLParam(r, "huntID")
+		if e != nil {
+			e.Handle(w)
+			return
+		}
+
+		playerID, e := request.GetIntURLParam(r, "playerID")
+		if e != nil {
+			e.Handle(w)
+			return
+		}
+
+		player := db.PlayerDB{
+			HuntID: huntID,
+			UserDB: db.UserDB{
+				ID: playerID,
+			},
+		}
+
+		e = player.RemoveFromHunt()
+		if e != nil {
+			e.Handle(w)
+			return
+		}
+
+		return
 	}
 }

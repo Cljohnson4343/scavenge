@@ -331,6 +331,11 @@ var PermToRoleEndpoint = map[string]roleEndPoint{
 		Route:          `/hunts/%d/invitations/`,
 		Role:           `hunt_member`,
 	},
+	"delete_hunt_players": roleEndPoint{
+		FormattedRegex: `/hunts/%d/players/\d+$`,
+		Route:          `/hunts/%d/players/43`,
+		Role:           `hunt_member`,
+	},
 	"get_hunt_players": roleEndPoint{
 		FormattedRegex: `/hunts/%d/players/$`,
 		Route:          `/hunts/%d/players/`,

@@ -1420,7 +1420,7 @@ func TestGetAddPlayerHandler(t *testing.T) {
 		},
 		{
 			name:   "add user to second team in same hunt",
-			code:   http.StatusBadRequest,
+			code:   http.StatusOK,
 			teamID: team2.ID,
 			addReq: addPlayerData{
 				PlayerID: newUser.ID,

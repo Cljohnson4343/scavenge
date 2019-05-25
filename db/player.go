@@ -46,10 +46,10 @@ WITH teams_for_hunt AS(
 		COALESCE(u.image_url, ''),
 		u.email,
 		COALESCE(pft.players_team, 0),
-		hu.hunt_id
+		uh.hunt_id
 	FROM users u
-	INNER JOIN hunts_users hu 
-		ON hu.hunt_id = $1 AND u.id = hu.user_id
+	INNER JOIN users_hunts uh 
+		ON uh.hunt_id = $1 AND u.id = uh.user_id
 	LEFT OUTER JOIN players_for_teams pft 
 		ON pft.player = u.id;
 `
@@ -122,6 +122,42 @@ func (p *PlayerDB) AddToHunt() *response.Error {
 			http.StatusInternalServerError,
 			"error adding player to hunt in AddToHunt: %v",
 			err,
+		)
+	}
+
+	return nil
+}
+
+var playerRemoveFromHuntScript = `
+	DELETE FROM users_hunts
+	WHERE user_id = $1 AND hunt_id = $2;
+`
+
+// RemoveFromHunt removes the player from a hunt. This method
+// depends on the player's ID and HuntID fields for removal.
+func (p *PlayerDB) RemoveFromHunt() *response.Error {
+	res, err := stmtMap["playerRemoveFromHunt"].Exec(p.ID, p.HuntID)
+	if err != nil {
+		return response.NewErrorf(
+			http.StatusInternalServerError,
+			"error removing player from hunt: %v",
+			err,
+		)
+	}
+
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return response.NewErrorf(
+			http.StatusInternalServerError,
+			"error getting rows affected for player removal from hunt: %v",
+			err,
+		)
+	}
+
+	if rowsAffected == 0 {
+		return response.NewError(
+			http.StatusBadRequest,
+			"Can't remove a player from a hunt that they haven't joined.",
 		)
 	}
 
