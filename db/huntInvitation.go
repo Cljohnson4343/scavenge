@@ -15,7 +15,7 @@ type HuntInvitationDB struct {
 	// The id of the invitation
 	//
 	// required: false
-	ID int `json:"huntInvitationID" valid:"int,optional"`
+	ID int `json:"notificationID" valid:"int,optional"`
 
 	// The email address the invitation is/was sent to
 	//
@@ -27,6 +27,12 @@ type HuntInvitationDB struct {
 	// required: true
 	HuntID int `json:"huntID" valid:"int,optional"`
 
+	// The username of the user that sent the invite
+	InviterUsername string `json:"inviterUsername" valid:"-"`
+
+	// The hunt name
+	HuntName string `json:"huntName" valid:"-"`
+
 	// The id of the user that sent the invite
 	//
 	// required: true
@@ -37,6 +43,9 @@ type HuntInvitationDB struct {
 	// required: true
 	// swagger:strfmt date
 	InvitedAt time.Time `json:"invitedAt" valid:"-"`
+
+	// The id of the recieving user
+	UserID int `json:"userID" valid:"int,optional"`
 }
 
 // Validate validates the struct
@@ -54,9 +63,20 @@ func (i *HuntInvitationDB) Validate(r *http.Request) *response.Error {
 }
 
 var huntInvitationsByUserIDScript = `
-	SELECT hi.id, hi.email, hi.hunt_id, hi.inviter_id, hi.invited_at 
-	FROM hunt_invitations hi INNER JOIN users u
-	ON u.id = $1 AND u.email = hi.email;
+	SELECT 
+		hi.id, 
+		hi.email, 
+		hi.hunt_id, 
+		hi.inviter_id, 
+		hi.invited_at, 
+		u.id, 
+		u.username,
+		h.name
+	FROM hunt_invitations hi 
+	INNER JOIN users u
+	ON u.id = $1 AND u.email = hi.email
+	INNER JOIN hunts h
+	ON hi.hunt_id = h.id;
 	`
 
 // GetHuntInvitationsByUserID returns all hunt invitations for the user with the
@@ -85,6 +105,9 @@ func GetHuntInvitationsByUserID(userID int) ([]*HuntInvitationDB, *response.Erro
 			&i.HuntID,
 			&i.InviterID,
 			&i.InvitedAt,
+			&i.UserID,
+			&i.InviterUsername,
+			&i.HuntName,
 		)
 		if err != nil {
 			e.Addf(
