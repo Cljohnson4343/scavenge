@@ -100,3 +100,30 @@ func GetPlayersForHunt(huntID int) ([]*PlayerDB, *response.Error) {
 
 	return players, e.GetError()
 }
+
+var playerAddToHuntScript = `
+	SELECT ins_hunt_player($1, $2, COALESCE($3, 0));
+`
+
+// AddToHunt adds the given player to a hunt. If the player's
+// teamID field is not nil, then the player will also be
+// added to the given hunt, if the team is part of the hunt.
+// If the teamID field is valid and player is on another team
+// in the same hunt, then the player will be removed from
+// old team and added to the new team.
+func (p *PlayerDB) AddToHunt() *response.Error {
+	err := stmtMap["playerAddToHunt"].QueryRow(
+		p.HuntID,
+		p.ID,
+		p.TeamID,
+	).Scan(&p.TeamID)
+	if err != nil {
+		return response.NewErrorf(
+			http.StatusInternalServerError,
+			"error adding player to hunt in AddToHunt: %v",
+			err,
+		)
+	}
+
+	return nil
+}

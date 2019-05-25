@@ -549,3 +549,48 @@ func getHuntPlayersHandler() http.HandlerFunc {
 		render.JSON(w, r, players)
 	}
 }
+
+// swagger:route POST /hunts/{huntID}/players/ hunt players add
+//
+// Adds the player to the given hunt.
+//
+// Consumes:
+// 	- application/json
+//
+// Produces:
+//	- application/json
+//
+// Schemes: http, https
+//
+// Responses:
+// 	200:
+// 	404:
+//  400:
+func addHuntPlayersHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		huntID, e := request.GetIntURLParam(r, "huntID")
+		if e != nil {
+			e.Handle(w)
+			return
+		}
+
+		player := db.PlayerDB{}
+		err := json.NewDecoder(r.Body).Decode(&player)
+		if err != nil {
+			e := response.NewErrorf(
+				http.StatusBadRequest,
+				"error decoding request: %v",
+				err,
+			)
+			e.Handle(w)
+			return
+		}
+
+		player.HuntID = huntID
+		e = player.AddToHunt()
+		if e != nil {
+			e.Handle(w)
+			return
+		}
+	}
+}

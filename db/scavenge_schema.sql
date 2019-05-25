@@ -112,6 +112,7 @@ CREATE INDEX teams_huntid_asc ON teams(hunt_id ASC);
 CREATE TABLE users_teams (
     team_id         int NOT NULL,
     user_id         int NOT NULL,
+    CONSTRAINT users_on_same_team UNIQUE(team_id, user_id),
     FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
@@ -313,6 +314,57 @@ CREATE TABLE hunts_users (
     hunt_id         int NOT NULL,
     user_id         int NOT NULL,
 
+    CONSTRAINT user_in_same_hunt UNIQUE(hunt_id, user_id),
     FOREIGN KEY (hunt_id) REFERENCES hunts(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-)
+);
+
+CREATE OR REPLACE FUNCTION ins_team_player(_hunt_id int, _user_id int, _team_id int, out _team_id_out int)
+AS $func$
+BEGIN
+    WITH teams_for_hunt AS (
+        SELECT t.id AS team FROM teams t WHERE t.hunt_id = _hunt_id
+    )
+    SELECT COALESCE(tfh.team, 0) 
+    FROM teams_for_hunt tfh 
+    INNER JOIN users_teams ut
+        ON ut.user_id = _user_id AND tfh.team = ut.team_id
+    INTO _team_id_out;
+
+    IF _team_id IN (SELECT t.id AS team FROM teams t WHERE t.hunt_id = _hunt_id) THEN
+        IF _team_id_out != 0 THEN 
+
+            DELETE FROM users_teams ut
+            WHERE ut.user_id = _user_id AND ut.team_id = _team_id_out;
+
+        END IF;
+
+        INSERT INTO users_teams(user_id, team_id) 
+        VALUES (_user_id, _team_id)
+        ON CONFLICT DO NOTHING
+        RETURNING _team_id
+        INTO _team_id_out;
+
+    END IF;
+
+END; $func$
+LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION ins_hunt_player(
+    _hunt_id int, 
+    _user_id int, 
+    _team_id int, 
+    out _team_id_out int)
+
+AS $func$
+BEGIN
+
+    INSERT INTO hunts_users(hunt_id, user_id)
+    VALUES (_hunt_id, _user_id)
+    ON CONFLICT DO NOTHING;
+
+    SELECT ins_team_player(_hunt_id, _user_id, _team_id)
+    INTO _team_id_out;
+
+END; $func$
+LANGUAGE plpgsql;

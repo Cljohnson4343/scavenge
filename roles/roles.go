@@ -336,6 +336,11 @@ var PermToRoleEndpoint = map[string]roleEndPoint{
 		Route:          `/hunts/%d/players/`,
 		Role:           `user`,
 	},
+	"post_hunt_player": roleEndPoint{
+		FormattedRegex: `/hunts/%d/players/$`,
+		Route:          `/hunts/%d/players/`,
+		Role:           `user`, //TODO this is a hack to simplify hunt invitation acceptance. Think about refactoring
+	},
 }
 
 // the team role relationships look like: Owner -> Editor -> Member -> HuntMember -> User
