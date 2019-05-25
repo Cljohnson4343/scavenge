@@ -360,11 +360,28 @@ BEGIN
         FROM users_hunts 
         WHERE hunt_id = _hunt_id AND user_id = _user_id
         INTO _users_hunts_id;
+    ELSE
+        PERFORM del_hunt_invitation(_hunt_id, _user_id);
     END IF;
 
     SELECT ins_team_player(_hunt_id, _user_id, _team_id, _users_hunts_id)
     INTO _team_id_out;
 
+END; $func$
+LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION del_hunt_invitation(_hunt_id int, _user_id int)
+RETURNS void
+AS $func$
+BEGIN
+	WITH email_for_user AS (
+		SELECT email
+		FROM users u 
+		WHERE u.id = _user_id
+	)
+	DELETE FROM hunt_invitations hi
+	USING email_for_user efu
+	WHERE hi.hunt_id = _hunt_id AND efu.email = hi.email;
 END; $func$
 LANGUAGE plpgsql;
 
