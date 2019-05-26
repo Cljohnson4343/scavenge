@@ -329,7 +329,12 @@ func getNotificationsHandler() http.HandlerFunc {
 			return
 		}
 
-		render.JSON(w, r, &invitations)
+		notifications := make([]*Notification, 0, len(invitations))
+		for _, v := range invitations {
+			notifications = append(notifications, GetNotification(v))
+		}
+
+		render.JSON(w, r, &notifications)
 	}
 }
 

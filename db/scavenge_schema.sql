@@ -1,7 +1,7 @@
+DROP TABLE IF EXISTS users_teams CASCADE;
 DROP TABLE IF EXISTS users_hunts CASCADE;
 DROP TABLE IF EXISTS hunt_invitations CASCADE;
 DROP TABLE IF EXISTS users_sessions CASCADE;
-DROP TABLE IF EXISTS users_teams CASCADE;
 DROP TABLE IF EXISTS media CASCADE;
 DROP TABLE IF EXISTS locations CASCADE;
 DROP TABLE IF EXISTS items CASCADE;
@@ -68,7 +68,7 @@ CREATE INDEX sessions_by_user_idx ON users_sessions(user_id ASC);
 CREATE TABLE hunts (
     id              serial,
     name            varchar(255) NOT NULL,
-    max_teams       smallint  NOT NULL CONSTRAINT positive_num_teams CHECK (max_teams > 1),
+    max_teams       smallint NOT NULL CONSTRAINT positive_num_teams CHECK (max_teams > 0),
     start_time      timestamp NOT NULL,
     end_time        timestamp NOT NULL,
     latitude        real NOT NULL,
