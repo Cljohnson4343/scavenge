@@ -57,9 +57,10 @@ func init() {
 var stmtMap = map[string]*sql.Stmt{}
 
 var scriptMap = map[string]string{
-	"huntInvitationsByUserID": huntInvitationsByUserIDScript,
 	"huntInvitationDelete":    huntInvitationDeleteScript,
 	"huntInvitationInsert":    huntInvitationInsertScript,
+	"huntInvitationSelect":    huntInvitationSelectScript,
+	"huntInvitationsByUserID": huntInvitationsByUserIDScript,
 	"huntGetByCreatorAndName": huntGetByCreatorAndNameScript,
 	"huntSelect":              huntSelectScript,
 	"huntDelete":              huntDeleteScript,

@@ -641,3 +641,64 @@ func removeHuntPlayerHandler() http.HandlerFunc {
 		return
 	}
 }
+
+func acceptHuntInvitationHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		huntID, e := request.GetIntURLParam(r, "huntID")
+		if e != nil {
+			e.Handle(w)
+			return
+		}
+
+		invitationID, e := request.GetIntURLParam(r, "invitationID")
+		if e != nil {
+			e.Handle(w)
+			return
+		}
+
+		userID, e := users.GetUserID(r.Context())
+		if e != nil {
+			e.Handle(w)
+			return
+		}
+
+		invitation, e := db.GetHuntInvitation(invitationID)
+		if e != nil {
+			e.Handle(w)
+			return
+		}
+
+		if invitation.UserID != userID {
+			e = response.NewError(
+				http.StatusBadRequest,
+				"You are not authorized to accept this invitation",
+			)
+			e.Handle(w)
+			return
+		}
+
+		if invitation.HuntID != huntID {
+			e = response.NewError(
+				http.StatusBadRequest,
+				"You are not authorized to accept this invitation",
+			)
+			e.Handle(w)
+			return
+		}
+
+		player := db.PlayerDB{
+			HuntID: huntID,
+			UserDB: db.UserDB{
+				ID: userID,
+			},
+		}
+
+		e = player.AddToHunt()
+		if e != nil {
+			e.Handle(w)
+			return
+		}
+
+		return
+	}
+}

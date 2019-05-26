@@ -337,14 +337,20 @@ var PermToRoleEndpoint = map[string]roleEndPoint{
 		Role:           `hunt_member`,
 	},
 	"get_hunt_players": roleEndPoint{
-		FormattedRegex: `/hunts/%d/players/$`,
+		FormattedRegex: `/hunts/\d+/players/$`,
 		Route:          `/hunts/%d/players/`,
 		Role:           `user`,
 	},
 	"post_hunt_player": roleEndPoint{
 		FormattedRegex: `/hunts/%d/players/$`,
 		Route:          `/hunts/%d/players/`,
-		Role:           `user`, //TODO this is a hack to simplify hunt invitation acceptance. Think about refactoring
+		Role:           `hunt_editor`,
+	},
+	"post_accept_hunt_invite": roleEndPoint{
+
+		FormattedRegex: `/hunts/\d+/invitations/\d+/accept$`,
+		Route:          `/hunts/43/invitations/43/accept`,
+		Role:           `user`,
 	},
 }
 

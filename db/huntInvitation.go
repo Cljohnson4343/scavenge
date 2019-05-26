@@ -133,6 +133,48 @@ func GetHuntInvitationsByUserID(userID int) ([]*HuntInvitationDB, *response.Erro
 	return invitations, e.GetError()
 }
 
+var huntInvitationSelectScript = `
+	SELECT 
+		hi.id, 
+		hi.email, 
+		hi.hunt_id, 
+		hi.inviter_id, 
+		hi.invited_at, 
+		u.id, 
+		u.username,
+		h.name
+	FROM hunt_invitations hi 
+	INNER JOIN users u
+		ON hi.id = $1 AND u.email = hi.email
+	INNER JOIN hunts h
+		ON h.id = hi.hunt_id;
+	`
+
+// GetHuntInvitation returns the hunt invitation for the given id
+func GetHuntInvitation(invitationID int) (*HuntInvitationDB, *response.Error) {
+	i := HuntInvitationDB{}
+	err := stmtMap["huntInvitationSelect"].QueryRow(invitationID).Scan(
+		&i.ID,
+		&i.Email,
+		&i.HuntID,
+		&i.InviterID,
+		&i.InvitedAt,
+		&i.UserID,
+		&i.InviterUsername,
+		&i.HuntName,
+	)
+	if err != nil {
+		return nil, response.NewErrorf(
+			http.StatusInternalServerError,
+			"error retrieving hunt invitation %d: %v",
+			invitationID,
+			err,
+		)
+	}
+
+	return &i, nil
+}
+
 var huntInvitationInsertScript = `
 	INSERT INTO hunt_invitations(email, hunt_id, inviter_id)
 	VALUES ($1, $2, $3)

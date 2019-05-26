@@ -281,7 +281,7 @@ func testGenerateRole(t *testing.T, name string) {
 			got := role.Authorized(c.req)
 
 			if got != c.expected {
-				t.Errorf("expected %v got %v", c.expected, got)
+				t.Errorf("expected %v got %v for request: %s", c.expected, got, c.req.URL.Path)
 			}
 		})
 	}

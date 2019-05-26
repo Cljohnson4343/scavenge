@@ -56,6 +56,7 @@ func Routes(env *config.Env) *chi.Mux {
 	router.Delete("/{huntID}/players/{playerID}", removeHuntPlayerHandler())
 
 	router.Post("/{huntID}/invitations/", createHuntInvitationHandler())
+	router.Post("/{huntID}/invitations/{invitationID}/accept", acceptHuntInvitationHandler())
 
 	return router
 }
