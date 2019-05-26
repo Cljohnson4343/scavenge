@@ -63,20 +63,38 @@ func (i *HuntInvitationDB) Validate(r *http.Request) *response.Error {
 }
 
 var huntInvitationsByUserIDScript = `
+WITH invite AS (
 	SELECT 
-		hi.id, 
-		hi.email, 
-		hi.hunt_id, 
-		hi.inviter_id, 
-		hi.invited_at, 
-		u.id, 
-		u.username,
-		h.name
+		hi.id AS invitationID, 
+		hi.email AS email, 
+		hi.hunt_id AS huntID, 
+		hi.inviter_id AS inviterID, 
+		hi.invited_at AS invitedAt, 
+		u.id AS userID, 
+		h.name AS huntName
 	FROM hunt_invitations hi 
 	INNER JOIN users u
 	ON u.id = $1 AND u.email = hi.email
 	INNER JOIN hunts h
-	ON hi.hunt_id = h.id;
+	ON hi.hunt_id = h.id
+), invite_user AS (
+	SELECT u.username AS inviterUsername
+	FROM users u
+	INNER JOIN invite i
+	ON u.id = i.inviterID
+)
+SELECT 
+	invitationID,
+	email,
+	huntID,
+	inviterID,
+	invitedAt,
+	userID,
+	huntName,
+	inviterUsername
+FROM invite 
+LEFT OUTER JOIN invite_user
+ON true;
 	`
 
 // GetHuntInvitationsByUserID returns all hunt invitations for the user with the
@@ -106,8 +124,8 @@ func GetHuntInvitationsByUserID(userID int) ([]*HuntInvitationDB, *response.Erro
 			&i.InviterID,
 			&i.InvitedAt,
 			&i.UserID,
-			&i.InviterUsername,
 			&i.HuntName,
+			&i.InviterUsername,
 		)
 		if err != nil {
 			e.Addf(
@@ -134,20 +152,38 @@ func GetHuntInvitationsByUserID(userID int) ([]*HuntInvitationDB, *response.Erro
 }
 
 var huntInvitationSelectScript = `
+WITH invite AS (
 	SELECT 
-		hi.id, 
-		hi.email, 
-		hi.hunt_id, 
-		hi.inviter_id, 
-		hi.invited_at, 
-		u.id, 
-		u.username,
-		h.name
+		hi.id AS invitationID, 
+		hi.email AS email, 
+		hi.hunt_id AS huntID, 
+		hi.inviter_id AS inviterID, 
+		hi.invited_at AS invitedAt, 
+		u.id AS userID, 
+		h.name AS huntName
 	FROM hunt_invitations hi 
 	INNER JOIN users u
 		ON hi.id = $1 AND u.email = hi.email
 	INNER JOIN hunts h
-		ON h.id = hi.hunt_id;
+		ON h.id = hi.hunt_id
+), inviter_user AS (
+	SELECT u.username AS inviterUsername
+	FROM users u 
+	INNER JOIN invite
+	ON inviterID = u.id
+)
+	SELECT 
+		invitationID,
+		email,
+		huntID,
+		inviterID,
+		invitedAt,
+		userID,
+		huntName,
+		inviterUsername
+	FROM invite 
+	LEFT OUTER JOIN inviter_user
+	ON true;
 	`
 
 // GetHuntInvitation returns the hunt invitation for the given id
@@ -160,8 +196,8 @@ func GetHuntInvitation(invitationID int) (*HuntInvitationDB, *response.Error) {
 		&i.InviterID,
 		&i.InvitedAt,
 		&i.UserID,
-		&i.InviterUsername,
 		&i.HuntName,
+		&i.InviterUsername,
 	)
 	if err != nil {
 		return nil, response.NewErrorf(
