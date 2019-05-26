@@ -60,6 +60,10 @@ func Routes(env *config.Env) *chi.Mux {
 		"/{huntID}/invitations/{invitationID}/accept",
 		acceptHuntInvitationHandler(),
 	)
+	router.Post(
+		"/{huntID}/invitations/{invitationID}/decline",
+		declineHuntInvitationHandler(),
+	)
 
 	return router
 }

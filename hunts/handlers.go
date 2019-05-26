@@ -642,6 +642,22 @@ func removeHuntPlayerHandler() http.HandlerFunc {
 	}
 }
 
+// swagger:route POST /hunts/{huntID}/invitations/{invitationID}/accept
+//
+// Accepts a hunt invitation.
+//
+// Consumes:
+// 	- application/json
+//
+// Produces:
+//	- application/json
+//
+// Schemes: http, https
+//
+// Responses:
+// 	200:
+// 	404:
+//  400:
 func acceptHuntInvitationHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		huntID, e := request.GetIntURLParam(r, "huntID")
@@ -694,6 +710,76 @@ func acceptHuntInvitationHandler() http.HandlerFunc {
 		}
 
 		e = player.AddToHunt()
+		if e != nil {
+			e.Handle(w)
+			return
+		}
+
+		return
+	}
+}
+
+// swagger:route POST /hunts/{huntID}/invitations/{invitationID}/decline
+//
+// Declines a hunt invitation. The invitation is deleted.
+//
+// Consumes:
+// 	- application/json
+//
+// Produces:
+//	- application/json
+//
+// Schemes: http, https
+//
+// Responses:
+// 	200:
+// 	404:
+//  400:
+func declineHuntInvitationHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		huntID, e := request.GetIntURLParam(r, "huntID")
+		if e != nil {
+			e.Handle(w)
+			return
+		}
+
+		invitationID, e := request.GetIntURLParam(r, "invitationID")
+		if e != nil {
+			e.Handle(w)
+			return
+		}
+
+		userID, e := users.GetUserID(r.Context())
+		if e != nil {
+			e.Handle(w)
+			return
+		}
+
+		invitation, e := db.GetHuntInvitation(invitationID)
+		if e != nil {
+			e.Handle(w)
+			return
+		}
+
+		if invitation.UserID != userID {
+			e = response.NewError(
+				http.StatusBadRequest,
+				"You are not authorized to decline this invitation",
+			)
+			e.Handle(w)
+			return
+		}
+
+		if invitation.HuntID != huntID {
+			e = response.NewError(
+				http.StatusBadRequest,
+				"You are not authorized to decline this invitation",
+			)
+			e.Handle(w)
+			return
+		}
+
+		e = db.DeleteHuntInvitation(invitationID, userID)
 		if e != nil {
 			e.Handle(w)
 			return

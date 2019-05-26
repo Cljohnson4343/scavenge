@@ -347,9 +347,13 @@ var PermToRoleEndpoint = map[string]roleEndPoint{
 		Role:           `hunt_editor`,
 	},
 	"post_accept_hunt_invite": roleEndPoint{
-
 		FormattedRegex: `/hunts/\d+/invitations/\d+/accept$`,
 		Route:          `/hunts/43/invitations/43/accept`,
+		Role:           `user`,
+	},
+	"post_decline_hunt_invite": roleEndPoint{
+		FormattedRegex: `/hunts/\d+/invitations/\d+/decline$`,
+		Route:          `/hunts/43/invitations/43/decline`,
 		Role:           `user`,
 	},
 }
