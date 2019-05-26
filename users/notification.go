@@ -24,9 +24,12 @@ func GetNotification(invite *db.HuntInvitationDB) *Notification {
 		HuntInvitationDB: *invite,
 		Links: &huntInvitationLink{
 			Accept: accept{
-				Path:   fmt.Sprintf("/hunts/%d/players/", invite.HuntID),
+				Path: fmt.Sprintf(
+					"/hunts/%d/invitations/%d/accept",
+					invite.HuntID,
+					invite.ID,
+				),
 				Method: "POST",
-				Data:   fmt.Sprintf("{ huntID: %d}", invite.HuntID),
 			},
 			Decline: decline{
 				Path: fmt.Sprintf(
