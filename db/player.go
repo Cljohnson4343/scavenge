@@ -102,7 +102,7 @@ func GetPlayersForHunt(huntID int) ([]*PlayerDB, *response.Error) {
 }
 
 var playerAddToHuntScript = `
-	SELECT ins_hunt_player($1, $2, COALESCE($3, 0));
+	SELECT COALESCE(ins_hunt_player($1, $2, COALESCE($3, 0)), 0);
 `
 
 // AddToHunt adds the given player to a hunt. If the player's
