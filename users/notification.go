@@ -18,6 +18,10 @@ type Notification struct {
 	Links linker `json:"links"`
 }
 
+// TODO this smells: the hunt invitation notification is using hard coded
+// url addresses that it should not know about. Get rid of this
+// obscure dependency
+
 // GetNotification returns a notification from the given HuntInvitation
 func GetNotification(invite *db.HuntInvitationDB) *Notification {
 	return &Notification{
@@ -33,19 +37,19 @@ func GetNotification(invite *db.HuntInvitationDB) *Notification {
 			},
 			Decline: decline{
 				Path: fmt.Sprintf(
-					"/users/%d/players/%d",
-					invite.UserID,
+					"/hunts/%d/invitations/%d/decline",
+					invite.HuntID,
 					invite.ID,
 				),
-				Method: "DELETE",
+				Method: "POST",
 			},
 			Delete: delete{
 				Path: fmt.Sprintf(
-					"/users/%d/players/%d",
-					invite.UserID,
+					"/hunts/%d/invitations/%d/decline",
+					invite.HuntID,
 					invite.ID,
 				),
-				Method: "DELETE",
+				Method: "POST",
 			},
 		},
 	}
