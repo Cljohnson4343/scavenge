@@ -63,7 +63,7 @@ func (i *HuntInvitationDB) Validate(r *http.Request) *response.Error {
 }
 
 var huntInvitationsByUserIDScript = `
-WITH invite AS (
+WITH invited_user AS (
 	SELECT 
 		hi.id AS invitationID, 
 		hi.email AS email, 
@@ -77,25 +77,22 @@ WITH invite AS (
 	ON u.id = $1 AND u.email = hi.email
 	INNER JOIN hunts h
 	ON hi.hunt_id = h.id
-), invite_user AS (
-	SELECT u.username AS inviterUsername
+), invite AS (
+	SELECT 
+		i.invitationID,
+		i.email,
+		i.huntID,
+		i.inviterID,
+		i.invitedAt,
+		i.userID,
+		i.huntName,
+		u.username AS inviterUsername
 	FROM users u
-	INNER JOIN invite i
+	INNER JOIN invited_user i
 	ON u.id = i.inviterID
 )
-SELECT 
-	invitationID,
-	email,
-	huntID,
-	inviterID,
-	invitedAt,
-	userID,
-	huntName,
-	inviterUsername
-FROM invite 
-LEFT OUTER JOIN invite_user
-ON true;
-	`
+SELECT * FROM invite; 
+`
 
 // GetHuntInvitationsByUserID returns all hunt invitations for the user with the
 // given id. A result with both media meta objects and an error is possible
@@ -152,7 +149,7 @@ func GetHuntInvitationsByUserID(userID int) ([]*HuntInvitationDB, *response.Erro
 }
 
 var huntInvitationSelectScript = `
-WITH invite AS (
+WITH invited_user AS (
 	SELECT 
 		hi.id AS invitationID, 
 		hi.email AS email, 
@@ -166,24 +163,21 @@ WITH invite AS (
 		ON hi.id = $1 AND u.email = hi.email
 	INNER JOIN hunts h
 		ON h.id = hi.hunt_id
-), inviter_user AS (
-	SELECT u.username AS inviterUsername
+), invite AS (
+	SELECT 
+		i.invitationID,
+		i.email,
+		i.huntID,
+		i.inviterID,
+		i.invitedAt,
+		i.userID,
+		i.huntName,
+		u.username AS inviterUsername
 	FROM users u 
-	INNER JOIN invite
+	INNER JOIN invite i
 	ON inviterID = u.id
 )
-	SELECT 
-		invitationID,
-		email,
-		huntID,
-		inviterID,
-		invitedAt,
-		userID,
-		huntName,
-		inviterUsername
-	FROM invite 
-	LEFT OUTER JOIN inviter_user
-	ON true;
+	SELECT * FROM invite; 
 	`
 
 // GetHuntInvitation returns the hunt invitation for the given id
@@ -211,6 +205,8 @@ func GetHuntInvitation(invitationID int) (*HuntInvitationDB, *response.Error) {
 	return &i, nil
 }
 
+// TODO add check to make sure that person being invited isnt already a
+// hunt member
 var huntInvitationInsertScript = `
 	INSERT INTO hunt_invitations(email, hunt_id, inviter_id)
 	VALUES ($1, $2, $3)
