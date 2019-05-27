@@ -164,6 +164,16 @@ func InsertHunt(ctx context.Context, hunt *Hunt) *response.Error {
 		}
 	}
 
+	// TODO add the hunt creator automatically
+	for _, player := range hunt.Players {
+		player.HuntID = hunt.ID
+		playerErr := player.Invite(userID)
+		if playerErr != nil {
+			e.AddError(playerErr)
+			break
+		}
+	}
+
 	return e.GetError()
 }
 

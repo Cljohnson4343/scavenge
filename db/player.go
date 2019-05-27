@@ -163,3 +163,16 @@ func (p *PlayerDB) RemoveFromHunt() *response.Error {
 
 	return nil
 }
+
+// Invite invites a player to a hunt. The player struct should
+// have the HuntID and Email fields set. The player does not
+// have to be a registered user to be invited to a hunt.
+func (p *PlayerDB) Invite(inviterID int) *response.Error {
+	invite := HuntInvitationDB{
+		HuntID:    p.HuntID,
+		Email:     p.Email,
+		InviterID: inviterID,
+	}
+
+	return invite.Insert()
+}

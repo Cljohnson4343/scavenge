@@ -586,8 +586,7 @@ func addHuntPlayerHandler() http.HandlerFunc {
 			return
 		}
 
-		player.HuntID = huntID
-		e = player.AddToHunt()
+		e = AddPlayer(huntID, &player)
 		if e != nil {
 			e.Handle(w)
 			return
@@ -709,7 +708,7 @@ func acceptHuntInvitationHandler() http.HandlerFunc {
 			},
 		}
 
-		e = player.AddToHunt()
+		e = AddPlayer(huntID, &player)
 		if e != nil {
 			e.Handle(w)
 			return

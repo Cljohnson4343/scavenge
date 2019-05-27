@@ -3,6 +3,8 @@ package hunts
 import (
 	"net/http"
 
+	"github.com/cljohnson4343/scavenge/roles"
+
 	"github.com/cljohnson4343/scavenge/db"
 	"github.com/cljohnson4343/scavenge/hunts/models"
 	"github.com/cljohnson4343/scavenge/pgsql"
@@ -23,6 +25,9 @@ type Hunt struct {
 	//
 	// min length: 1
 	Items []*models.Item `json:"items" valid:"-"`
+
+	// the players for this hunt
+	Players []*db.PlayerDB `json:"players" valid:"-"`
 }
 
 // Validate will validate the Hunt
@@ -151,6 +156,23 @@ func (h *Hunt) Update(ex pgsql.Executioner) *response.Error {
 		if e != nil {
 			return e
 		}
+	}
+
+	return nil
+}
+
+// AddPlayer adds a player to the given hunt and assigns the necessary roles
+func AddPlayer(huntID int, player *db.PlayerDB) *response.Error {
+	player.HuntID = huntID
+	e := player.AddToHunt()
+	if e != nil {
+		return e
+	}
+
+	huntMember := roles.New("hunt_member", huntID)
+	e = huntMember.AddTo(player.ID)
+	if e != nil {
+		return e
 	}
 
 	return nil
