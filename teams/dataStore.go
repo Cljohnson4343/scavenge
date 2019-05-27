@@ -141,3 +141,19 @@ func UpdateTeam(env *config.Env, team *Team) *response.Error {
 
 	return nil
 }
+
+// AddPlayer adds the given player to the given team and assigns the
+// necessary roles
+func AddPlayer(teamID int, playerID int) *response.Error {
+	e := db.TeamAddPlayer(teamID, playerID)
+	if e != nil {
+		return e
+	}
+
+	teamMember := roles.New("team_member", teamID)
+	e = teamMember.AddTo(playerID)
+	if e != nil {
+		return e
+	}
+	return nil
+}

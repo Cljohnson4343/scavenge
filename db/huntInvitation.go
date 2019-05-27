@@ -174,7 +174,7 @@ WITH invited_user AS (
 		i.huntName,
 		u.username AS inviterUsername
 	FROM users u 
-	INNER JOIN invite i
+	INNER JOIN invited_user i
 	ON inviterID = u.id
 )
 	SELECT * FROM invite; 

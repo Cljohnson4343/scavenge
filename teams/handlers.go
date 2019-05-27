@@ -579,11 +579,12 @@ func getAddPlayerHandler(env *config.Env) http.HandlerFunc {
 			return
 		}
 
-		e = db.TeamAddPlayer(teamID, reqBody.PlayerID)
+		e = AddPlayer(teamID, reqBody.PlayerID)
 		if e != nil {
 			e.Handle(w)
 			return
 		}
+		// TODO add roles
 	})
 }
 
