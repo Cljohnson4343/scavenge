@@ -1,3 +1,4 @@
+DROP TABLE IF EXISTS users_roles CASCADE;
 DROP TABLE IF EXISTS users_teams CASCADE;
 DROP TABLE IF EXISTS users_hunts CASCADE;
 DROP TABLE IF EXISTS hunt_invitations CASCADE;
@@ -7,7 +8,6 @@ DROP TABLE IF EXISTS locations CASCADE;
 DROP TABLE IF EXISTS items CASCADE;
 DROP TABLE IF EXISTS teams CASCADE;
 DROP TABLE IF EXISTS hunts CASCADE;
-DROP TABLE IF EXISTS users_roles CASCADE;
 DROP TABLE IF EXISTS permissions CASCADE;
 DROP TABLE IF EXISTS roles CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
@@ -181,8 +181,16 @@ CREATE TABLE roles (
 );
 CREATE UNIQUE INDEX roles_name_asc_idx ON roles(name ASC);
 
-CREATE OR REPLACE FUNCTION ins_sel_role(_name varchar(64), _user_id int, OUT _role_id int)
+CREATE OR REPLACE FUNCTION ins_sel_role(
+    _name varchar(64), 
+    _user_id int, 
+    _entity_id int,
+    OUT _role_id int
+)
 AS $func$
+DECLARE
+    _users_hunts_id int;
+    _users_teams_id int;
 BEGIN
 LOOP
     SELECT id 
@@ -201,27 +209,36 @@ LOOP
     EXIT WHEN FOUND;
 END LOOP;
 
-    INSERT INTO users_roles(user_id, role_id)
-    VALUES (_user_id, _role_id)
-    ON CONFLICT ON CONSTRAINT users_roles_no_dups DO NOTHING;
+    if _name ~* '^hunt' THEN
+        SELECT id
+        FROM users_hunts
+        WHERE user_id = _user_id AND hunt_id = _entity_id
+        INTO _users_hunts_id;
+
+        INSERT INTO users_roles(user_id, role_id, users_hunts_id)
+        VALUES (_user_id, _role_id, _users_hunts_id)
+        ON CONFLICT ON CONSTRAINT users_roles_no_dups 
+            DO UPDATE 
+            SET users_hunts_id = (_users_hunts_id);
+    ELSIF _name ~* '^team' THEN
+        SELECT id
+        FROM users_teams
+        WHERE user_id = _user_id AND team_id = _entity_id
+        INTO _users_teams_id;
+
+        INSERT INTO users_roles(user_id, role_id, users_teams_id)
+        VALUES (_user_id, _role_id, _users_teams_id)
+        ON CONFLICT ON CONSTRAINT users_roles_no_dups 
+            DO UPDATE 
+            SET users_teams_id = (_users_teams_id);
+    ELSE 
+        INSERT INTO users_roles(user_id, role_id)
+        VALUES (_user_id, _role_id)
+        ON CONFLICT ON CONSTRAINT users_roles_no_dups DO NOTHING;
+    END IF;
 
 END; $func$
 LANGUAGE plpgsql;
-
-
-/*
-    This table is a junction table for the users and roles
-    tables.
-*/
-CREATE TABLE users_roles (
-    user_id         int NOT NULL,
-    role_id        int NOT NULL,
-    CONSTRAINT users_roles_no_dups UNIQUE(user_id, role_id),
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE
-);
-CREATE INDEX users_roles_user_id_idx ON users_roles(user_id ASC);
-CREATE INDEX users_roles_role_id_idx ON users_roles(role_id ASC);
 
 /*
     This table is used to store the permissions for endpoints.
@@ -394,10 +411,12 @@ LANGUAGE plpgsql;
 
 */
 CREATE TABLE users_teams (
+    id              serial,
     team_id         int NOT NULL,
     user_id         int NOT NULL,
     users_hunts_id  int NOT NULL,
     
+    PRIMARY KEY(id), 
     CONSTRAINT users_on_same_team UNIQUE(team_id, user_id),
     FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
@@ -406,3 +425,21 @@ CREATE TABLE users_teams (
 CREATE INDEX team_users_idx ON users_teams(team_id ASC);
 CREATE INDEX user_teams_idx ON users_teams(user_id ASC);
 
+/*
+    This table is a junction table for the users and roles
+    tables.
+*/
+CREATE TABLE users_roles (
+    user_id         int NOT NULL,
+    role_id         int NOT NULL,
+    users_hunts_id  int,
+    users_teams_id  int,
+
+    CONSTRAINT users_roles_no_dups UNIQUE(user_id, role_id),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE,
+    FOREIGN KEY (users_hunts_id) REFERENCES users_hunts(id) ON DELETE CASCADE,
+    FOREIGN KEY (users_teams_id) REFERENCES users_teams(id) ON DELETE CASCADE
+);
+CREATE INDEX users_roles_user_id_idx ON users_roles(user_id ASC);
+CREATE INDEX users_roles_role_id_idx ON users_roles(role_id ASC);

@@ -21,13 +21,14 @@ type PermissionDB struct {
 // RoleDB is a representation of a roles table row
 type RoleDB struct {
 	ID          int             `json:"roleID"`
+	EntityID    int             `json:"entityID"`
 	Name        string          `json:"roleName"`
 	UserID      int             `json:"userID"`
 	Permissions []*PermissionDB `json:"permissions"`
 }
 
 var roleInsertScript = `
-	SELECT ins_sel_role($1, $2);
+	SELECT ins_sel_role($1, $2, $3);
 `
 
 var permissionInsertScript = `
@@ -53,7 +54,7 @@ func AddRoles(roles []*RoleDB) *response.Error {
 	permInsStmt := tx.Stmt(stmtMap["permissionInsert"])
 
 	for _, r := range roles {
-		err := roleInsStmt.QueryRow(r.Name, r.UserID).Scan(&r.ID)
+		err := roleInsStmt.QueryRow(r.Name, r.UserID, r.EntityID).Scan(&r.ID)
 		if err != nil {
 			if rollbackErr := tx.Rollback(); rollbackErr != nil {
 				return response.NewErrorf(

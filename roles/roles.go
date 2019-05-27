@@ -15,6 +15,7 @@ type Role struct {
 	Name        string
 	Permissions []*Permission
 	Child       *Role
+	EntityID    int
 }
 
 // New returns a new role
@@ -79,6 +80,7 @@ func (r *Role) RoleDBs(userID int) []*db.RoleDB {
 	roleDB := db.RoleDB{
 		Name:        r.Name,
 		UserID:      userID,
+		EntityID:    r.EntityID,
 		Permissions: make([]*db.PermissionDB, 0, len(r.Permissions)),
 	}
 
@@ -387,6 +389,7 @@ func genRole(name string, id int) *Role {
 	role := Role{
 		Name:        getRoleName(name, id),
 		Permissions: make([]*Permission, 0),
+		EntityID:    id,
 	}
 	// create role specific permissions
 	for k, v := range PermToRoleEndpoint {

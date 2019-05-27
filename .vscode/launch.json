@@ -22,8 +22,8 @@
       "request": "launch",
       "mode": "test",
       "buildFlags": "-tags=integration",
-      "program": "${workspaceFolder}/hunts/api_test.go",
-      "args": ["-test.v", "-test.run", "TestCreateHuntInvitationHandler"]
+      "program": "${workspaceFolder}/db/roles_test.go",
+      "args": ["-test.v", "-test.run", "TestAddRoles"]
     }
   ]
 }
