@@ -250,3 +250,20 @@ func getUpdateHuntSQLCommand(hunt *Hunt) (*[]*pgsql.Command, *response.Error) {
 
 	return &sqlCmds, nil
 }
+
+// AddPlayer adds a player to the given hunt and assigns the necessary roles
+func AddPlayer(huntID int, player *db.PlayerDB) *response.Error {
+	player.HuntID = huntID
+	e := player.AddToHunt()
+	if e != nil {
+		return e
+	}
+
+	huntMember := roles.New("hunt_member", huntID)
+	e = huntMember.AddTo(player.ID)
+	if e != nil {
+		return e
+	}
+
+	return nil
+}
