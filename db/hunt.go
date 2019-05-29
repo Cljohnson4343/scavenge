@@ -253,12 +253,11 @@ func GetHunts() ([]*HuntDB, *response.Error) {
 }
 
 var huntsByUserIDSelectScript = `
-	WITH teams_for_user AS (
-		SELECT t.hunt_id 
-		FROM teams t 
-		INNER JOIN users_teams ut 
-		ON ut.user_id = $1 AND t.id = ut.team_id
-	)
+WITH hunts_for_user AS (
+	SELECT hunt_id AS users_hunt_id
+	FROM users_hunts
+	WHERE user_id = $1
+)
 	SELECT 
 		h.name, 
 		h.id, 
@@ -271,9 +270,9 @@ var huntsByUserIDSelectScript = `
 		h.created_at,
 		h.creator_id,
 		u.username
-	FROM teams_for_user tfs 
+	FROM hunts_for_user hfu 
 	INNER JOIN hunts h 
-	ON tfs.hunt_id = h.id 
+	ON users_hunt_id = h.id 
 	INNER JOIN users u
 	ON u.id = h.creator_id;
 	`
