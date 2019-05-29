@@ -377,9 +377,9 @@ BEGIN
         FROM users_hunts 
         WHERE hunt_id = _hunt_id AND user_id = _user_id
         INTO _users_hunts_id;
-    ELSE
-        PERFORM del_hunt_invitation(_hunt_id, _user_id);
     END IF;
+
+    PERFORM del_hunt_invitation(_hunt_id, _user_id);
 
     SELECT ins_team_player(_hunt_id, _user_id, _team_id, _users_hunts_id)
     INTO _team_id_out;
