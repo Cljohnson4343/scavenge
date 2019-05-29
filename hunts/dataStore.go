@@ -184,16 +184,22 @@ func InsertHunt(ctx context.Context, hunt *Hunt) *response.Error {
 		}
 	}
 
-	// TODO add the hunt creator automatically
 	for _, player := range hunt.Players {
 		player.HuntID = hunt.ID
-		playerErr := player.Invite(userID)
-		if playerErr != nil {
-			e.AddError(playerErr)
-			break
+		if player.ID == userID {
+			playerErr := AddPlayer(hunt.ID, player)
+			if playerErr != nil {
+				e.AddError(playerErr)
+				break
+			}
+		} else {
+			playerErr := player.Invite(userID)
+			if playerErr != nil {
+				e.AddError(playerErr)
+				break
+			}
 		}
 	}
-
 	return e.GetError()
 }
 
@@ -279,8 +285,8 @@ func AddPlayer(huntID int, player *db.PlayerDB) *response.Error {
 		return e
 	}
 
-	huntMember := roles.New("hunt_member", huntID)
-	e = huntMember.AddTo(player.ID)
+	huntEditor := roles.New("hunt_editor", huntID)
+	e = huntEditor.AddTo(player.ID)
 	if e != nil {
 		return e
 	}
