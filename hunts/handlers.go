@@ -41,7 +41,7 @@ func getHuntsHandler() http.HandlerFunc {
 		if strUserID != "" {
 			userID, err := strconv.Atoi(strUserID)
 			if err != nil {
-				e := response.NewErrorf(http.StatusBadRequest, "atoi: error parsing userID query.")
+				e := response.NewErrorf(http.StatusBadRequest, "userID parameter must be a number")
 				e.Handle(w)
 				return
 			}
