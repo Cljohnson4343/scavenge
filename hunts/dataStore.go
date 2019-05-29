@@ -37,7 +37,12 @@ func AllHunts() ([]*Hunt, *response.Error) {
 			e.AddError(itemErr)
 		}
 
-		hunt := Hunt{HuntDB: *h, Teams: ts, Items: items}
+		players, playersErr := db.GetPlayersForHunt(h.ID)
+		if playersErr != nil {
+			e.AddError(playersErr)
+		}
+
+		hunt := Hunt{HuntDB: *h, Teams: ts, Items: items, Players: players}
 
 		hunts = append(hunts, &hunt)
 	}
@@ -64,7 +69,12 @@ func GetHunt(huntID int) (*Hunt, *response.Error) {
 		e.AddError(itemErr)
 	}
 
-	return &Hunt{HuntDB: *huntDB, Teams: teams, Items: items}, e.GetError()
+	players, playersErr := db.GetPlayersForHunt(huntID)
+	if playersErr != nil {
+		e.AddError(playersErr)
+	}
+
+	return &Hunt{HuntDB: *huntDB, Teams: teams, Items: items, Players: players}, e.GetError()
 }
 
 // GetHuntByCreatorAndName returns a pointer to the hunt with the given
@@ -87,7 +97,12 @@ func GetHuntByCreatorAndName(creator, name string) (*Hunt, *response.Error) {
 		e.AddError(itemErr)
 	}
 
-	return &Hunt{HuntDB: *huntDB, Teams: teams, Items: items}, e.GetError()
+	players, playersErr := db.GetPlayersForHunt(huntDB.ID)
+	if playersErr != nil {
+		e.AddError(playersErr)
+	}
+
+	return &Hunt{HuntDB: *huntDB, Teams: teams, Items: items, Players: players}, e.GetError()
 }
 
 // GetHuntsByUserID returns all Hunts for the given user
@@ -114,7 +129,12 @@ func GetHuntsByUserID(userID int) ([]*Hunt, *response.Error) {
 			e.AddError(itemErr)
 		}
 
-		hunt := Hunt{HuntDB: *h, Teams: ts, Items: items}
+		players, playersErr := db.GetPlayersForHunt(h.ID)
+		if playersErr != nil {
+			e.AddError(playersErr)
+		}
+
+		hunt := Hunt{HuntDB: *h, Teams: ts, Items: items, Players: players}
 
 		hunts = append(hunts, &hunt)
 	}
