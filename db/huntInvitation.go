@@ -302,3 +302,77 @@ func (i *HuntInvitationDB) ParseError(err error, op string) *response.Error {
 		err.Error(),
 	)
 }
+
+var huntInvitationsForHuntScript = `
+WITH invited_user AS (
+	SELECT 
+		u.email AS invitedEmail,
+		u.id AS invitedID
+	FROM users u
+)
+	SELECT
+		hi.id,
+		hi.email,
+		hi.hunt_id,
+		u.username,
+		h.name,
+		hi.inviter_id,
+		hi.invited_at,
+		COALESCE(invitedID, 0)
+	FROM hunt_invitations hi 
+	INNER JOIN users u 
+		ON hi.hunt_id = $1 AND hi.inviter_id = u.id
+	INNER JOIN hunts h
+		ON hi.hunt_id = h.id
+	LEFT OUTER JOIN invited_user iu 
+		ON invitedEmail = hi.email; 
+`
+
+// GetInvitationsForHunt returns the invitations for the given hunt
+func GetInvitationsForHunt(huntID int) ([]*HuntInvitationDB, *response.Error) {
+	rows, err := stmtMap["huntInvitationsForHunt"].Query(huntID)
+	if err != nil {
+		return nil, response.NewErrorf(
+			http.StatusInternalServerError,
+			"error getting invitations for hunt %d: %v",
+			huntID,
+			err,
+		)
+	}
+	defer rows.Close()
+
+	e := response.NewNilError()
+	invitations := make([]*HuntInvitationDB, 0)
+	for rows.Next() {
+		i := HuntInvitationDB{}
+		err = rows.Scan(
+			&i.ID,
+			&i.Email,
+			&i.HuntID,
+			&i.InviterUsername,
+			&i.HuntName,
+			&i.InviterID,
+			&i.InvitedAt,
+			&i.UserID,
+		)
+		if err != nil {
+			e.Addf(
+				http.StatusInternalServerError,
+				"error retrieving invite: %v",
+				err,
+			)
+			break
+		}
+		invitations = append(invitations, &i)
+	}
+
+	if err = rows.Err(); err != nil {
+		e.Addf(
+			http.StatusInternalServerError,
+			"error retrieving invite: %v",
+			err,
+		)
+	}
+
+	return invitations, e.GetError()
+}
