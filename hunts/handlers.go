@@ -146,7 +146,13 @@ func createHuntHandler(env *config.Env) http.HandlerFunc {
 			return
 		}
 
-		e = InsertHunt(r.Context(), &hunt)
+		userID, e := users.GetUserID(r.Context())
+		if e != nil {
+			e.Handle(w)
+			return
+		}
+
+		e = InsertHunt(userID, &hunt)
 		if e != nil {
 			e.Handle(w)
 			return

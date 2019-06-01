@@ -1,7 +1,6 @@
 package hunts
 
 import (
-	"context"
 	"net/http"
 
 	"github.com/cljohnson4343/scavenge/config"
@@ -10,7 +9,6 @@ import (
 	"github.com/cljohnson4343/scavenge/response"
 	"github.com/cljohnson4343/scavenge/roles"
 	"github.com/cljohnson4343/scavenge/teams"
-	"github.com/cljohnson4343/scavenge/users"
 )
 
 // AllHunts returns all Hunts from the database
@@ -144,16 +142,11 @@ func GetHuntsByUserID(userID int) ([]*Hunt, *response.Error) {
 
 // InsertHunt inserts the given hunt into the database and updates the hunt
 // with the new id and created_at timestamp
-func InsertHunt(ctx context.Context, hunt *Hunt) *response.Error {
-	// set the creator field
-	userID, e := users.GetUserID(ctx)
-	if e != nil {
-		return e
-	}
+func InsertHunt(userID int, hunt *Hunt) *response.Error {
 	hunt.CreatorID = userID
 
 	// TODO I don't think I like how hunts are inserted. Go over and see about refactoring
-	e = hunt.HuntDB.Insert()
+	e := hunt.HuntDB.Insert()
 	if e != nil {
 		return e
 	}
@@ -168,7 +161,7 @@ func InsertHunt(ctx context.Context, hunt *Hunt) *response.Error {
 
 	for _, team := range hunt.Teams {
 		team.HuntID = hunt.ID
-		teamErr := teams.InsertTeam(ctx, team)
+		teamErr := teams.InsertTeam(userID, team)
 		if teamErr != nil {
 			e.AddError(teamErr)
 			break

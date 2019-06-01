@@ -1,10 +1,7 @@
 package teams
 
 import (
-	"context"
 	"net/http"
-
-	"github.com/cljohnson4343/scavenge/users"
 
 	"github.com/cljohnson4343/scavenge/config"
 	"github.com/cljohnson4343/scavenge/db"
@@ -63,7 +60,7 @@ func GetTeam(teamID int) (*Team, *response.Error) {
 }
 
 // InsertTeam inserts a Team into the db
-func InsertTeam(ctx context.Context, team *Team) *response.Error {
+func InsertTeam(userID int, team *Team) *response.Error {
 	// inserting a team that has a non-zero id is not valid
 	if team.ID != 0 {
 		return response.NewError(
@@ -73,11 +70,6 @@ func InsertTeam(ctx context.Context, team *Team) *response.Error {
 	}
 
 	e := team.Insert()
-	if e != nil {
-		return e
-	}
-
-	userID, e := users.GetUserID(ctx)
 	if e != nil {
 		return e
 	}

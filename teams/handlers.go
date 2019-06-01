@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/cljohnson4343/scavenge/users"
+
 	"github.com/cljohnson4343/scavenge/config"
 	"github.com/cljohnson4343/scavenge/db"
 	"github.com/cljohnson4343/scavenge/request"
@@ -133,7 +135,13 @@ func createTeamHandler(env *config.Env) http.HandlerFunc {
 			return
 		}
 
-		e = InsertTeam(r.Context(), &team)
+		userID, e := users.GetUserID(r.Context())
+		if e != nil {
+			e.Handle(w)
+			return
+		}
+
+		e = InsertTeam(userID, &team)
 		if e != nil {
 			e.Handle(w)
 			return
