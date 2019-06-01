@@ -14,7 +14,7 @@
       "showLog": true,
       "program": "${workspaceFolder}",
       "env": {},
-      "args": []
+      "args": ["--populate"]
     },
     {
       "name": "Launch test function",

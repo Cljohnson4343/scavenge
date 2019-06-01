@@ -7,6 +7,7 @@ import (
 
 	"github.com/cljohnson4343/scavenge/config"
 	"github.com/cljohnson4343/scavenge/db"
+	"github.com/cljohnson4343/scavenge/populate"
 	"github.com/cljohnson4343/scavenge/response"
 	"github.com/cljohnson4343/scavenge/routes"
 	"github.com/go-chi/chi"
@@ -14,9 +15,12 @@ import (
 
 // Flags for scavenge
 var devModeFlag bool
+var populateFlag bool
 
 func init() {
 	flag.BoolVar(&devModeFlag, "dev-mode", false, "set the server to dev mode")
+	flag.BoolVar(&populateFlag, "populate", false, "populate the database with dummy data")
+
 }
 
 func main() {
@@ -30,6 +34,8 @@ func main() {
 
 	env := config.CreateEnv(database)
 	router := routes.Routes(env)
+
+	populate.Populate(populateFlag)
 
 	walkFunc := func(method string, route string, handler http.Handler, middlewares ...func(http.Handler) http.Handler) error {
 		log.Printf("%s %s\n", method, route) // walk and print out all routes

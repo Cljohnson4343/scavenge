@@ -26,6 +26,9 @@ type Hunt struct {
 
 	// the players for this hunt
 	Players []*db.PlayerDB `json:"players" valid:"-"`
+
+	// the invites for this hunt
+	Invites []*db.HuntInvitationDB `json:"invites" valid:"-"`
 }
 
 // Validate will validate the Hunt

@@ -1,0 +1,56 @@
+[
+  {
+    "firstName": "pete",
+    "lastName": "ross",
+    "username": "pete",
+    "email": "pete@smallville.com"
+  },
+  {
+    "firstName": "clark",
+    "lastName": "kent",
+    "username": "clark",
+    "email": "clark@smallville.com"
+  },
+  {
+    "firstName": "chloe",
+    "lastName": "sullivan",
+    "username": "chloe",
+    "email": "chloe@smallville.com"
+  },
+  {
+    "firstName": "lana",
+    "lastName": "lang",
+    "username": "lana",
+    "email": "lana@smallville.com"
+  },
+  {
+    "firstName": "lois",
+    "lastName": "lane",
+    "username": "lois",
+    "email": "lois@smallville.com"
+  },
+  {
+    "firstName": "jonathan",
+    "lastName": "kent",
+    "username": "jonathan",
+    "email": "jonathan@smallville.com"
+  },
+  {
+    "firstName": "martha",
+    "lastName": "kent",
+    "username": "martha",
+    "email": "martha@smallville.com"
+  },
+  {
+    "firstName": "lex",
+    "lastName": "luther",
+    "username": "lex",
+    "email": "lex@smallville.com"
+  },
+  {
+    "firstName": "lionel",
+    "lastName": "luther",
+    "username": "lionel",
+    "email": "lionel@smallville.com"
+  }
+]
