@@ -137,7 +137,7 @@ func getHuntHandler(env *config.Env) http.HandlerFunc {
 // Responses:
 // 	200:
 //  400:
-func createHuntHandler(env *config.Env) http.HandlerFunc {
+func createHuntHandler() http.HandlerFunc {
 	return (func(w http.ResponseWriter, r *http.Request) {
 		hunt := Hunt{}
 		e := request.DecodeAndValidate(r, &hunt)
