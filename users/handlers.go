@@ -355,19 +355,13 @@ func getNotificationsHandler() http.HandlerFunc {
 //  400:
 func DeleteNotificationHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		userID, e := request.GetIntURLParam(r, "userID")
-		if e != nil {
-			e.Handle(w)
-			return
-		}
-
 		notificationID, e := request.GetIntURLParam(r, "notificationID")
 		if e != nil {
 			e.Handle(w)
 			return
 		}
 
-		e = db.DeleteHuntInvitation(notificationID, userID)
+		e = db.DeleteHuntInvitation(notificationID)
 		if e != nil {
 			e.Handle(w)
 			return

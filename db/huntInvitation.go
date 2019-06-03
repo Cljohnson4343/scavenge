@@ -231,18 +231,12 @@ func (i *HuntInvitationDB) Insert() *response.Error {
 }
 
 var huntInvitationDeleteScript = `
-	WITH email_for_user AS (
-		SELECT email
-		FROM users u 
-		WHERE u.id = $2
-	)
-	DELETE FROM hunt_invitations hi
-	USING email_for_user efu
-	WHERE hi.id = $1 AND efu.email = hi.email;`
+	DELETE FROM hunt_invitations 
+	WHERE id = $1;`
 
 // DeleteHuntInvitation deletes the row from the hunt_invitations table
-func DeleteHuntInvitation(huntInvitationID, userID int) *response.Error {
-	res, err := stmtMap["huntInvitationDelete"].Exec(huntInvitationID, userID)
+func DeleteHuntInvitation(huntInvitationID int) *response.Error {
+	res, err := stmtMap["huntInvitationDelete"].Exec(huntInvitationID)
 	if err != nil {
 		return response.NewErrorf(
 			http.StatusInternalServerError,
@@ -265,9 +259,8 @@ func DeleteHuntInvitation(huntInvitationID, userID int) *response.Error {
 	if numRows < 1 {
 		return response.NewErrorf(
 			http.StatusBadRequest,
-			"error deleting hunt invitation with id %d: no invitation with that id for user %d exists",
+			"error deleting hunt invitation with id %d: no invitation with that id",
 			huntInvitationID,
-			userID,
 		)
 	}
 

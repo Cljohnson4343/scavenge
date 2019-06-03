@@ -522,6 +522,40 @@ func createHuntInvitationHandler() http.HandlerFunc {
 	})
 }
 
+// swagger:route DELETE /hunts/{huntID}/invitations/{invitationID} invitations delete
+//
+// Deletes the hunt invitation.
+//
+// Consumes:
+// 	- application/json
+//
+// Produces:
+//	- application/json
+//
+// Schemes: http, https
+//
+// Responses:
+// 	200:
+//  400:
+//  500:
+func deleteHuntInvitationHandler() http.HandlerFunc {
+	return (func(w http.ResponseWriter, r *http.Request) {
+		invitationID, e := request.GetIntURLParam(r, "invitationID")
+		if e != nil {
+			e.Handle(w)
+			return
+		}
+
+		e = db.DeleteHuntInvitation(invitationID)
+		if e != nil {
+			e.Handle(w)
+			return
+		}
+
+		return
+	})
+}
+
 // swagger:route GET /hunts/{huntID}/invitations/ hunt invitations
 //
 // Gets the player invitations for the given hunt.
@@ -818,7 +852,7 @@ func declineHuntInvitationHandler() http.HandlerFunc {
 			return
 		}
 
-		e = db.DeleteHuntInvitation(invitationID, userID)
+		e = db.DeleteHuntInvitation(invitationID)
 		if e != nil {
 			e.Handle(w)
 			return

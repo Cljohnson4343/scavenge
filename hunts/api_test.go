@@ -298,7 +298,7 @@ func TestCreateHuntInvitationHandler(t *testing.T) {
 					t.Fatalf("expected user to have invitations")
 				}
 
-				e = db.DeleteHuntInvitation(invitations[0].ID, c.user.ID)
+				e = db.DeleteHuntInvitation(invitations[0].ID)
 				if e != nil {
 					t.Fatalf("error deleting newly created invitation: %s", e.JSON())
 				}
