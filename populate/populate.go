@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"github.com/cljohnson4343/scavenge/db"
 
@@ -35,9 +36,13 @@ func addPlayers(hunts []*h.Hunt, users []*u.User) {
 	for i, v := range hunts {
 		v.Players = make([]*db.PlayerDB, len(users), len(users))
 		copy(v.Players, players)
-		v.CreatorID = i % len(users)
-		v.CreatorUsername = users[v.CreatorID].Username
+		v.CreatorID = (i % len(users)) + 1
+		v.CreatorUsername = users[i%len(users)].Username
 	}
+}
+
+func changeStartTime(hunt *h.Hunt, date time.Time) {
+	hunt.StartTime = date
 }
 
 // Populate fills the database with dummy test data
@@ -59,6 +64,14 @@ func Populate(populateFlag bool) {
 	hunts := make([]*h.Hunt, 0)
 	readResource("hunts", &hunts)
 	addPlayers(hunts, users)
+
+	// make one of the hunts soon to start so that there can be an in progress hunt
+	hunts[0].StartTime = time.Now().Add(1000)
+
+	// make one of the hunts soon to end so that there can be a finished hunt
+	hunts[1].StartTime = time.Now().Add(1000)
+	hunts[1].EndTime = time.Now().Add(3000)
+
 	for _, v := range hunts {
 		huntErr := h.InsertHunt(v.CreatorID, v)
 		if huntErr != nil {

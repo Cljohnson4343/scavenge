@@ -1,5 +1,83 @@
 [
   {
+    "huntName": "In Progress Hunt",
+    "maxTeams": 4,
+    "startTime": "2021-10-21T10:00:00Z",
+    "endTime": "2021-10-21T13:00:00Z",
+    "teams": [
+      {
+        "teamName": "Lakers"
+      },
+      {
+        "teamName": "Panthers"
+      }
+    ],
+    "items": [
+      {
+        "itemName": "Santa Clause",
+        "points": 10
+      },
+      {
+        "itemName": "Rudolph",
+        "points": 10
+      },
+      {
+        "itemName": "Reindeer on the Roof",
+        "points": 40
+      },
+      {
+        "itemName": "Mrs. Clause",
+        "points": 30
+      },
+      {
+        "itemName": "Snow Globe",
+        "points": 40
+      }
+    ],
+    "locationName": "Huntsville, Al",
+    "latitude": 34.730705,
+    "longitude": -86.59481
+  },
+  {
+    "huntName": "Finished Hunt",
+    "maxTeams": 4,
+    "startTime": "2021-10-21T10:00:00Z",
+    "endTime": "2021-10-21T13:00:00Z",
+    "teams": [
+      {
+        "teamName": "Lakers"
+      },
+      {
+        "teamName": "Panthers"
+      }
+    ],
+    "items": [
+      {
+        "itemName": "Santa Clause",
+        "points": 10
+      },
+      {
+        "itemName": "Rudolph",
+        "points": 10
+      },
+      {
+        "itemName": "Reindeer on the Roof",
+        "points": 40
+      },
+      {
+        "itemName": "Mrs. Clause",
+        "points": 30
+      },
+      {
+        "itemName": "Snow Globe",
+        "points": 40
+      }
+    ],
+    "locationName": "Huntsville, Al",
+    "latitude": 34.730705,
+    "longitude": -86.59481
+  },
+  {
     "huntName": "Huntsville Hunt",
     "maxTeams": 4,
     "startTime": "2021-10-21T10:00:00Z",
