@@ -142,8 +142,8 @@ func AddPlayer(teamID int, playerID int) *response.Error {
 		return e
 	}
 
-	teamMember := roles.New("team_member", teamID)
-	e = teamMember.AddTo(playerID)
+	teamEditor := roles.New("team_editor", teamID)
+	e = teamEditor.AddTo(playerID)
 	if e != nil {
 		return e
 	}
