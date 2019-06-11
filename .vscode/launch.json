@@ -13,8 +13,7 @@
       "host": "localhost",
       "showLog": true,
       "program": "${workspaceFolder}",
-      "env": {},
-      "args": ["--populate"]
+      "env": {}
     },
     {
       "name": "Launch test function",
