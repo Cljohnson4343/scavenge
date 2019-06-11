@@ -100,7 +100,12 @@ func GetHuntByCreatorAndName(creator, name string) (*Hunt, *response.Error) {
 		e.AddError(playersErr)
 	}
 
-	return &Hunt{HuntDB: *huntDB, Teams: teams, Items: items, Players: players}, e.GetError()
+	invites, invitesErr := db.GetInvitationsForHunt(huntDB.ID)
+	if invitesErr != nil {
+		e.AddError(invitesErr)
+	}
+
+	return &Hunt{HuntDB: *huntDB, Teams: teams, Items: items, Players: players, Invites: invites}, e.GetError()
 }
 
 // GetHuntsByUserID returns all Hunts for the given user
