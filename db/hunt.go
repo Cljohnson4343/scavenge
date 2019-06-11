@@ -163,6 +163,7 @@ func (h *HuntDB) PatchValidate(r *http.Request, huntID int) *response.Error {
 	id, ok := tblColMap[HuntTbl]["id"]
 	if !ok {
 		h.ID = huntID
+		id = huntID
 		tblColMap[HuntTbl]["id"] = huntID
 	}
 
