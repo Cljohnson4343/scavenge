@@ -101,6 +101,24 @@ CREATE TABLE teams (
 );
 CREATE INDEX teams_huntid_asc ON teams(hunt_id ASC);
 
+CREATE OR REPLACE FUNCTION ins_team(_hunt_id int, _team_name varchar(255), OUT _id int)
+AS $func$
+DECLARE
+    _max_teams int;
+BEGIN
+    SELECT h.max_teams FROM hunts h WHERE h.id = _hunt_id FOR UPDATE INTO _max_teams;  -- write lock
+
+    INSERT INTO teams(hunt_id, name)
+    SELECT _hunt_id, _team_name 
+    FROM teams
+    WHERE  teams.hunt_id = _hunt_id
+    HAVING count(*) < _max_teams
+    RETURNING teams.id
+    INTO _id;
+
+END; $func$
+LANGUAGE plpgsql;
+
 /*
     This table contains the route info for a team during a
     specific hunt. Each entry represents a location from 

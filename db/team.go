@@ -23,7 +23,7 @@ type TeamDB struct {
 	// The id of the Hunt
 	//
 	// required: true
-	HuntID int `json:"huntID" valid:"int,optional"`
+	HuntID int `json:"huntID" valid:"int"`
 
 	// The id of the team
 	//
@@ -114,9 +114,8 @@ func (t *TeamDB) Update(ex pgsql.Executioner) *response.Error {
 }
 
 var teamInsertScript = `
-	INSERT INTO teams(hunt_id, name)
-	VALUES ($1, $2)
-	RETURNING id;`
+	SELECT COALESCE(ins_team($1, $2), 0);
+`
 
 // Insert inserts the team into the db
 func (t *TeamDB) Insert() *response.Error {
