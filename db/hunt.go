@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/cljohnson4343/scavenge/request"
+	"github.com/lib/pq"
 
 	"github.com/cljohnson4343/scavenge/pgsql"
 
@@ -472,9 +473,33 @@ func (h *HuntDB) Insert() *response.Error {
 	err := stmtMap["huntInsert"].QueryRow(h.Name, h.MaxTeams, h.StartTime, h.EndTime,
 		h.LocationName, h.Latitude, h.Longitude, h.CreatorID).Scan(&h.ID, &h.CreatedAt)
 	if err != nil {
-		return response.NewErrorf(http.StatusInternalServerError, "error inserting hunt with name %s: %s", h.Name, err.Error())
-
+		return h.ParseError(err, "insert")
 	}
 
 	return nil
+}
+
+// ParseError maps a pq driver error to a response.Error that contains the information a
+// client needs to know.
+func (h *HuntDB) ParseError(err error, op string) *response.Error {
+	pqErr, ok := err.(*pq.Error)
+	if ok {
+		if pqErr.Constraint != "" {
+			switch pqErr.Constraint {
+			case "hunt_with_same_name":
+				return response.NewErrorf(
+					http.StatusBadRequest,
+					"huntName: There is already a hunt with the name %s",
+					h.Name,
+				)
+			}
+		}
+	}
+
+	return response.NewErrorf(
+		http.StatusInternalServerError,
+		"error performing operation %s: %v",
+		op,
+		err,
+	)
 }
