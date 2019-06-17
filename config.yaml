@@ -1,0 +1,14 @@
+database:
+  defaults: &defaults
+    host: localhost
+    port: 5432
+    password: 67Metsys_43
+    user: cj43
+
+  development:
+    dbname: scavengedb_test
+    <<: *defaults
+
+  production:
+    dbname: scavengedb
+    <<: *defaults

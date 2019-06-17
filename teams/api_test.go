@@ -23,6 +23,7 @@ import (
 	"github.com/cljohnson4343/scavenge/routes"
 	"github.com/cljohnson4343/scavenge/teams"
 	"github.com/cljohnson4343/scavenge/users"
+	"github.com/spf13/viper"
 )
 
 var env *config.Env
@@ -32,7 +33,12 @@ var sessionCookie *http.Cookie
 var newUser *users.User
 
 func TestMain(m *testing.M) {
-	d := db.InitDB("../db/db_info_test.json")
+	if err := config.Read(""); err != nil {
+		fmt.Printf("unable to read config: %v\n", err)
+		os.Exit(1)
+	}
+
+	d := db.InitDB(viper.GetString("database.development.dbname"))
 	defer db.Shutdown(d)
 	env = config.CreateEnv(d)
 	response.SetDevMode(true)

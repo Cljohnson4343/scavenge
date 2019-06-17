@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/go-chi/chi"
+	"github.com/spf13/viper"
 
 	"github.com/cljohnson4343/scavenge/apitest"
 	"github.com/cljohnson4343/scavenge/config"
@@ -37,7 +38,12 @@ var newUser = users.User{
 }
 
 func TestMain(m *testing.M) {
-	d := db.InitDB("../db/db_info_test.json")
+	if err := config.Read(""); err != nil {
+		fmt.Printf("unable to read config: %v\n", err)
+		os.Exit(1)
+	}
+
+	d := db.InitDB(viper.GetString("database.development.dbname"))
 	defer db.Shutdown(d)
 
 	env = config.CreateEnv(d)

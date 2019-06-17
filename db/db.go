@@ -2,14 +2,13 @@ package db
 
 import (
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"log"
-	"os"
 
 	// TODO look into whether this blank import is necessary. GoLint seems to
 	// have a problem with it.
 	_ "github.com/lib/pq"
+	"github.com/spf13/viper"
 )
 
 // Config is a custom type to store info used to configure postgresql db
@@ -57,18 +56,13 @@ func Shutdown(db *sql.DB) {
 
 // InitDB initializes a db and returns the db. The caller is responible for closing the
 // db.
-func InitDB(filePath string) *sql.DB {
-	file, err := os.Open(filePath)
-	if err != nil {
-		log.Panicf("Error configuring db: %s\n", err.Error())
-	}
-	defer file.Close()
-
+func InitDB(dbName string) *sql.DB {
 	var dbConfig = new(Config)
-	err = json.NewDecoder(file).Decode(&dbConfig)
-	if err != nil {
-		log.Panicf("Error decoding config file: %s\n", err.Error())
-	}
+	dbConfig.DBName = dbName
+	dbConfig.Host = viper.GetString("database.production.host")
+	dbConfig.Port = viper.GetInt("database.production.port")
+	dbConfig.Password = viper.GetString("database.production.password")
+	dbConfig.User = viper.GetString("database.production.user")
 
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
 		dbConfig.Host, dbConfig.Port, dbConfig.User, dbConfig.Password, dbConfig.DBName)
