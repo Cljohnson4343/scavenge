@@ -6,14 +6,13 @@ import (
 
 	"github.com/cljohnson4343/scavenge/config"
 	"github.com/cljohnson4343/scavenge/db"
-	"github.com/cljohnson4343/scavenge/populate"
 	"github.com/cljohnson4343/scavenge/response"
 	"github.com/cljohnson4343/scavenge/routes"
 	"github.com/go-chi/chi"
 	"github.com/spf13/cobra"
 )
 
-var populateFlag, devModeFlag *bool
+var devModeFlag *bool
 
 var serveCmd = &cobra.Command{
 	Use:   "serve",
@@ -31,8 +30,6 @@ var serveCmd = &cobra.Command{
 		env := config.CreateEnv(database)
 		router := routes.Routes(env)
 
-		populate.Populate(*populateFlag)
-
 		walkFunc := func(method string, route string, handler http.Handler, middlewares ...func(http.Handler) http.Handler) error {
 			log.Printf("%s %s\n", method, route) // walk and print out all routes
 			return nil
@@ -49,5 +46,4 @@ var serveCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(serveCmd)
 	devModeFlag = serveCmd.PersistentFlags().Bool("dev-mode", false, "set the server to dev mode")
-	populateFlag = serveCmd.PersistentFlags().Bool("populate", false, "populate the database with dummy data")
 }
