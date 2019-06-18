@@ -11,7 +11,6 @@ import (
 	"github.com/cljohnson4343/scavenge/routes"
 	"github.com/go-chi/chi"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 var populateFlag, devModeFlag *bool
@@ -20,11 +19,13 @@ var serveCmd = &cobra.Command{
 	Use:   "serve",
 	Short: "Serve the scavenge api",
 	Run: func(cmd *cobra.Command, args []string) {
+		deployEnv := "production"
 		if *devModeFlag {
 			response.SetDevMode(true)
+			deployEnv = "development"
 		}
 
-		database := db.InitDB(viper.GetString("database.production.dbname"))
+		database := db.InitDB(deployEnv)
 		defer db.Shutdown(database)
 
 		env := config.CreateEnv(database)

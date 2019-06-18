@@ -38,7 +38,7 @@ func TestMain(m *testing.M) {
 		os.Exit(1)
 	}
 
-	d := db.InitDB(viper.GetString("database.development.dbname"))
+	d := db.InitDB("testing")
 	defer db.Shutdown(d)
 
 	env = c.CreateEnv(d)

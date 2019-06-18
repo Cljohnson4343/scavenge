@@ -56,13 +56,13 @@ func Shutdown(db *sql.DB) {
 
 // InitDB initializes a db and returns the db. The caller is responible for closing the
 // db.
-func InitDB(dbName string) *sql.DB {
+func InitDB(env string) *sql.DB {
 	var dbConfig = new(Config)
-	dbConfig.DBName = dbName
-	dbConfig.Host = viper.GetString("database.production.host")
-	dbConfig.Port = viper.GetInt("database.production.port")
-	dbConfig.Password = viper.GetString("database.production.password")
-	dbConfig.User = viper.GetString("database.production.user")
+	dbConfig.DBName = viper.GetString(fmt.Sprintf("database.%s.dbname", env))
+	dbConfig.Host = viper.GetString(fmt.Sprintf("database.%s.host", env))
+	dbConfig.Port = viper.GetInt(fmt.Sprintf("database.%s.port", env))
+	dbConfig.Password = viper.GetString(fmt.Sprintf("database.%s.password", env))
+	dbConfig.User = viper.GetString(fmt.Sprintf("database.%s.user", env))
 
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
 		dbConfig.Host, dbConfig.Port, dbConfig.User, dbConfig.Password, dbConfig.DBName)

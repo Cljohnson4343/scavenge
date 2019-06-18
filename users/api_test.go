@@ -22,7 +22,6 @@ import (
 	"github.com/cljohnson4343/scavenge/routes"
 	"github.com/cljohnson4343/scavenge/sessions"
 	"github.com/cljohnson4343/scavenge/users"
-	"github.com/spf13/viper"
 )
 
 var env *config.Env
@@ -42,7 +41,7 @@ func TestMain(m *testing.M) {
 		os.Exit(1)
 	}
 
-	d := db.InitDB(viper.GetString("database.development.dbname"))
+	d := db.InitDB("testing")
 	defer db.Shutdown(d)
 
 	env = config.CreateEnv(d)
