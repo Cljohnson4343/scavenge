@@ -13,6 +13,7 @@
       "host": "localhost",
       "showLog": true,
       "program": "${workspaceFolder}",
+      "args": ["serve", "--dev-mode"],
       "env": {}
     },
     {

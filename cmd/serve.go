@@ -48,6 +48,6 @@ var serveCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(serveCmd)
-	populateFlag = serveCmd.PersistentFlags().Bool("dev-mode", false, "set the server to dev mode")
-	devModeFlag = serveCmd.PersistentFlags().Bool("populate", false, "populate the database with dummy data")
+	devModeFlag = serveCmd.PersistentFlags().Bool("dev-mode", false, "set the server to dev mode")
+	populateFlag = serveCmd.PersistentFlags().Bool("populate", false, "populate the database with dummy data")
 }
