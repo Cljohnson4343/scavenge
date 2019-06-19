@@ -35,7 +35,7 @@ type HuntDB struct {
 
 	// The id of the Hunt
 	//
-	// required: true
+	// required: false
 	ID int `json:"huntID" valid:"int,optional"`
 
 	// The start time for the Hunt

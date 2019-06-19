@@ -22,12 +22,12 @@ type TeamDB struct {
 
 	// The id of the Hunt
 	//
-	// required: true
-	HuntID int `json:"huntID" valid:"int"`
+	// required: false
+	HuntID int `json:"huntID" valid:"int,optional"`
 
 	// The id of the team
 	//
-	// required: true
+	// required: false
 	ID int `json:"teamID" valid:"int,optional"`
 
 	// the name of the team
