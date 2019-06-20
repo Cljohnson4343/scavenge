@@ -1,11 +1,9 @@
-FROM golang
+FROM scratch
 
-RUN go get -v github.com/cljohnson4343/scavenge
-RUN go install -i github.com/cljohnson4343/scavenge
+ADD scavenge .
+ADD config.yaml .
 
-ADD config.yaml /go/src/github.com/cljohnson4343/scavenge
-
-CMD ["/go/bin/scavenge", "serve"]
+CMD ["./scavenge", "serve"]
 
 EXPOSE 4343
 

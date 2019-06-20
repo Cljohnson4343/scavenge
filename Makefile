@@ -27,3 +27,7 @@ tests: integration unit
 start: 
 	@echo "\nStarting the server...\n"
 	@go build && ./scavenge serve --dev-mode
+
+build:
+	go build -a
+	docker build -t scavenge .

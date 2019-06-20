@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 
@@ -13,6 +14,7 @@ import (
 )
 
 var devModeFlag *bool
+var portFlag *int
 
 var serveCmd = &cobra.Command{
 	Use:   "serve",
@@ -38,12 +40,14 @@ var serveCmd = &cobra.Command{
 			log.Panicf("Logging err: %s\n", err.Error()) // panic if there is an error
 		}
 
-		log.Fatal(http.ListenAndServe(":4343", router))
+		log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", *portFlag), router))
 
 	},
 }
 
 func init() {
-	rootCmd.AddCommand(serveCmd)
 	devModeFlag = serveCmd.PersistentFlags().Bool("dev-mode", false, "set the server to dev mode")
+	portFlag = serveCmd.Flags().Int("port", 4343, "port to use")
+
+	rootCmd.AddCommand(serveCmd)
 }
