@@ -289,5 +289,13 @@ func AddPlayer(huntID int, player *db.PlayerDB) *response.Error {
 		return e
 	}
 
+	if player.TeamID != 0 {
+		teamEditor := roles.New("team_editor", player.TeamID)
+		e = teamEditor.AddTo(player.ID)
+		if e != nil {
+			return e
+		}
+	}
+
 	return nil
 }
