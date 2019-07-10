@@ -13,7 +13,7 @@ type MediaMetaDB struct {
 
 	// The id of the media row
 	//
-	// required: true
+	// required: false
 	ID int `json:"mediaID" valid:"int,optional"`
 
 	// The id of the item, if available, for the media file described by this object

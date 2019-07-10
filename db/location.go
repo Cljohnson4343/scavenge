@@ -21,7 +21,7 @@ type LocationDB struct {
 
 	// The id of the location
 	//
-	// required: true
+	// required: false
 	ID int `json:"locationID" valid:"int,optional"`
 
 	// the latitude

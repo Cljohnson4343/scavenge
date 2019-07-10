@@ -26,7 +26,7 @@ tests: integration unit
 
 start: 
 	@echo "\nStarting the server...\n"
-	@go build && ./scavenge serve --dev-mode
+	@go build && ./scavenge serve --dev-mode --port 4343
 
 build:
 	go build -a

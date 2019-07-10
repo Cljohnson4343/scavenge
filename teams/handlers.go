@@ -258,6 +258,7 @@ func createLocationHandler(env *config.Env) http.HandlerFunc {
 		}
 
 		location := db.LocationDB{}
+		location.TeamID = teamID
 
 		e = request.DecodeAndValidate(r, &location)
 		if e != nil {
@@ -374,6 +375,7 @@ func createMediaHandler(env *config.Env) http.HandlerFunc {
 		}
 
 		media := db.MediaMetaDB{}
+		media.TeamID = teamID
 
 		e = request.DecodeAndValidate(r, &media)
 		if e != nil {
