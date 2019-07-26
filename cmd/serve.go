@@ -9,6 +9,7 @@ import (
 	"github.com/cljohnson4343/scavenge/db"
 	"github.com/cljohnson4343/scavenge/response"
 	"github.com/cljohnson4343/scavenge/routes"
+	"github.com/cljohnson4343/scavenge/s3"
 	"github.com/go-chi/chi"
 	"github.com/spf13/cobra"
 )
@@ -31,6 +32,11 @@ var serveCmd = &cobra.Command{
 
 		env := config.CreateEnv(database)
 		router := routes.Routes(env)
+
+		err := s3.InitSession()
+		if err != nil {
+			log.Panic(err.JSON())
+		}
 
 		walkFunc := func(method string, route string, handler http.Handler, middlewares ...func(http.Handler) http.Handler) error {
 			log.Printf("%s %s\n", method, route) // walk and print out all routes
