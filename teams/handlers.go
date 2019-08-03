@@ -14,6 +14,7 @@ import (
 	"github.com/cljohnson4343/scavenge/s3"
 	"github.com/cljohnson4343/scavenge/users"
 	"github.com/go-chi/render"
+	"github.com/google/uuid"
 )
 
 // swagger:route GET /teams/ teams getTeamsHandler
@@ -386,7 +387,7 @@ func createMediaHandler(env *config.Env) http.HandlerFunc {
 			return
 		}
 
-		file, handler, err := r.FormFile("file")
+		file, _, err := r.FormFile("file")
 		if err != nil {
 			e := response.NewErrorf(
 				http.StatusBadRequest,
@@ -398,8 +399,9 @@ func createMediaHandler(env *config.Env) http.HandlerFunc {
 		}
 		defer file.Close()
 
+		key := uuid.New()
 		url, e := s3.Upload(
-			handler.Filename,
+			key.String(),
 			file,
 		)
 		if e != nil {
