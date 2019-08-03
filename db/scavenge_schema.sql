@@ -178,6 +178,7 @@ CREATE TABLE media (
     item_id         int,
     location_id     int NOT NULL,
     url             varchar(2083) NOT NULL CHECK (length(url) > 3),
+    CONSTRAINT media_for_same_item UNIQUE(item_id),
     PRIMARY KEY(id),
     FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE,
     FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE,
