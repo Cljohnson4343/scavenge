@@ -127,10 +127,19 @@ var mediaMetaInsertScript = `
 	WITH loc_ins AS (
 		INSERT INTO locations(team_id, latitude, longitude, time_stamp)
 		VALUES ($1, $2, $3, $4)
+		ON CONFLICT ON CONSTRAINT team_same_loc_and_time DO NOTHING
 		RETURNING id locations_id
+	), loc_get AS (
+		SELECT id locations_id
+		FROM locations
+		WHERE team_id = $1 AND time_stamp = $4
+	), loc AS (
+		SELECT locations_id FROM loc_get
+		UNION ALL 
+		SELECT locations_id FROM loc_ins
 	)
 	INSERT INTO media(team_id, item_id, location_id, url)
-	VALUES ($5, NULLIF($6, 0), (SELECT locations_id FROM loc_ins), $7)
+	VALUES ($5, NULLIF($6, 0), (SELECT locations_id FROM loc), $7)
 	RETURNING location_id, id media_id;
 	`
 
@@ -139,7 +148,10 @@ var mediaMetaInsertScript = `
 func (m *MediaMetaDB) Insert(teamID int) *response.Error {
 	// make sure the given teamID matches the teamID's for the structs
 	if teamID != m.TeamID || teamID != m.Location.TeamID {
-		return response.NewError(http.StatusBadRequest, "invalid insert request: the teamID's provided don't match")
+		return response.NewError(
+			http.StatusBadRequest,
+			"invalid insert request: the teamID's provided don't match",
+		)
 	}
 
 	err := stmtMap["mediaMetaInsert"].QueryRow(m.TeamID, m.Location.Latitude,

@@ -1,45 +1,53 @@
 package s3
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/cljohnson4343/scavenge/response"
 	"github.com/spf13/viper"
 )
 
 var s *session.Session
-var svc *s3.S3
+var uploader *s3manager.Uploader
 
-func Upload(key string, contentType string, size int64, file io.ReadSeeker) (*s3.PutObjectOutput, *response.Error) {
+// Upload file to s3 bucket
+func Upload(key string, file io.ReadSeeker) (string, *response.Error) {
 	bucketName := viper.GetString("s3_bucket_name")
 
-	obInput := &s3.PutObjectInput{
-		ACL:                  aws.String("public"),
-		Body:                 file,
-		Bucket:               aws.String(bucketName),
-		ContentLength:        aws.Int64(size),
-		ContentType:          aws.String(contentType),
-		Key:                  aws.String(key),
-		ServerSideEncryption: aws.String("AES256"),
+	obInput := &s3manager.UploadInput{
+		Body:   file,
+		Bucket: aws.String(bucketName),
+		Key:    aws.String(key),
 	}
 
-	result, err := svc.PutObject(obInput)
+	result, err := uploader.Upload(obInput)
 	if err != nil {
-		return nil, response.NewErrorf(
+		var errMsg string
+		if awsErr, ok := err.(awserr.Error); ok {
+			errMsg = awsErr.Error()
+
+			if origErr := awsErr.OrigErr(); origErr != nil {
+				fmt.Printf("original error: %v", origErr)
+			}
+		}
+		return "", response.NewErrorf(
 			http.StatusInternalServerError,
 			"error uploading file to s3 bucket: %v",
-			err,
+			errMsg,
 		)
 	}
 
-	return result, nil
+	return result.Location, nil
 }
 
+// InitSession set up s3 session and service for file uploading
 func InitSession() *response.Error {
 	region := viper.GetString("s3_region")
 	id := viper.GetString("s3_id")
@@ -58,7 +66,7 @@ func InitSession() *response.Error {
 		)
 	}
 
-	svc = s3.New(s)
+	uploader = s3manager.NewUploader(s)
 
 	return nil
 }

@@ -73,6 +73,9 @@ func GetCookie(r *http.Request) *http.Cookie {
 
 // GetCurrent returns the user agents current session.
 func GetCurrent(cookie *http.Cookie) (*Session, *response.Error) {
+	if cookie == nil {
+		return nil, nil
+	}
 	key, err := uuid.Parse(cookie.Value)
 	if err != nil {
 		return nil, response.NewErrorf(http.StatusInternalServerError,

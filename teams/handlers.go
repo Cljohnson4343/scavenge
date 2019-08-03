@@ -3,15 +3,16 @@ package teams
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"os"
-
-	"github.com/cljohnson4343/scavenge/users"
 
 	"github.com/cljohnson4343/scavenge/config"
 	"github.com/cljohnson4343/scavenge/db"
 	"github.com/cljohnson4343/scavenge/request"
 	"github.com/cljohnson4343/scavenge/response"
+	"github.com/cljohnson4343/scavenge/s3"
+	"github.com/cljohnson4343/scavenge/users"
 	"github.com/go-chi/render"
 )
 
@@ -368,7 +369,39 @@ func getMediaForTeamHandler(env *config.Env) http.HandlerFunc {
 //  500:
 func createMediaHandler(env *config.Env) http.HandlerFunc {
 	return (func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println("File Upload Endpoint Hit")
+
 		teamID, e := request.GetIntURLParam(r, "teamID")
+		if e != nil {
+			e.Handle(w)
+			return
+		}
+
+		// Parse our multipart form, 10 << 20 specifies a maximum
+		// upload of 10 MB files.
+		err := r.ParseMultipartForm(10 << 20)
+		if err != nil {
+			e := response.NewErrorf(http.StatusBadRequest, "Invalid file: %v", err)
+			e.Handle(w)
+			return
+		}
+
+		file, handler, err := r.FormFile("file")
+		if err != nil {
+			e := response.NewErrorf(
+				http.StatusBadRequest,
+				"error retrieving 'file' from request: %v",
+				err,
+			)
+			e.Handle(w)
+			return
+		}
+		defer file.Close()
+
+		url, e := s3.Upload(
+			handler.Filename,
+			file,
+		)
 		if e != nil {
 			e.Handle(w)
 			return
@@ -376,9 +409,27 @@ func createMediaHandler(env *config.Env) http.HandlerFunc {
 
 		media := db.MediaMetaDB{}
 		media.TeamID = teamID
+		media.URL = url
 
-		e = request.DecodeAndValidate(r, &media)
-		if e != nil {
+		jsonBody, _, err := r.FormFile("json")
+		if err != nil {
+			e := response.NewErrorf(
+				http.StatusBadRequest,
+				"error retrieving 'json' from request: %v",
+				err,
+			)
+			e.Handle(w)
+			return
+		}
+		defer jsonBody.Close()
+
+		err = json.NewDecoder(jsonBody).Decode(&media)
+		if err != nil {
+			e := response.NewErrorf(
+				http.StatusBadRequest,
+				"error reading 'json' from request: %v",
+				err,
+			)
 			e.Handle(w)
 			return
 		}
