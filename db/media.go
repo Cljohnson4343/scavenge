@@ -166,25 +166,25 @@ func (m *MediaMetaDB) Insert(teamID int) *response.Error {
 
 var mediaMetaDeleteScript = `
 	DELETE FROM media
-	WHERE id = $1 AND team_id = $2;`
+	WHERE id = $1 AND team_id = $2
+	RETURNING url; 
+	`
 
 // DeleteMedia deletes the row from the media table but leaves the location data in
 // the location table. If you want to delete both then delete the associated Location row.
-func DeleteMedia(mediaID, teamID int) *response.Error {
-	res, err := stmtMap["mediaMetaDelete"].Exec(mediaID, teamID)
+func DeleteMedia(mediaID, teamID int) (string, *response.Error) {
+	var url string
+	err := stmtMap["mediaMetaDelete"].QueryRow(mediaID, teamID).Scan(&url)
 	if err != nil {
-		return response.NewErrorf(http.StatusInternalServerError, "error deleting media with id %d: %v", mediaID, err)
+		return url, response.NewErrorf(
+			http.StatusInternalServerError,
+			"error deleting media with id %d: %v",
+			mediaID,
+			err,
+		)
 	}
 
-	numRows, err := res.RowsAffected()
-	if err != nil {
-		return response.NewErrorf(http.StatusInternalServerError, "error deleting media with id %d: %v", mediaID, err)
-	}
-
-	if numRows < 1 {
-		return response.NewErrorf(http.StatusBadRequest, "error deleting media with id %d and team id %d", mediaID, teamID)
-	}
-	return nil
+	return url, nil
 }
 
 var teamPointsScript = `

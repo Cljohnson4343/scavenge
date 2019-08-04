@@ -476,9 +476,16 @@ func deleteMediaHandler(env *config.Env) http.HandlerFunc {
 			return
 		}
 
-		e = db.DeleteMedia(mediaID, teamID)
+		url, e := db.DeleteMedia(mediaID, teamID)
 		if e != nil {
 			e.Handle(w)
+			return
+		}
+
+		e = s3.Delete(s3.GetKey(url))
+		if e != nil {
+			e.Handle(w)
+			return
 		}
 
 		return
