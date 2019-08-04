@@ -55,6 +55,12 @@ func GetKey(url string) string {
 	return s[len(s)-1]
 }
 
+// GetExt returns the ext, including the dot, for the file name
+func GetExt(fileName string) string {
+	s := strings.Split(fileName, ".")
+	return "." + s[len(s)-1]
+}
+
 // Delete deletes an object from the s3 media bucket
 func Delete(key string) *response.Error {
 	svc := s3.New(s)

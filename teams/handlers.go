@@ -387,7 +387,7 @@ func createMediaHandler(env *config.Env) http.HandlerFunc {
 			return
 		}
 
-		file, _, err := r.FormFile("file")
+		file, handler, err := r.FormFile("file")
 		if err != nil {
 			e := response.NewErrorf(
 				http.StatusBadRequest,
@@ -401,7 +401,7 @@ func createMediaHandler(env *config.Env) http.HandlerFunc {
 
 		key := uuid.New()
 		url, e := s3.Upload(
-			key.String(),
+			key.String()+s3.GetExt(handler.Filename),
 			file,
 		)
 		if e != nil {
@@ -507,7 +507,11 @@ func populateMediaDBHandler(env *config.Env) http.HandlerFunc {
 
 		err = json.NewDecoder(file).Decode(&metas)
 		if err != nil {
-			e := response.NewErrorf(http.StatusInternalServerError, "error decoding json data: %s", err.Error())
+			e := response.NewErrorf(
+				http.StatusInternalServerError,
+				"error decoding json data: %s",
+				err.Error(),
+			)
 			e.Handle(w)
 			return
 		}
@@ -515,7 +519,11 @@ func populateMediaDBHandler(env *config.Env) http.HandlerFunc {
 		for _, m := range metas {
 			b, err := json.Marshal(m)
 			if err != nil {
-				e := response.NewErrorf(http.StatusInternalServerError, "error decoding json data: %s", err.Error())
+				e := response.NewErrorf(
+					http.StatusInternalServerError,
+					"error decoding json data: %s",
+					err.Error(),
+				)
 				e.Handle(w)
 				return
 			}
@@ -524,7 +532,11 @@ func populateMediaDBHandler(env *config.Env) http.HandlerFunc {
 
 			res, err := http.Post(url, "application/json", buf)
 			if err != nil {
-				e := response.NewErrorf(http.StatusInternalServerError, "error decoding json data: %s", err.Error())
+				e := response.NewErrorf(
+					http.StatusInternalServerError,
+					"error decoding json data: %s",
+					err.Error(),
+				)
 				e.Handle(w)
 				return
 			}
